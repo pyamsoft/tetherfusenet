@@ -6,6 +6,8 @@ Previous versions before December 09, 2025 used to be named
 "TetherFi" but the name was changed because it conflicted with
 a different trademarked name in India.
 
+Please see [Issue 468](https://github.com/pyamsoft/tetherfusenet/issues/468)
+
 ---
 
 pyamsoft apps NEVER intend to infringe on existing copyright
