@@ -22,7 +22,13 @@ import androidx.annotation.ChecksSdkIntAtLeast
 
 object ServerDefaults {
 
-  const val WIFI_SSID = "TFNet"
+  /**
+   * This SSID must be kept as the default "TetherFi" which is the old app name
+   *
+   * Otherwise it will cause upgrading users to have to re-setup the network, which we do
+   * not want them to do
+   */
+  const val WIFI_SSID = "TetherFi"
 
   /** Default port for HTTP server */
   const val HTTP_PORT = 8228
