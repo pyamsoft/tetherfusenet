@@ -5,7 +5,7 @@ targetSdk = "36"
 compileSdk = "36"
 
 # Android Gradle
-agp = "8.13.1"
+agp = "8.13.2"
 cacheFix = "3.0.3"
 
 # Kotlin
