@@ -37,7 +37,7 @@ composeMaterial = "1.7.8"
 composeMaterial3 = "1.4.0"
 
 # Google
-ksp = "2.3.3"
+ksp = "2.3.4"
 
 # Images
 coil = "3.3.0"
