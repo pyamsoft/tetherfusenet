@@ -46,7 +46,7 @@ coil = "3.3.0"
 spotless = "8.1.0"
 doctor = "0.12.1"
 jdkDesugar = "2.1.5"
-caupain = "1.7.1"
+caupain = "1.8.0"
 
 
 [plugins]
