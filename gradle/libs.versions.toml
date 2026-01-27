@@ -43,7 +43,7 @@ ksp = "2.3.4"
 coil = "3.3.0"
 
 # Developer Tools
-spotless = "8.2.0"
+spotless = "8.2.1"
 doctor = "0.12.1"
 jdkDesugar = "2.1.5"
 caupain = "1.8.1"
