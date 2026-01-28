@@ -17,6 +17,16 @@
 import com.deezer.caupain.model.StabilityLevelPolicy
 import com.deezer.caupain.plugin.DependenciesUpdateTask
 
+// https://developer.android.com/build/releases/agp-9-0-0-release-notes#runtime-dependency-on-kotlin-gradle-plugin
+buildscript {
+  dependencies {
+    //noinspection DifferentKotlinGradleVersion
+    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlin.get()}")
+    //noinspection DifferentKotlinGradleVersion
+    classpath("com.google.devtools.ksp:symbol-processing-gradle-plugin:${libs.versions.ksp.get()}")
+  }
+}
+
 plugins {
   // Android AGP
   // https://developer.android.com/studio/build#top-level
