@@ -14,7 +14,7 @@ coroutines = "1.10.2"
 
 # Us
 pydroid = "29.2.0"
-ktor = "3.3.3-PYAMSOFT"
+ktor = "3.4.0-PYAMSOFT"
 
 # Square
 leakCanary = "2.14"

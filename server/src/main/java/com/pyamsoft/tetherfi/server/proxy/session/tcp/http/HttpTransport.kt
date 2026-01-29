@@ -28,7 +28,7 @@ import com.pyamsoft.tetherfi.server.proxy.session.tcp.relayData
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.readLineStrict
 import io.ktor.utils.io.writeFully
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -60,7 +60,7 @@ internal constructor(
     // actual data
     var throwaway: String?
     do {
-      throwaway = input.readUTF8Line()
+      throwaway = input.readLineStrict()
     } while (!throwaway.isNullOrBlank())
 
     debugLog { "Establish HTTPS CONNECT tunnel ${request.raw}" }
@@ -105,7 +105,7 @@ internal constructor(
       input: ByteReadChannel,
       output: ByteWriteChannel,
   ): HttpProxyRequest {
-    val line = input.readUTF8Line()
+    val line = input.readLineStrict()
 
     // No line, no go
     if (line.isNullOrBlank()) {
