@@ -21,7 +21,7 @@ leakCanary = "2.14"
 timber = "5.0.1"
 
 qrCode = "4.5.0"
-dagger = "2.59"
+dagger = "2.59.1"
 
 # AndroidX
 core = "1.17.0"
