@@ -40,7 +40,9 @@
 
   <string name="editmode_hotspot_proxy_socks_title">SOCKS Proxy</string>
   <string name="editmode_hotspot_proxy_socks_description">
-    Both SOCKS4A and SOCKS5H proxy modes (CONNECT/CONNECT-UDP).
+    Both SOCKS4A and SOCKS5H proxy modes (CONNECT/UDP-ASSOCIATE).
+    Can be used for both normal connections and UDP tunneling.
+    UDP tunneling currently supports IPv4 traffic only.
     This proxy mode is slow and is only meant for specific use-cases.
     Most users will not need this option, and should leave this disabled.
   </string>
