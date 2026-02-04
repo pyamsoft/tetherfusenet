@@ -33,17 +33,19 @@
 
   <string name="editmode_hotspot_proxy_http_title">HTTP Proxy</string>
   <string name="editmode_hotspot_proxy_http_description">
-    Both HTTP and HTTPS proxy modes.
-    This proxy mode is simple and fast. It is compatible with most online services.
+    HTTP/HTTPS proxy modes.
+    This proxy mode is simple and fast. It is compatible with most webpages
+    but not all online services like games, chat, or video streaming.
     Most users will want to use this option (recommended)
   </string>
 
   <string name="editmode_hotspot_proxy_socks_title">SOCKS Proxy</string>
   <string name="editmode_hotspot_proxy_socks_description">
-    Both SOCKS4A and SOCKS5H proxy modes (CONNECT/UDP-ASSOCIATE).
+    SOCKS4(A)/SOCKS5(H) proxy modes (CONNECT/UDP-ASSOCIATE).
+    This proxy mode is slower and is only meant for highly technical
+    users and specific use-cases.
     Can be used for both normal connections and UDP tunneling.
     UDP tunneling currently supports IPv4 traffic only.
-    This proxy mode is slow and is only meant for specific use-cases.
-    Most users will not need this option, and should leave this disabled.
+    Most users will not need this option.
   </string>
 </resources>
