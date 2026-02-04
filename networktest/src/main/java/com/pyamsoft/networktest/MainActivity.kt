@@ -57,6 +57,9 @@ class MainActivity : ComponentActivity() {
               val addresses =
                   iface.inetAddresses
                       .asSequence()
+                      // TODO(Peter): Support both IPv4 and IPv6
+                      //              Right now UDP CONNECT does not fully support IPv6 tunneling
+                      //              All upstream requests are converted to IPv4
                       .filter { it is Inet4Address }
                       .filterNot { it.isLoopbackAddress }
                       .mapIndexed { index, addr ->
