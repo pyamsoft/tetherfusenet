@@ -426,7 +426,7 @@ protected constructor(
       internal val INVALID_IPV4_BYTES = ByteArray(4)
 
       /** Zero port sent for error commands */
-      internal const val INVALID_PORT: Short = 0
+      internal const val INVALID_PORT: UShort = 0U
 
       @CheckResult
       internal fun InetSocketAddress.getJavaInetSocketAddress(): InetAddress {

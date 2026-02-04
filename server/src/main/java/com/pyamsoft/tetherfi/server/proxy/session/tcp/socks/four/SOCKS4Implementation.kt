@@ -57,6 +57,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
+import kotlinx.io.writeUShort
 
 /** https://www.openssh.com/txt/socks4.protocol */
 @Singleton
@@ -239,13 +240,13 @@ internal constructor(
       }
     }
 
-    private suspend fun sendPacket(replyCode: Byte, port: Short, address: ByteArray) {
+    private suspend fun sendPacket(replyCode: Byte, port: UShort, address: ByteArray) {
       sendPacket {
         // CD
         writeByte(replyCode)
 
         // DSTPORT
-        writeShort(port)
+        writeUShort(port)
 
         // DSTIP
         writeFully(address)
@@ -297,8 +298,11 @@ internal constructor(
 
       @JvmStatic
       @CheckResult
-      internal fun getDestinationPort(address: InetSocketAddress?): Short {
-        return address?.port?.toShort() ?: INVALID_PORT
+      internal fun getDestinationPort(address: InetSocketAddress?): UShort {
+        // A short max is 32767 but ports can go up to 65k
+        // Sometimes the short value is negative, in that case, we
+        // "fix" it by converting back to an unsigned number
+        return address?.port?.toUShort() ?: INVALID_PORT
       }
 
       @JvmStatic

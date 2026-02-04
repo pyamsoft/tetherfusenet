@@ -371,11 +371,12 @@ def test_dns(transaction_id: int, domain_name: str) -> int:
         proxy_response = parse_dns_response(b)
         pprint(proxy_response)
 
-    if domain_name == "example.com":
-        mismatched_fields: list[str] = normal_response.matches(proxy_response)
-        if len(mismatched_fields) > 0:
-            print(f"MISMATCH IN RESPONSES: {mismatched_fields}")
-            return 1
+    if normal_response and proxy_response:
+        if domain_name == "example.com":
+            mismatched_fields: list[str] = normal_response.matches(proxy_response)
+            if len(mismatched_fields) > 0:
+                print(f"MISMATCH IN RESPONSES: {mismatched_fields}")
+                return 1
 
     return 0
 
