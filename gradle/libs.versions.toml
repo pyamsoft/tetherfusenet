@@ -32,7 +32,7 @@ preference = "1.2.1"
 testRunner = "1.7.0"
 
 # Compose
-compose = "1.10.2"
+compose = "1.10.3"
 composeMaterial = "1.7.8"
 composeMaterial3 = "1.4.0"
 
