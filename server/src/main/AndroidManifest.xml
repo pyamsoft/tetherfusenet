@@ -47,10 +47,10 @@
   <!-- To bind to mobile networks even when cellular data is not active because of a Wi-Fi connection -->
   <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
 
-  <!-- Android API 37 deprecates the application useClearText
-       we must apply a network security config -->
-  <application
-    android:usesCleartextTraffic="true"
-    android:networkSecurityConfig="@xml/network_config_allow_http"
-  />
+  <!--
+  Android API 37 deprecates the application useClearText
+  we must apply a network security config
+  https://developer.android.com/about/versions/17/behavior-changes-all
+  -->
+  <application android:networkSecurityConfig="@xml/network_config_allow_http" />
 </manifest>
