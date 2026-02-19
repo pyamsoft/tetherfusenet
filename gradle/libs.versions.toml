@@ -13,7 +13,7 @@ kotlin = "2.3.10"
 coroutines = "1.10.2"
 
 # Us
-pydroid = "29.2.0"
+pydroid = "29.2.2"
 ktor = "3.4.0-PYAMSOFT"
 
 # Square
