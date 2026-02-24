@@ -40,7 +40,7 @@ composeMaterial3 = "1.4.0"
 ksp = "2.3.6"
 
 # Images
-coil = "3.3.0"
+coil = "3.4.0"
 
 # Developer Tools
 spotless = "8.2.1"
