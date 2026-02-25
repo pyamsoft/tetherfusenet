@@ -25,9 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,9 +47,7 @@ import com.pyamsoft.tetherfi.info.MutableInfoViewState
 import com.pyamsoft.tetherfi.info.R
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.ui.ServerViewState
-import com.pyamsoft.tetherfi.ui.icons.QrCode
-import com.pyamsoft.tetherfi.ui.icons.Visibility
-import com.pyamsoft.tetherfi.ui.icons.VisibilityOff
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 import com.pyamsoft.tetherfi.ui.rememberPortNumber
 import com.pyamsoft.tetherfi.ui.rememberServerHostname
 import com.pyamsoft.tetherfi.ui.rememberServerPassword
@@ -164,7 +159,7 @@ internal fun LazyListScope.renderDeviceSetup(
               ) {
                 Icon(
                     modifier = Modifier.size(16.dp),
-                    imageVector = Icons.Filled.QrCode,
+                    painter = IconPainters.qrCode(),
                     contentDescription = stringResource(com.pyamsoft.tetherfi.ui.R.string.qr_code),
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -216,9 +211,9 @@ internal fun LazyListScope.renderDeviceSetup(
               ) {
                 Icon(
                     modifier = Modifier.size(16.dp),
-                    imageVector =
-                        if (isPasswordVisible) Icons.Filled.VisibilityOff
-                        else Icons.Filled.Visibility,
+                    painter =
+                        if (isPasswordVisible) IconPainters.visibilityOff()
+                        else IconPainters.visibility(),
                     contentDescription =
                         stringResource(
                             if (isPasswordVisible) com.pyamsoft.tetherfi.ui.R.string.pass_visible
@@ -258,9 +253,9 @@ internal fun LazyListScope.renderDeviceSetup(
 
               Icon(
                   modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                  imageVector =
-                      if (showHttpOptions) Icons.AutoMirrored.Filled.KeyboardArrowRight
-                      else Icons.Filled.KeyboardArrowDown,
+                  painter =
+                      if (showHttpOptions) IconPainters.keyboardArrowRight()
+                      else IconPainters.keyboardArrowDown(),
                   contentDescription = stringResource(R.string.view_http_options),
                   tint = MaterialTheme.colorScheme.onSurfaceVariant,
               )
@@ -357,9 +352,9 @@ internal fun LazyListScope.renderDeviceSetup(
 
               Icon(
                   modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                  imageVector =
-                      if (showSocksOptions) Icons.AutoMirrored.Filled.KeyboardArrowRight
-                      else Icons.Filled.KeyboardArrowDown,
+                  painter =
+                      if (showSocksOptions) IconPainters.keyboardArrowRight()
+                      else IconPainters.keyboardArrowDown(),
                   contentDescription = stringResource(R.string.view_http_options),
                   tint = MaterialTheme.colorScheme.onSurfaceVariant,
               )

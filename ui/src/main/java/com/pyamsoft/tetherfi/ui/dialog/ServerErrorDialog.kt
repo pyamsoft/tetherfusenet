@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.ZeroCornerSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -44,6 +42,7 @@ import com.pyamsoft.pydroid.ui.haptics.LocalHapticManager
 import com.pyamsoft.tetherfi.server.broadcast.rndis.RNDISInitializeException
 import com.pyamsoft.tetherfi.ui.IconButtonContent
 import com.pyamsoft.tetherfi.ui.R
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 
 private enum class ServerErrorDialogContentTypes {
   TITLE,
@@ -63,7 +62,7 @@ fun ServerErrorTile(onShowError: () -> Unit, content: IconButtonContent) {
   content(Modifier.clickable { handleClick() }) {
     Icon(
         modifier = Modifier.padding(MaterialTheme.keylines.content),
-        imageVector = Icons.Filled.Warning,
+        painter = IconPainters.warning(),
         contentDescription = stringResource(R.string.something_went_wrong),
         tint = MaterialTheme.colorScheme.error,
     )

@@ -64,8 +64,6 @@ dependencies {
   api(libs.compose.ui)
   api(libs.compose.animation)
   api(libs.compose.material3)
-  api(libs.compose.material.icons)
-  // api(libs.compose.material.icons.extended)
 
   // Compose Preview
   api(libs.compose.ui.tooling.preview)

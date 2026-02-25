@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
@@ -49,8 +48,7 @@ import com.pyamsoft.tetherfi.status.sections.StatusItem
 import com.pyamsoft.tetherfi.ui.R as R2
 import com.pyamsoft.tetherfi.ui.ServerViewState
 import com.pyamsoft.tetherfi.ui.dialog.SlowSpeedsUpsell
-import com.pyamsoft.tetherfi.ui.icons.Visibility
-import com.pyamsoft.tetherfi.ui.icons.VisibilityOff
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 import com.pyamsoft.tetherfi.ui.rememberPortNumber
 import com.pyamsoft.tetherfi.ui.rememberServerHostname
 import com.pyamsoft.tetherfi.ui.rememberServerPassword
@@ -157,8 +155,8 @@ internal fun ViewPassword(
           },
       ) {
         Icon(
-            imageVector =
-                if (isPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+            painter =
+                if (isPasswordVisible) IconPainters.visibilityOff() else IconPainters.visibility(),
             contentDescription =
                 stringResource(
                     if (isPasswordVisible) R2.string.pass_visible else R2.string.pass_hidden

@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -40,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.PopupProperties
@@ -55,6 +52,7 @@ import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.clients.TransferAmount
 import com.pyamsoft.tetherfi.server.clients.TransferUnit
 import com.pyamsoft.tetherfi.server.clients.key
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 import com.pyamsoft.tetherfi.ui.test.TEST_HOSTNAME
 import java.time.Clock
 import java.time.format.DateTimeFormatter
@@ -182,17 +180,9 @@ private fun OptionsMenu(
   ) {
     Icon(
         contentDescription = stringResource(R.string.connection_options),
-        imageVector = Icons.Filled.MoreVert,
+        painter = IconPainters.moreVert(),
     )
   }
-
-  /*
-  7
-  3
-
-  8
-  2
-   */
 
   DropdownMenu(
       expanded = show,
@@ -343,19 +333,11 @@ private fun Limit(
     isOverLimit: Boolean,
 ) {
   limit?.also { target ->
-    val context = LocalContext.current
     val displayLimit =
-        remember(
-            context,
-            isOverLimit,
-            target,
-            label,
-        ) {
-          if (isOverLimit) {
-            context.getString(R.string.transfer_over_limit, target.display)
-          } else {
-            target.display
-          }
+        if (isOverLimit) {
+          stringResource(R.string.transfer_over_limit, target.display)
+        } else {
+          target.display
         }
 
     val color =

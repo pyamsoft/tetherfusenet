@@ -25,8 +25,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -45,6 +43,7 @@ import androidx.compose.ui.res.stringResource
 import com.pyamsoft.pydroid.ui.haptics.LocalHapticManager
 import com.pyamsoft.tetherfi.status.R
 import com.pyamsoft.tetherfi.ui.IconButtonContent
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 import kotlinx.coroutines.delay
 
 @Composable
@@ -134,7 +133,7 @@ private fun AttemptRefreshButton(
 
       Icon(
           modifier = Modifier.graphicsLayer { rotationZ = if (fakeSpin) angle else 0F },
-          imageVector = Icons.Filled.Refresh,
+          painter = IconPainters.refresh(),
           contentDescription = "Refresh",
           tint = MaterialTheme.colorScheme.primary,
       )

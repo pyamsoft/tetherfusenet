@@ -19,7 +19,6 @@ package com.pyamsoft.tetherfi.status.sections.tiles.tile
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.pyamsoft.pydroid.ui.haptics.LocalHapticManager
 import com.pyamsoft.tetherfi.status.R
-import com.pyamsoft.tetherfi.ui.icons.QrCode
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 
 @Composable
 internal fun ViewQRCodeTile(
@@ -61,7 +60,7 @@ internal fun ViewQRCodeTile(
           enabled = isQREnabled,
       ) {
         Icon(
-            imageVector = Icons.Filled.QrCode,
+            painter = IconPainters.qrCode(),
             contentDescription = stringResource(R.string.tile_qr_code),
             tint =
                 MaterialTheme.colorScheme.run {

@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,8 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.pydroid.ui.defaults.ImageDefaults
 import com.pyamsoft.pydroid.ui.haptics.LocalHapticManager
-import com.pyamsoft.pydroid.ui.icons.RadioButtonUnchecked
 import com.pyamsoft.tetherfi.ui.checkable.rememberCheckableColor
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 import com.pyamsoft.tetherfi.ui.rememberCheckableIconColor
 import com.pyamsoft.tetherfi.ui.textAlpha
 
@@ -120,11 +118,6 @@ private fun <T : Any> Selectable(
           selectedColor = MaterialTheme.colorScheme.primary,
       )
 
-  val checkIcon =
-      remember(isSelected) {
-        if (isSelected) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked
-      }
-
   Column(
       modifier =
           modifier
@@ -152,7 +145,8 @@ private fun <T : Any> Selectable(
 
       Icon(
           modifier = Modifier.size(ImageDefaults.IconSize),
-          imageVector = checkIcon,
+          painter =
+              if (isSelected) IconPainters.checkCircle() else IconPainters.radioButtonUnchecked(),
           contentDescription = title,
           tint = iconColor,
       )

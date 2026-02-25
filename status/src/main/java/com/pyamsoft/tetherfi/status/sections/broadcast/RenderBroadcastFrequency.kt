@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -43,7 +41,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.pydroid.ui.defaults.ImageDefaults
 import com.pyamsoft.pydroid.ui.haptics.LocalHapticManager
-import com.pyamsoft.pydroid.ui.icons.RadioButtonUnchecked
 import com.pyamsoft.tetherfi.server.ServerDefaults
 import com.pyamsoft.tetherfi.server.ServerNetworkBand
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
@@ -51,6 +48,7 @@ import com.pyamsoft.tetherfi.status.R
 import com.pyamsoft.tetherfi.status.StatusViewState
 import com.pyamsoft.tetherfi.ui.ServerViewState
 import com.pyamsoft.tetherfi.ui.checkable.rememberCheckableColor
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 import com.pyamsoft.tetherfi.ui.rememberCheckableIconColor
 import com.pyamsoft.tetherfi.ui.surfaceAlpha
 import com.pyamsoft.tetherfi.ui.textAlpha
@@ -181,11 +179,6 @@ private fun SelectableNetworkBand(
           selectedColor = MaterialTheme.colorScheme.primary,
       )
 
-  val checkIcon =
-      remember(isSelected) {
-        if (isSelected) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked
-      }
-
   Column(
       modifier =
           modifier
@@ -214,7 +207,8 @@ private fun SelectableNetworkBand(
 
       Icon(
           modifier = Modifier.size(ImageDefaults.IconSize),
-          imageVector = checkIcon,
+          painter =
+              if (isSelected) IconPainters.checkCircle() else IconPainters.radioButtonUnchecked(),
           contentDescription = title,
           tint = iconColor,
       )

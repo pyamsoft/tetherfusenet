@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,10 +41,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pyamsoft.pydroid.theme.keylines
-import com.pyamsoft.pydroid.ui.icons.RadioButtonUnchecked
 import com.pyamsoft.pydroid.ui.uri.rememberUriHandler
 import com.pyamsoft.tetherfi.core.GITHUB_URL
 import com.pyamsoft.tetherfi.ui.R
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 
 private enum class SlowSpeedsContentTypes {
   TITLE,
@@ -95,7 +94,7 @@ private fun SlowSpeedsContent(
                         end = MaterialTheme.keylines.content,
                     )
                     .size(8.dp),
-            imageVector = Icons.Filled.RadioButtonUnchecked,
+            painter = IconPainters.radioButtonUnchecked(),
             contentDescription = text,
         )
         Text(

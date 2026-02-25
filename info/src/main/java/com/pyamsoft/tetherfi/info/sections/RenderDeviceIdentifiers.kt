@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,8 +37,7 @@ import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.pydroid.ui.defaults.ImageDefaults
 import com.pyamsoft.pydroid.ui.theme.ZeroSize
 import com.pyamsoft.tetherfi.info.R
-import com.pyamsoft.tetherfi.ui.icons.Devices
-import com.pyamsoft.tetherfi.ui.icons.PhoneAndroid
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 
 private enum class DeviceIdentifiersContentTypes {
   THIS,
@@ -104,7 +102,7 @@ private fun ThisDevice(
               .padding(start = if (small) 2.dp else ZeroSize)
               .size(ImageDefaults.IconSize - sizeAdjustment)
               .padding(end = if (small) 2.dp else ZeroSize),
-      imageVector = Icons.Filled.PhoneAndroid,
+      painter = IconPainters.mobile(),
       contentDescription = stringResource(R.string.this_device),
       tint = MaterialTheme.colorScheme.primary,
   )
@@ -130,7 +128,7 @@ private fun OtherDevice(
               .padding(start = if (small) 2.dp else ZeroSize)
               .size(ImageDefaults.IconSize - sizeAdjustment)
               .padding(end = if (small) 2.dp else ZeroSize),
-      imageVector = Icons.Filled.Devices,
+      painter = IconPainters.devices(),
       contentDescription = stringResource(R.string.other_device),
       tint = MaterialTheme.colorScheme.tertiary,
   )

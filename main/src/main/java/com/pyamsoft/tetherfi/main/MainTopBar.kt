@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.ZeroCornerSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,7 +33,6 @@ import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -44,11 +41,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.pydroid.ui.haptics.LocalHapticManager
+import com.pyamsoft.tetherfi.ui.icons.IconPainters
 
 @Composable
 @CheckResult
@@ -102,7 +100,7 @@ fun MainTopBar(
                 },
             ) {
               Icon(
-                  imageVector = Icons.Filled.Settings,
+                  painter = IconPainters.settings(),
                   contentDescription = "Open Settings",
               )
             }
@@ -154,10 +152,8 @@ private fun MainTab(
     isSelected: Boolean,
     onSelected: () -> Unit,
 ) {
-  val context = LocalContext.current
   val textStyle = LocalTextStyle.current
-
-  val tabName = remember(context, tab) { context.getString(tab.displayNameRes) }
+  val tabName = stringResource(tab.displayNameRes)
 
   Tab(
       modifier = modifier,
