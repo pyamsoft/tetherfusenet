@@ -73,6 +73,8 @@ dependencies {
   implementation(libs.compose.runtime.annotation)
 
   implementation(libs.ktor.network)
+  implementation(libs.ktor.server.netty)
+  implementation(libs.ktor.client.cio)
 
   // PYDroid
   implementation(libs.pydroid.bus)
