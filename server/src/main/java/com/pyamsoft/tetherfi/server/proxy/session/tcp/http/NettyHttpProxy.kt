@@ -50,12 +50,32 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
 
+fun interface NettyServerStopper {
+
+  fun stop()
+}
+
+class SuspendingNettyHttpProxy(private val host: String, private val port: Int) {
+
+  suspend fun start() {
+    val proxy = NettyHttpProxy(host, port)
+    var stopper: NettyServerStopper? = null
+    try {
+      stopper = proxy.start()
+      awaitCancellation()
+    } finally {
+      stopper?.also { s -> withContext(context = NonCancellable) { s.stop() } }
+    }
+  }
+}
+
 class NettyHttpProxy(private val host: String, private val port: Int) {
 
   private val bossGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
   private val workerGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
 
-  suspend fun start() {
+  @CheckResult
+  fun start(): NettyServerStopper {
     val bootstrap =
       ServerBootstrap()
         .group(bossGroup, workerGroup)
@@ -76,14 +96,10 @@ class NettyHttpProxy(private val host: String, private val port: Int) {
         )
 
     val serverChannel = bootstrap.bind(host, port).channel()
-    try {
-      awaitCancellation()
-    } finally {
-      withContext(context = NonCancellable) {
-        serverChannel.close()
-        bossGroup.shutdownGracefully()
-        workerGroup.shutdownGracefully()
-      }
+    return {
+      serverChannel.close()
+      bossGroup.shutdownGracefully()
+      workerGroup.shutdownGracefully()
     }
   }
 }
