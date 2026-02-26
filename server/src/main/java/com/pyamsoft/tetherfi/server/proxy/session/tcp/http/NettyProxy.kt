@@ -16,9 +16,13 @@
 
 package com.pyamsoft.tetherfi.server.proxy.session.tcp.http
 
+import android.R.attr.host
+import android.R.attr.port
+import android.net.Network
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
+import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
@@ -37,7 +41,6 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.http.DefaultFullHttpResponse
-import io.netty.handler.codec.http.HttpClientCodec
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -55,10 +58,30 @@ fun interface NettyServerStopper {
   fun stop()
 }
 
-class SuspendingNettyHttpProxy(private val host: String, private val port: Int) {
+/** Run this with a completely new [com.pyamsoft.tetherfi.server.proxy.manager.ProxyManager] */
+class SuspendingNettyProxy(
+  host: String,
+  port: Int,
+  socketTagger: SocketTagger,
+  androidPreferredNetwork: Network?,
+  onOpened: () -> Unit,
+  onClosing: () -> Unit,
+  onError: (Throwable) -> Unit,
+) {
+
+  private val proxy by lazy {
+    NettyHttpProxy(
+      host = host,
+      port = port,
+      socketTagger = socketTagger,
+      androidPreferredNetwork = androidPreferredNetwork,
+      onOpened = onOpened,
+      onClosing = onClosing,
+      onError = onError,
+    )
+  }
 
   suspend fun start() {
-    val proxy = NettyHttpProxy(host, port)
     var stopper: NettyServerStopper? = null
     try {
       stopper = proxy.start()
@@ -69,13 +92,40 @@ class SuspendingNettyHttpProxy(private val host: String, private val port: Int) 
   }
 }
 
-class NettyHttpProxy(private val host: String, private val port: Int) {
+class NettyHttpProxy(
+  host: String,
+  port: Int,
+  onOpened: () -> Unit,
+  onClosing: () -> Unit,
+  onError: (Throwable) -> Unit,
+  private val socketTagger: SocketTagger,
+  private val androidPreferredNetwork: Network?,
+) : NettyProxy(host = host, port = port, onOpened = onOpened, onClosing = onClosing, onError = onError) {
 
-  private val bossGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
-  private val workerGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
+  override fun onChannelInitialized(channel: SocketChannel) {
+    val pipeline = channel.pipeline()
+
+    // We want our pipeline to deal with HTTP
+    pipeline.addLast(HttpServerCodec())
+
+    // And bind our proxy relay handler
+    pipeline.addLast(HttpProxyHandlder(socketTagger = socketTagger, androidPreferredNetwork = androidPreferredNetwork))
+  }
+}
+
+abstract class NettyProxy(
+  private val host: String,
+  private val port: Int,
+  private val onOpened: () -> Unit,
+  private val onClosing: () -> Unit,
+  private val onError: (Throwable) -> Unit,
+) {
 
   @CheckResult
   fun start(): NettyServerStopper {
+    val bossGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
+    val workerGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
+
     val bootstrap =
       ServerBootstrap()
         .group(bossGroup, workerGroup)
@@ -84,27 +134,47 @@ class NettyHttpProxy(private val host: String, private val port: Int) {
         .childHandler(
           object : ChannelInitializer<SocketChannel>() {
             override fun initChannel(ch: SocketChannel) {
-              val pipeline = ch.pipeline()
-
-              // We want our pipeline to deal with HTTP
-              pipeline.addLast(HttpServerCodec())
-
-              // And bind our proxy relay handler
-              pipeline.addLast(Connect())
+              onChannelInitialized(ch)
             }
           }
         )
 
-    val serverChannel = bootstrap.bind(host, port).channel()
+    val serverChannel =
+      bootstrap
+        .bind(host, port)
+        .apply {
+          addListener { future ->
+            if (future.isSuccess) {
+              Timber.d { "Netty server started" }
+              onOpened()
+            } else {
+              val err = future.cause()
+              Timber.e(err) { "Failed to bind netty server" }
+              onError(err)
+            }
+          }
+        }
+        .channel()
+        .apply {
+          closeFuture().addListener {
+            Timber.d { "Netty server is closing!" }
+            onClosing()
+          }
+        }
+
     return {
+      Timber.d { "Stopping Netty server gracefully" }
       serverChannel.close()
       bossGroup.shutdownGracefully()
       workerGroup.shutdownGracefully()
     }
   }
+
+  protected abstract fun onChannelInitialized(channel: SocketChannel)
 }
 
-class Connect : ChannelInboundHandlerAdapter() {
+class HttpProxyHandlder(private val socketTagger: SocketTagger, private val androidPreferredNetwork: Network?) :
+  ChannelInboundHandlerAdapter() {
 
   private var outboundChannel: Channel? = null
 
@@ -171,25 +241,27 @@ class Connect : ChannelInboundHandlerAdapter() {
     }
   }
 
-  private fun handleHttpsConnect(ctx: ChannelHandlerContext, msg: HttpRequest) {
-
-    val proxyServerChannel = ctx.channel()
-    val parsed = parseHostAndPort(msg.uri())
-    val outbound =
-      Bootstrap()
-        .group(proxyServerChannel.eventLoop())
-        .channelFactory(NetworkBoundChannelFactory())
-        .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-        .handler(
-          object : ChannelInitializer<Channel>() {
-            override fun initChannel(ch: Channel) {
-              // Once our connection to the internet is made, relay data in tunnel
-              ch.pipeline().addLast(RelayHandler(proxyServerChannel))
-            }
+  @CheckResult
+  private fun newOutboundConnection(channel: Channel): Bootstrap {
+    return Bootstrap()
+      .group(channel.eventLoop())
+      .channelFactory(
+        NetworkBoundChannelFactory(socketTagger = socketTagger, androidPreferredNetwork = androidPreferredNetwork)
+      )
+      .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+      .handler(
+        object : ChannelInitializer<Channel>() {
+          override fun initChannel(ch: Channel) {
+            // Once our connection to the internet is made, relay data in tunnel
+            ch.pipeline().addLast(RelayHandler(channel))
           }
-        )
+        }
+      )
+  }
 
-    outbound.connect(parsed.host, parsed.port).addListener { future ->
+  private fun handleHttpsConnect(ctx: ChannelHandlerContext, msg: HttpRequest) {
+    val parsed = parseHostAndPort(msg.uri())
+    newOutboundConnection(ctx.channel()).connect(parsed.host, parsed.port).addListener { future ->
       if (!future.isSuccess) {
         sendErrorAndClose(ctx)
         return@addListener
@@ -224,23 +296,7 @@ class Connect : ChannelInboundHandlerAdapter() {
     val uri = URI(msg.uri())
     val port = if (uri.port <= 0) 80 else uri.port
 
-    val proxyChannel = ctx.channel()
-    val bootstrap =
-      Bootstrap()
-        .group(proxyChannel.eventLoop())
-        .channelFactory(NetworkBoundChannelFactory())
-        .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-        .handler(
-          object : ChannelInitializer<Channel>() {
-            override fun initChannel(ch: Channel) {
-              val pipeline = ch.pipeline()
-              pipeline.addLast(HttpClientCodec())
-              pipeline.addLast(RelayHandler(proxyChannel))
-            }
-          }
-        )
-
-    bootstrap.connect(uri.host, port).addListener { future ->
+    newOutboundConnection(ctx.channel()).connect(uri.host, port).addListener { future ->
       if (!future.isSuccess) {
         sendErrorAndClose(ctx)
         return@addListener
@@ -276,12 +332,18 @@ class Connect : ChannelInboundHandlerAdapter() {
   }
 }
 
-class NetworkBoundChannelFactory : ChannelFactory<NioSocketChannel> {
+class NetworkBoundChannelFactory(
+  private val socketTagger: SocketTagger,
+  private val androidPreferredNetwork: Network?,
+) : ChannelFactory<NioSocketChannel> {
 
   override fun newChannel(): NioSocketChannel {
     val outboundSocketChannel = java.nio.channels.SocketChannel.open().apply { configureBlocking(false) }
 
-    // TODO Bind socket to network
+    val socket = outboundSocketChannel.socket()
+
+    socketTagger.tagSocket()
+    androidPreferredNetwork?.bindSocket(socket)
 
     return NioSocketChannel(outboundSocketChannel)
   }
