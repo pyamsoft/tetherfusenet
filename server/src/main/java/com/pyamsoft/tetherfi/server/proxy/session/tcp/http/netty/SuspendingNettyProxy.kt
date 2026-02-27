@@ -16,45 +16,39 @@
 
 package com.pyamsoft.tetherfi.server.proxy.session.tcp.http.netty
 
-import android.net.Network
-import com.pyamsoft.tetherfi.server.proxy.SocketTagger
-import com.pyamsoft.tetherfi.server.proxy.session.tcp.http.netty.http.NettyHttpProxy
+import androidx.annotation.CheckResult
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 
-/** Run this with a completely new [com.pyamsoft.tetherfi.server.proxy.manager.ProxyManager] */
-class SuspendingNettyProxy(
-    isDebug: Boolean,
-    host: String,
-    port: Int,
-    socketTagger: SocketTagger,
-    androidPreferredNetwork: Network?,
-    onOpened: () -> Unit,
-    onClosing: () -> Unit,
-    onError: (Throwable) -> Unit,
-) {
+abstract class SuspendingNettyProxy internal constructor() {
 
-  private val proxy by lazy {
-    NettyHttpProxy(
-        isDebug = isDebug,
-        host = host,
-        port = port,
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-        onOpened = onOpened,
-        onClosing = onClosing,
-        onError = onError,
-    )
-  }
+  private val started = MutableStateFlow(false)
 
-  suspend fun start() {
+  private val proxy by lazy { provideProxy() }
+
+  private suspend fun startProxy() {
     var stopper: NettyServerStopper? = null
     try {
       stopper = proxy.start()
       awaitCancellation()
     } finally {
-      stopper?.also { s -> withContext(context = NonCancellable) { s.stop() } }
+      withContext(context = NonCancellable) { stopper?.also { s -> s.stop() } }
     }
   }
+
+  suspend fun start() {
+    if (started.compareAndSet(expect = false, update = true)) {
+      try {
+        startProxy()
+      } finally {
+        withContext(context = NonCancellable) {
+          started.compareAndSet(expect = true, update = false)
+        }
+      }
+    }
+  }
+
+  @CheckResult protected abstract fun provideProxy(): NettyProxy
 }

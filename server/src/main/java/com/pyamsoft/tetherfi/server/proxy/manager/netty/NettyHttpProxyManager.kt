@@ -16,58 +16,44 @@
 
 package com.pyamsoft.tetherfi.server.proxy.manager.netty
 
-import com.pyamsoft.tetherfi.core.Timber
+import android.net.Network
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
-import com.pyamsoft.tetherfi.server.lock.Locker
 import com.pyamsoft.tetherfi.server.network.SocketBinder
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
-import com.pyamsoft.tetherfi.server.proxy.manager.ProxyManager
+import com.pyamsoft.tetherfi.server.proxy.session.tcp.http.netty.SuspendingNettyHttpProxy
 import com.pyamsoft.tetherfi.server.proxy.session.tcp.http.netty.SuspendingNettyProxy
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 internal class NettyHttpProxyManager
 internal constructor(
+    socketBinder: SocketBinder,
     private val isDebug: Boolean,
-    private val socketBinder: SocketBinder,
     private val socketTagger: SocketTagger,
     private val hostConnection: BroadcastNetworkStatus.ConnectionInfo.Connected,
     private val port: Int,
-) : ProxyManager {
+) :
+    NettyProxyManager(
+        socketBinder = socketBinder,
+        hostConnection = hostConnection,
+        port = port,
+    ) {
 
-  override suspend fun loop(
-      lock: Locker.Lock,
+  override fun CoroutineScope.provideProxy(
+      network: Network?,
       onOpened: suspend () -> Unit,
       onClosing: suspend () -> Unit,
       onError: suspend (Throwable) -> Unit,
-  ) {
-    val releaser = lock.acquire()
-
-    try {
-      socketBinder.withMobileDataNetworkActive { binder ->
-        val network = binder.getNetwork()
-
-        coroutineScope {
-          val server =
-              SuspendingNettyProxy(
-                  isDebug = isDebug,
-                  host = hostConnection.hostName,
-                  port = port,
-                  socketTagger = socketTagger,
-                  androidPreferredNetwork = network,
-                  onOpened = { launch { onOpened() } },
-                  onClosing = { launch { onClosing() } },
-                  onError = { launch { onError(it) } },
-              )
-
-          Timber.d { "Netty server started: ${hostConnection.hostName} $port" }
-          server.start()
-          Timber.d { "Netty server stopped" }
-        }
-      }
-    } finally {
-      Timber.d { "Wakelock released!" }
-      releaser.release()
-    }
+  ): SuspendingNettyProxy {
+    return SuspendingNettyHttpProxy(
+        isDebug = isDebug,
+        host = hostConnection.hostName,
+        port = port,
+        socketTagger = socketTagger,
+        androidPreferredNetwork = network,
+        onOpened = { launch { onOpened() } },
+        onClosing = { launch { onClosing() } },
+        onError = { launch { onError(it) } },
+    )
   }
 }
