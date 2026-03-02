@@ -37,101 +37,100 @@ internal fun flushAndClose(channel: Channel) {
 }
 
 @CheckResult
-internal fun createOutboundChannel(
-  isDebug: Boolean,
-  id: String,
-  channel: Channel,
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  onChannelOpened: (Channel) -> Unit = {},
+private fun createOutboundChannel(
+    isDebug: Boolean,
+    channel: Channel,
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    onChannelOpened: (Channel) -> Unit = {},
 ): Bootstrap {
-  return Bootstrap().group(channel.eventLoop()).channelFactory(
-    NetworkBoundSocketChannelFactory(
-      socketTagger = socketTagger,
-      androidPreferredNetwork = androidPreferredNetwork,
-    )
-  ).handler(object : ChannelInitializer<Channel>() {
-    override fun initChannel(ch: Channel) {
-      val pipeline = ch.pipeline()
-      if (isDebug) {
-        pipeline.addLast(LoggingHandler(LogLevel.DEBUG))
-      }
-
-      onChannelOpened(ch)
-
-      // Once our connection to the internet is made, relay data in tunnel
-      pipeline.addLast(
-        RelayHandler(
-          id,
-          channel
-        )
+  return Bootstrap()
+      .group(channel.eventLoop())
+      .channelFactory(
+          NetworkBoundSocketChannelFactory(
+              socketTagger = socketTagger,
+              androidPreferredNetwork = androidPreferredNetwork,
+          )
       )
-    }
-  })
+      .handler(
+          object : ChannelInitializer<Channel>() {
+            override fun initChannel(ch: Channel) {
+              val pipeline = ch.pipeline()
+              if (isDebug) {
+                pipeline.addLast(LoggingHandler(LogLevel.DEBUG))
+              }
+
+              onChannelOpened(ch)
+            }
+          },
+      )
 }
 
 @CheckResult
 private fun createOutboundDatagramChannel(
-  isDebug: Boolean,
-  channel: Channel,
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  onChannelOpened: (Channel) -> Unit = {},
+    isDebug: Boolean,
+    channel: Channel,
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    onChannelOpened: (Channel) -> Unit = {},
 ): Bootstrap {
-  return Bootstrap().group(channel.eventLoop()).channelFactory(
-    NetworkBoundDatagramChannelFactory(
-      socketTagger = socketTagger,
-      androidPreferredNetwork = androidPreferredNetwork,
-    )
-  ).handler(object : ChannelInitializer<Channel>() {
-    override fun initChannel(ch: Channel) {
-      val pipeline = ch.pipeline()
-      if (isDebug) {
-        pipeline.addLast(LoggingHandler(LogLevel.DEBUG))
-      }
+  return Bootstrap()
+      .group(channel.eventLoop())
+      .channelFactory(
+          NetworkBoundDatagramChannelFactory(
+              socketTagger = socketTagger,
+              androidPreferredNetwork = androidPreferredNetwork,
+          )
+      )
+      .handler(
+          object : ChannelInitializer<Channel>() {
+            override fun initChannel(ch: Channel) {
+              val pipeline = ch.pipeline()
+              if (isDebug) {
+                pipeline.addLast(LoggingHandler(LogLevel.DEBUG))
+              }
 
-      onChannelOpened(ch)
-    }
-  })
+              onChannelOpened(ch)
+            }
+          }
+      )
 }
 
 @CheckResult
 internal fun newOutboundConnection(
-  isDebug: Boolean,
-  channel: Channel,
-  hostName: String,
-  port: Int,
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  onChannelOpened: (Channel) -> Unit = {},
+    isDebug: Boolean,
+    channel: Channel,
+    hostName: String,
+    port: Int,
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    onChannelOpened: (Channel) -> Unit = {},
 ): ChannelFuture {
   return createOutboundChannel(
-    isDebug = isDebug,
-    id = "$hostName:$port",
-    channel = channel,
-    socketTagger = socketTagger,
-    androidPreferredNetwork = androidPreferredNetwork,
-    onChannelOpened = onChannelOpened,
-  ).connect(
-    hostName,
-    port
-  )
+          isDebug = isDebug,
+          channel = channel,
+          socketTagger = socketTagger,
+          androidPreferredNetwork = androidPreferredNetwork,
+          onChannelOpened = onChannelOpened,
+      )
+      .connect(hostName, port)
 }
 
 @CheckResult
 internal fun newDatagramServer(
-  isDebug: Boolean,
-  channel: Channel,
-  hostName: String,
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  onChannelOpened: (Channel) -> Unit = {},
+    isDebug: Boolean,
+    channel: Channel,
+    hostName: String,
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    onChannelOpened: (Channel) -> Unit = {},
 ): ChannelFuture {
   return createOutboundDatagramChannel(
-    isDebug = isDebug,
-    channel = channel,
-    socketTagger = socketTagger,
-    androidPreferredNetwork = androidPreferredNetwork,
-    onChannelOpened = onChannelOpened,
-  ).bind(hostName, 0)
+          isDebug = isDebug,
+          channel = channel,
+          socketTagger = socketTagger,
+          androidPreferredNetwork = androidPreferredNetwork,
+          onChannelOpened = onChannelOpened,
+      )
+      .bind(hostName, 0)
 }

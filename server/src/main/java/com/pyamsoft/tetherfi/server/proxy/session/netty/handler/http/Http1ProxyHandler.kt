@@ -37,31 +37,32 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.codec.http.HttpVersion
 
-internal class Http1ProxyHandler internal constructor(
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  isDebug: Boolean,
-  serverSocketTimeout: ServerSocketTimeout,
-) : DefaultProxyHandler(
-  socketTagger = socketTagger,
-  androidPreferredNetwork = androidPreferredNetwork,
-  isDebug = isDebug,
-  serverSocketTimeout = serverSocketTimeout,
-) {
+internal class Http1ProxyHandler
+internal constructor(
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    isDebug: Boolean,
+    serverSocketTimeout: ServerSocketTimeout,
+) :
+    DefaultProxyHandler(
+        socketTagger = socketTagger,
+        androidPreferredNetwork = androidPreferredNetwork,
+        isDebug = isDebug,
+        serverSocketTimeout = serverSocketTimeout,
+    ) {
 
   @CheckResult
   private fun createHttpErrorResponse(): HttpResponse {
     return DefaultFullHttpResponse(
-      HttpVersion.HTTP_1_1,
-      HttpResponseStatus.BAD_GATEWAY,
-      Unpooled.EMPTY_BUFFER,
+        HttpVersion.HTTP_1_1,
+        HttpResponseStatus.BAD_GATEWAY,
+        Unpooled.EMPTY_BUFFER,
     )
   }
 
   override fun createErrorResponse(msg: Any): Any {
     return createHttpErrorResponse()
   }
-
 
   private fun handleHttpsConnect(ctx: ChannelHandlerContext, msg: HttpRequest) {
     val parsed = parseUriAndPort(msg.uri(), 443)
@@ -73,17 +74,18 @@ internal class Http1ProxyHandler internal constructor(
     val clientChannel = ctx.channel()
 
     val future =
-      newOutboundConnection(
-        isDebug = isDebug,
-        channel = clientChannel,
-        hostName = parsed.resolvedHostName,
-        port = parsed.resolvedPort,
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-      )
+        newOutboundConnection(
+            isDebug = isDebug,
+            channel = clientChannel,
+            hostName = parsed.resolvedHostName,
+            port = parsed.resolvedPort,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = androidPreferredNetwork,
+        )
     val outbound = future.channel()
     future.addListener { future ->
       if (!future.isSuccess) {
+        Timber.e(future.cause()) { "Unable to connect to $parsed" }
         sendErrorAndClose(ctx, msg)
         return@addListener
       }
@@ -102,10 +104,11 @@ internal class Http1ProxyHandler internal constructor(
 
       // Add a relay for the internet outbound
       pipeline.addLast(
-        RelayHandler(
-          "HTTPS-CONNECT-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-          outbound
-        )
+          RelayHandler(
+              id = "HTTPS-CONNECT-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+              clientChannel = outbound,
+              serverSocketTimeout = serverSocketTimeout,
+          )
       )
 
       // Then establish connection
@@ -132,21 +135,25 @@ internal class Http1ProxyHandler internal constructor(
 
     val clientChannel = ctx.channel()
 
+    Timber.d { "Connect to $parsed" }
     val future =
-      newOutboundConnection(
-        isDebug = isDebug,
-        channel = clientChannel, hostName = parsed.resolvedHostName, port = parsed.resolvedPort,
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-        onChannelOpened = { ch ->
-          // Our outbound client MUST speak HTTP
-          ch.pipeline().addLast(HttpClientCodec())
-        },
-      )
+        newOutboundConnection(
+            isDebug = isDebug,
+            channel = clientChannel,
+            hostName = parsed.resolvedHostName,
+            port = parsed.resolvedPort,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = androidPreferredNetwork,
+            onChannelOpened = { ch ->
+              // Our outbound client MUST speak HTTP
+              ch.pipeline().addLast(HttpClientCodec())
+            },
+        )
 
     val outbound = future.channel()
     future.addListener { future ->
       if (!future.isSuccess) {
+        Timber.e(future.cause()) { "Unable to connect to $parsed" }
         sendErrorAndClose(ctx, msg)
         return@addListener
       }
@@ -165,14 +172,18 @@ internal class Http1ProxyHandler internal constructor(
 
       // Add a relay for the internet outbound
       pipeline.addLast(
-        RelayHandler(
-          "HTTP-FORWARD-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-          outbound
-        )
+          RelayHandler(
+              id = "HTTP-FORWARD-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+              clientChannel = outbound,
+              serverSocketTimeout = serverSocketTimeout,
+          )
       )
 
       // Replay the initial request
-      outbound.writeAndFlush(msg)
+      Timber.d { "REPLAY: $msg" }
+      outbound.writeAndFlush(msg).addListener {
+        Timber.d { "OUTBOUND: ${it.isSuccess} ${it.cause()}" }
+      }
 
       // Hold onto this channel for future requests to immediately fire off to it
       assignOutboundChannel(outbound)
@@ -228,8 +239,7 @@ internal class Http1ProxyHandler internal constructor(
       if (uri.startsWith(HTTPS_PREFIX)) {
         uriWithoutSchema = uri.substring(HTTPS_PREFIX.length)
         defaultPortBasedOnSchema = 443
-      } else if (uri.startsWith(HTTP_PREFIX)
-      ) {
+      } else if (uri.startsWith(HTTP_PREFIX)) {
         uriWithoutSchema = uri.substring(HTTP_PREFIX.length)
         defaultPortBasedOnSchema = 80
       } else {
@@ -250,7 +260,7 @@ internal class Http1ProxyHandler internal constructor(
       // Port must look like a port
       val portString = hostAndPort.getOrNull(1)
       val port =
-        if (portString.isNullOrBlank()) fallbackPort else portString.toIntOrNull() ?: fallbackPort
+          if (portString.isNullOrBlank()) fallbackPort else portString.toIntOrNull() ?: fallbackPort
 
       // Find the first slash to start the path
       val pathStartIndex = hostAndMaybePath.indexOf("/")
@@ -267,9 +277,9 @@ internal class Http1ProxyHandler internal constructor(
       }
 
       return HttpHostAndPort(
-        resolvedHostName = host,
-        resolvedPort = port,
-        proxyCorrectedFilePath = path,
+          resolvedHostName = host,
+          resolvedPort = port,
+          proxyCorrectedFilePath = path,
       )
     }
   }

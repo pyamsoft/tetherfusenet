@@ -29,16 +29,16 @@ import kotlinx.coroutines.coroutineScope
 
 abstract class NettyProxyManager
 protected constructor(
-  private val socketBinder: SocketBinder,
-  private val hostConnection: BroadcastNetworkStatus.ConnectionInfo.Connected,
-  private val port: Int,
+    private val socketBinder: SocketBinder,
+    private val hostConnection: BroadcastNetworkStatus.ConnectionInfo.Connected,
+    private val port: Int,
 ) : ProxyManager {
 
   final override suspend fun loop(
-    lock: Locker.Lock,
-    onOpened: suspend () -> Unit,
-    onClosing: suspend () -> Unit,
-    onError: suspend (Throwable) -> Unit,
+      lock: Locker.Lock,
+      onOpened: suspend () -> Unit,
+      onClosing: suspend () -> Unit,
+      onError: suspend (Throwable) -> Unit,
   ) {
     val releaser = lock.acquire()
 
@@ -48,12 +48,12 @@ protected constructor(
 
         coroutineScope {
           val server =
-            provideProxy(
-              network = network,
-              onOpened = onOpened,
-              onClosing = onClosing,
-              onError = onError,
-            )
+              provideProxy(
+                  network = network,
+                  onOpened = onOpened,
+                  onClosing = onClosing,
+                  onError = onError,
+              )
 
           Timber.d { "Netty server started: ${hostConnection.hostName} $port" }
           server.start()
@@ -68,9 +68,9 @@ protected constructor(
 
   @CheckResult
   protected abstract fun CoroutineScope.provideProxy(
-    network: Network?,
-    onOpened: suspend () -> Unit,
-    onClosing: suspend () -> Unit,
-    onError: suspend (Throwable) -> Unit,
+      network: Network?,
+      onOpened: suspend () -> Unit,
+      onClosing: suspend () -> Unit,
+      onError: suspend (Throwable) -> Unit,
   ): SuspendingNettyProxy
 }

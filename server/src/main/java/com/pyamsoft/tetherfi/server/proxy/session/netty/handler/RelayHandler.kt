@@ -17,18 +17,45 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
 import com.pyamsoft.tetherfi.core.Timber
+import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
+import io.netty.handler.timeout.IdleState
+import io.netty.handler.timeout.IdleStateEvent
+import io.netty.handler.timeout.IdleStateHandler
+import java.util.concurrent.TimeUnit
 
 internal class RelayHandler
 internal constructor(
-  private val id: String,
-  private val clientChannel: Channel,
+    private val id: String,
+    private val clientChannel: Channel,
+    private val serverSocketTimeout: ServerSocketTimeout,
 ) : ChannelInboundHandlerAdapter() {
 
+  override fun channelRegistered(ctx: ChannelHandlerContext) {
+    val timeout = serverSocketTimeout.timeoutDuration
+    if (timeout.isInfinite()) {
+      Timber.d { "Add idle timeout handler $timeout" }
+      ctx.pipeline()
+          .addFirst(IdleStateHandler(0, 0, timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS))
+    } else {
+      Timber.d { "Not adding idle timeout, infinite timeout configured!" }
+    }
+  }
+
+  override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
+    if (evt is IdleStateEvent) {
+      if (evt.state() == IdleState.ALL_IDLE) {
+        Timber.d { "Closing idle connection: $ctx $evt" }
+        flushAndClose(ctx.channel())
+      }
+    }
+  }
+
   override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+    Timber.d { "READ: $msg" }
     if (!clientChannel.isActive) {
       return
     }

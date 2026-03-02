@@ -35,22 +35,24 @@ import io.netty.handler.codec.socksx.v4.Socks4CommandType
 import io.netty.handler.codec.socksx.v4.Socks4Message
 import io.netty.handler.codec.socksx.v4.Socks4ServerDecoder
 
-internal class Socks4ProxyHandler internal constructor(
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  isDebug: Boolean,
-  serverSocketTimeout: ServerSocketTimeout,
-) : SocksProxyHandler<Socks4CommandRequest>(
-  socketTagger = socketTagger,
-  androidPreferredNetwork = androidPreferredNetwork,
-  isDebug = isDebug,
-  serverSocketTimeout = serverSocketTimeout,
-) {
+internal class Socks4ProxyHandler
+internal constructor(
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    isDebug: Boolean,
+    serverSocketTimeout: ServerSocketTimeout,
+) :
+    SocksProxyHandler<Socks4CommandRequest>(
+        socketTagger = socketTagger,
+        androidPreferredNetwork = androidPreferredNetwork,
+        isDebug = isDebug,
+        serverSocketTimeout = serverSocketTimeout,
+    ) {
 
   @CheckResult
   private fun createSOCKS4ErrorResponse(): Socks4CommandResponse {
     return DefaultSocks4CommandResponse(
-      Socks4CommandStatus.REJECTED_OR_FAILED,
+        Socks4CommandStatus.REJECTED_OR_FAILED,
     )
   }
 
@@ -62,18 +64,12 @@ internal class Socks4ProxyHandler internal constructor(
 
       Socks4CommandType.BIND -> {
         Timber.w { "SOCKS4 Bind request received: We do not support BIND currently" }
-        sendErrorAndClose(
-          ctx,
-          msg
-        )
+        sendErrorAndClose(ctx, msg)
       }
 
       else -> {
         Timber.w { "Unknown SOCKS4 command type: $type" }
-        sendErrorAndClose(
-          ctx,
-          msg
-        )
+        sendErrorAndClose(ctx, msg)
       }
     }
   }
@@ -87,9 +83,9 @@ internal class Socks4ProxyHandler internal constructor(
   }
 
   override fun publishConnectSuccess(
-    ctx: ChannelHandlerContext,
-    msg: Socks4CommandRequest,
-    outbound: Channel
+      ctx: ChannelHandlerContext,
+      msg: Socks4CommandRequest,
+      outbound: Channel,
   ) {
     val remote = outbound.localAddress()
     if (remote == null) {
@@ -99,22 +95,16 @@ internal class Socks4ProxyHandler internal constructor(
     }
 
     ctx.writeAndFlush(
-      DefaultSocks4CommandResponse(
-        Socks4CommandStatus.SUCCESS,
-        remote.address,
-        remote.port,
-      )
+        DefaultSocks4CommandResponse(
+            Socks4CommandStatus.SUCCESS,
+            remote.address,
+            remote.port,
+        )
     )
   }
 
-  override fun sendFailureAndClose(
-    ctx: ChannelHandlerContext,
-    msg: Socks4CommandRequest
-  ) {
-    sendErrorAndClose(
-      ctx,
-      msg
-    )
+  override fun sendFailureAndClose(ctx: ChannelHandlerContext, msg: Socks4CommandRequest) {
+    sendErrorAndClose(ctx, msg)
   }
 
   override fun createErrorResponse(msg: Any): Any? {
@@ -135,18 +125,11 @@ internal class Socks4ProxyHandler internal constructor(
         handleSocks4CommandRequest(ctx, msg)
       } else {
         Timber.w { "Unknown SOCKS4 Message: $msg" }
-        sendErrorAndClose(
-          ctx,
-          msg
-        )
+        sendErrorAndClose(ctx, msg)
       }
     } else {
       Timber.w { "Unknown Message: $msg" }
-      sendErrorAndClose(
-        ctx,
-        msg
-      )
+      sendErrorAndClose(ctx, msg)
     }
   }
-
 }

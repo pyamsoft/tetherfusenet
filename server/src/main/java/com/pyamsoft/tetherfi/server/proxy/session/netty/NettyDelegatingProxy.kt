@@ -20,7 +20,6 @@ import android.net.Network
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
-import com.pyamsoft.tetherfi.server.proxy.session.netty.dropHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http.Http1ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks4ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks5ProxyHandler
@@ -40,26 +39,26 @@ import io.netty.handler.logging.LoggingHandler
 
 class NettyDelegatingProxy
 internal constructor(
-  private val host: String,
-  private val port: Int,
-  private val isDebug: Boolean,
-  private val socketTagger: SocketTagger,
-  private val androidPreferredNetwork: Network?,
-  private val isHttpEnabled: Boolean,
-  private val isSocksEnabled: Boolean,
-  private val serverSocketTimeout: ServerSocketTimeout,
-  onOpened: () -> Unit,
-  onClosing: () -> Unit,
-  onError: (Throwable) -> Unit,
+    private val host: String,
+    private val port: Int,
+    private val isDebug: Boolean,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
+    private val isHttpEnabled: Boolean,
+    private val isSocksEnabled: Boolean,
+    private val serverSocketTimeout: ServerSocketTimeout,
+    onOpened: () -> Unit,
+    onClosing: () -> Unit,
+    onError: (Throwable) -> Unit,
 ) :
-  NettyProxy(
-    socketTagger = socketTagger,
-    host = host,
-    port = port,
-    onOpened = onOpened,
-    onClosing = onClosing,
-    onError = onError,
-  ) {
+    NettyProxy(
+        socketTagger = socketTagger,
+        host = host,
+        port = port,
+        onOpened = onOpened,
+        onClosing = onClosing,
+        onError = onError,
+    ) {
 
   override fun onChannelInitialized(channel: SocketChannel) {
     val pipeline = channel.pipeline()
@@ -70,36 +69,32 @@ internal constructor(
 
     // And bind our proxy relay handler
     pipeline.addLast(
-      DelegatingHandler(
-        serverHostName = host,
-        serverPort = port,
-        isDebug = isDebug,
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-        isHttpEnabled = isHttpEnabled,
-        isSocksEnabled = isSocksEnabled,
-        serverSocketTimeout = serverSocketTimeout,
-      )
+        DelegatingHandler(
+            serverHostName = host,
+            serverPort = port,
+            isDebug = isDebug,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = androidPreferredNetwork,
+            isHttpEnabled = isHttpEnabled,
+            isSocksEnabled = isSocksEnabled,
+            serverSocketTimeout = serverSocketTimeout,
+        )
     )
   }
 }
 
 private class DelegatingHandler(
-  private val serverHostName: String,
-  private val serverPort: Int,
-  private val isDebug: Boolean,
-  private val socketTagger: SocketTagger,
-  private val androidPreferredNetwork: Network?,
-  private val isHttpEnabled: Boolean,
-  private val isSocksEnabled: Boolean,
-  private val serverSocketTimeout: ServerSocketTimeout,
+    private val serverHostName: String,
+    private val serverPort: Int,
+    private val isDebug: Boolean,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
+    private val isHttpEnabled: Boolean,
+    private val isSocksEnabled: Boolean,
+    private val serverSocketTimeout: ServerSocketTimeout,
 ) : ByteToMessageDecoder() {
 
-  override fun decode(
-    ctx: ChannelHandlerContext,
-    input: ByteBuf,
-    out: List<Any>
-  ) {
+  override fun decode(ctx: ChannelHandlerContext, input: ByteBuf, out: List<Any>) {
     if (!input.isReadable) {
       Timber.w { "DROP: Unreadable input buffer sent." }
       return
@@ -130,12 +125,12 @@ private class DelegatingHandler(
           pipeline.addLast(Socks4ServerDecoder())
 
           pipeline.addLast(
-            Socks4ProxyHandler(
-              isDebug = isDebug,
-              socketTagger = socketTagger,
-              androidPreferredNetwork = androidPreferredNetwork,
-              serverSocketTimeout = serverSocketTimeout,
-            )
+              Socks4ProxyHandler(
+                  isDebug = isDebug,
+                  socketTagger = socketTagger,
+                  androidPreferredNetwork = androidPreferredNetwork,
+                  serverSocketTimeout = serverSocketTimeout,
+              )
           )
         }
 
@@ -151,13 +146,13 @@ private class DelegatingHandler(
           pipeline.addLast(Socks5CommandRequestDecoder())
 
           pipeline.addLast(
-            Socks5ProxyHandler(
-              serverHostName = serverHostName,
-              isDebug = isDebug,
-              socketTagger = socketTagger,
-              androidPreferredNetwork = androidPreferredNetwork,
-              serverSocketTimeout = serverSocketTimeout,
-            )
+              Socks5ProxyHandler(
+                  serverHostName = serverHostName,
+                  isDebug = isDebug,
+                  socketTagger = socketTagger,
+                  androidPreferredNetwork = androidPreferredNetwork,
+                  serverSocketTimeout = serverSocketTimeout,
+              )
           )
         }
         else -> {
@@ -171,12 +166,12 @@ private class DelegatingHandler(
 
           // And bind our proxy relay handler
           pipeline.addLast(
-            Http1ProxyHandler(
-              isDebug = isDebug,
-              socketTagger = socketTagger,
-              androidPreferredNetwork = androidPreferredNetwork,
-              serverSocketTimeout = serverSocketTimeout,
-            )
+              Http1ProxyHandler(
+                  isDebug = isDebug,
+                  socketTagger = socketTagger,
+                  androidPreferredNetwork = androidPreferredNetwork,
+                  serverSocketTimeout = serverSocketTimeout,
+              )
           )
         }
       }
@@ -184,5 +179,4 @@ private class DelegatingHandler(
       pipeline.dropHandler(this::class)
     }
   }
-
 }

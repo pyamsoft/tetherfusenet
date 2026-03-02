@@ -33,9 +33,9 @@ internal constructor(
     private val socketTagger: SocketTagger,
     private val hostConnection: BroadcastNetworkStatus.ConnectionInfo.Connected,
     private val port: Int,
-  private val isHttpEnabled: Boolean,
-  private val isSocksEnabled: Boolean,
-  private val serverSocketTimeout: ServerSocketTimeout,
+    private val isHttpEnabled: Boolean,
+    private val isSocksEnabled: Boolean,
+    private val serverSocketTimeout: ServerSocketTimeout,
 ) :
     NettyProxyManager(
         socketBinder = socketBinder,
@@ -50,17 +50,17 @@ internal constructor(
       onError: suspend (Throwable) -> Unit,
   ): SuspendingNettyProxy {
     return SuspendingNettyDelegatingProxy(
-      isDebug = isDebug,
-      host = hostConnection.hostName,
-      port = port,
-      socketTagger = socketTagger,
-      isHttpEnabled = isHttpEnabled,
-      isSocksEnabled = isSocksEnabled,
-      serverSocketTimeout = serverSocketTimeout,
-      androidPreferredNetwork = network,
-      onOpened = { launch { onOpened() } },
-      onClosing = { launch { onClosing() } },
-      onError = { launch { onError(it) } },
+        isDebug = isDebug,
+        host = hostConnection.hostName,
+        port = port,
+        socketTagger = socketTagger,
+        isHttpEnabled = isHttpEnabled,
+        isSocksEnabled = isSocksEnabled,
+        serverSocketTimeout = serverSocketTimeout,
+        androidPreferredNetwork = network,
+        onOpened = { launch { onOpened() } },
+        onClosing = { launch { onClosing() } },
+        onError = { launch { onError(it) } },
     )
   }
 }

@@ -17,8 +17,9 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http
 
 @ConsistentCopyVisibility
-internal data class HttpHostAndPort internal constructor(
-  val resolvedHostName: String,
-  val resolvedPort: Int,
-  val proxyCorrectedFilePath: String,
+internal data class HttpHostAndPort
+internal constructor(
+    val resolvedHostName: String,
+    val resolvedPort: Int,
+    val proxyCorrectedFilePath: String,
 )

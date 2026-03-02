@@ -32,9 +32,7 @@ interface SharedProxy : Server {
     HTTP,
     SOCKS,
 
-    /**
-     * New engine
-     */
+    /** New engine */
     NETTY,
   }
 }

@@ -20,9 +20,7 @@ import android.net.Network
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import io.netty.channel.ChannelFactory
 import io.netty.channel.socket.nio.NioDatagramChannel
-import io.netty.channel.socket.nio.NioSocketChannel
 import java.nio.channels.DatagramChannel
-import java.nio.channels.SocketChannel
 
 internal class NetworkBoundDatagramChannelFactory
 internal constructor(

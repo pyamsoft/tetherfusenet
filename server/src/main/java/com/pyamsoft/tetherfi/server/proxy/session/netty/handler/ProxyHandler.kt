@@ -28,10 +28,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 
-internal abstract class ProxyHandler internal constructor(
-  protected val isDebug: Boolean,
-  protected val socketTagger: SocketTagger,
-  protected val androidPreferredNetwork: Network?,
+internal abstract class ProxyHandler
+internal constructor(
+    protected val isDebug: Boolean,
+    protected val socketTagger: SocketTagger,
+    protected val androidPreferredNetwork: Network?,
 ) : ChannelInboundHandlerAdapter() {
 
   private val messageQueue = MutableStateFlow<List<Any>>(emptyList())
@@ -67,18 +68,14 @@ internal abstract class ProxyHandler internal constructor(
     outboundChannel?.also { outbound ->
       if (outbound.isActive) {
         Timber.d { "close outbound channel $outbound" }
-        flushAndClose(
-          outbound
-        )
+        flushAndClose(outbound)
       }
     }
 
     val channel = ctx.channel()
     if (channel.isActive) {
       Timber.d { "close owner channel $channel" }
-      flushAndClose(
-        channel
-      )
+      flushAndClose(channel)
     }
   }
 
@@ -102,7 +99,10 @@ internal abstract class ProxyHandler internal constructor(
       needsFlush = queued.isNotEmpty()
       if (needsFlush) {
         for (q in queued) {
-          channel.write(q)
+          Timber.d { "RELAY: $q" }
+          channel.write(q).addListener {
+            Timber.d { "RELAY OUTBOUND: ${it.isSuccess} ${it.cause()}" }
+          }
         }
       }
     } finally {
@@ -112,10 +112,6 @@ internal abstract class ProxyHandler internal constructor(
     }
   }
 
-  /**
-   * Return NULL from this function to NOT SEND a response
-   */
-  @CheckResult
-  protected abstract fun createErrorResponse(msg: Any): Any?
-
+  /** Return NULL from this function to NOT SEND a response */
+  @CheckResult protected abstract fun createErrorResponse(msg: Any): Any?
 }

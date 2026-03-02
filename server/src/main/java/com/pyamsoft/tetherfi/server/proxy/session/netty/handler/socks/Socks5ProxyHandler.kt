@@ -42,46 +42,45 @@ import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5Message
 import java.net.InetSocketAddress
 
-internal class Socks5ProxyHandler internal constructor(
-  private val serverHostName: String,
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  isDebug: Boolean,
-  serverSocketTimeout: ServerSocketTimeout,
-) : SocksProxyHandler<Socks5CommandRequest>(
-  socketTagger = socketTagger,
-  androidPreferredNetwork = androidPreferredNetwork,
-  isDebug = isDebug,
-  serverSocketTimeout = serverSocketTimeout,
-) {
+internal class Socks5ProxyHandler
+internal constructor(
+    private val serverHostName: String,
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    isDebug: Boolean,
+    serverSocketTimeout: ServerSocketTimeout,
+) :
+    SocksProxyHandler<Socks5CommandRequest>(
+        socketTagger = socketTagger,
+        androidPreferredNetwork = androidPreferredNetwork,
+        isDebug = isDebug,
+        serverSocketTimeout = serverSocketTimeout,
+    ) {
 
   @CheckResult
   private fun createSOCKS5CommandErrorResponse(msg: Socks5CommandRequest): Socks5CommandResponse {
     return DefaultSocks5CommandResponse(
-      Socks5CommandStatus.COMMAND_UNSUPPORTED,
-      msg.dstAddrType(),
+        Socks5CommandStatus.COMMAND_UNSUPPORTED,
+        msg.dstAddrType(),
     )
   }
 
   @CheckResult
   private fun createSOCKS5CommandFailureResponse(msg: Socks5CommandRequest): Socks5CommandResponse {
     return DefaultSocks5CommandResponse(
-      Socks5CommandStatus.FAILURE,
-      msg.dstAddrType(),
+        Socks5CommandStatus.FAILURE,
+        msg.dstAddrType(),
     )
   }
 
-  private fun handleSocks5InitialRequest(
-    ctx: ChannelHandlerContext,
-    msg: Socks5InitialRequest
-  ) {
+  private fun handleSocks5InitialRequest(ctx: ChannelHandlerContext, msg: Socks5InitialRequest) {
     // We do not care about auth
     ctx.writeAndFlush(DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH))
   }
 
   private fun handleSocksUdpAssociateRequest(
-    ctx: ChannelHandlerContext,
-    msg: Socks5CommandRequest
+      ctx: ChannelHandlerContext,
+      msg: Socks5CommandRequest,
   ) {
     val channel = ctx.channel()
 
@@ -93,34 +92,38 @@ internal class Socks5ProxyHandler internal constructor(
     }
 
     val updControlSocket =
-      newDatagramServer(
-        isDebug = isDebug,
-        channel = channel,
-        hostName = serverHostName,
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-      ) { ch ->
-        ch.pipeline().addLast(
-          UdpRelayHandler(
+        newDatagramServer(
             isDebug = isDebug,
+            channel = channel,
+            hostName = serverHostName,
             socketTagger = socketTagger,
             androidPreferredNetwork = androidPreferredNetwork,
-            isForcedIPv4Upstream = true,
-            tcpControlChannel = channel,
-            isValidClient = { sender ->
-              val isValid = clientAddress.address == sender
-              if (!isValid) {
-                Timber.w { "Sender address did not match expected client sender=${sender} client=${clientAddress.address}" }
-              }
-              return@UdpRelayHandler isValid
-            }
-          )
-        )
-      }
+        ) { ch ->
+          ch.pipeline()
+              .addLast(
+                  UdpRelayHandler(
+                      isDebug = isDebug,
+                      socketTagger = socketTagger,
+                      androidPreferredNetwork = androidPreferredNetwork,
+                      serverSocketTimeout = serverSocketTimeout,
+                      isForcedIPv4Upstream = true,
+                      tcpControlChannel = channel,
+                      isValidClient = { sender ->
+                        val isValid = clientAddress.address == sender
+                        if (!isValid) {
+                          Timber.w {
+                            "Sender address did not match expected client sender=${sender} client=${clientAddress.address}"
+                          }
+                        }
+                        return@UdpRelayHandler isValid
+                      },
+                  )
+              )
+        }
     val controlSocket = updControlSocket.channel()
     updControlSocket.addListener { future ->
       if (!future.isSuccess) {
-        Timber.w { "SOCKS proxied outbound failed ${future.cause()}" }
+        Timber.e(future.cause()) { "SOCKS proxied outbound failed" }
         sendFailureAndClose(ctx, msg)
         return@addListener
       }
@@ -148,20 +151,20 @@ internal class Socks5ProxyHandler internal constructor(
       pipeline.dropHandler(this::class)
 
       // Tell proxy we've established connection so that NOW we can relay
-      Timber.d { "Open UDP Relay: ${
+      Timber.d {
+        "Open UDP Relay: ${
         resolveSocks5AddressType(
           relayControlAddress
         )
-      } $relayControl" }
+      } $relayControl"
+      }
       ctx.writeAndFlush(
-        DefaultSocks5CommandResponse(
-          Socks5CommandStatus.SUCCESS,
-          resolveSocks5AddressType(
-            relayControlAddress
-          ),
-          relayControl.address,
-          relayControl.port,
-        )
+          DefaultSocks5CommandResponse(
+              Socks5CommandStatus.SUCCESS,
+              resolveSocks5AddressType(relayControlAddress),
+              relayControl.address,
+              relayControl.port,
+          )
       )
 
       assignOutboundChannel(controlSocket)
@@ -181,31 +184,18 @@ internal class Socks5ProxyHandler internal constructor(
 
       Socks5CommandType.BIND -> {
         Timber.w { "SOCKS5 Bind request received: We do not support BIND currently" }
-        sendErrorAndClose(
-          ctx,
-          msg
-        )
+        sendErrorAndClose(ctx, msg)
       }
 
       else -> {
         Timber.w { "Unknown SOCKS5 command type: $type" }
-        sendErrorAndClose(
-          ctx,
-          msg
-        )
+        sendErrorAndClose(ctx, msg)
       }
     }
   }
 
-  override fun sendFailureAndClose(
-    ctx: ChannelHandlerContext,
-    msg: Socks5CommandRequest
-  ) {
-    ctx.writeAndFlush(createSOCKS5CommandFailureResponse(msg)).addListener {
-      closeChannels(
-        ctx
-      )
-    }
+  override fun sendFailureAndClose(ctx: ChannelHandlerContext, msg: Socks5CommandRequest) {
+    ctx.writeAndFlush(createSOCKS5CommandFailureResponse(msg)).addListener { closeChannels(ctx) }
   }
 
   override fun isConnectMessageType(msg: Socks5CommandRequest): Boolean {
@@ -218,9 +208,9 @@ internal class Socks5ProxyHandler internal constructor(
   }
 
   override fun publishConnectSuccess(
-    ctx: ChannelHandlerContext,
-    msg: Socks5CommandRequest,
-    outbound: Channel
+      ctx: ChannelHandlerContext,
+      msg: Socks5CommandRequest,
+      outbound: Channel,
   ) {
     val remote = outbound.localAddress()
     if (remote == null) {
@@ -237,14 +227,12 @@ internal class Socks5ProxyHandler internal constructor(
     }
 
     ctx.writeAndFlush(
-      DefaultSocks5CommandResponse(
-        Socks5CommandStatus.SUCCESS,
-        resolveSocks5AddressType(
-          remoteAddress
-        ),
-        remote.address,
-        remote.port,
-      )
+        DefaultSocks5CommandResponse(
+            Socks5CommandStatus.SUCCESS,
+            resolveSocks5AddressType(remoteAddress),
+            remote.address,
+            remote.port,
+        )
     )
   }
 
@@ -273,19 +261,12 @@ internal class Socks5ProxyHandler internal constructor(
 
         else -> {
           Timber.w { "Unknown SOCKS5 Message: $msg" }
-          sendErrorAndClose(
-            ctx,
-            msg
-          )
+          sendErrorAndClose(ctx, msg)
         }
       }
     } else {
       Timber.w { "Unknown Message: $msg" }
-      sendErrorAndClose(
-        ctx,
-        msg
-      )
+      sendErrorAndClose(ctx, msg)
     }
   }
-
 }

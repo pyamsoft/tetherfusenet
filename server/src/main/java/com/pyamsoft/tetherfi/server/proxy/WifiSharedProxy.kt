@@ -33,6 +33,10 @@ import com.pyamsoft.tetherfi.server.event.ServerShutdownEvent
 import com.pyamsoft.tetherfi.server.lock.Locker
 import com.pyamsoft.tetherfi.server.proxy.manager.ProxyManager
 import com.pyamsoft.tetherfi.server.status.RunningStatus
+import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -51,32 +55,31 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import javax.inject.Named
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.seconds
 
 @Singleton
 internal class WifiSharedProxy
 @Inject
 internal constructor(
-  @param:Named("app_scope") private val appScope: CoroutineScope,
-  @param:ServerInternalApi private val serverDispatcherFactory: ServerDispatcher.Factory,
-  @param:ServerInternalApi private val factory: ProxyManager.Factory,
-  private val enforcer: ThreadEnforcer,
-  private val clientEraser: ClientEraser,
-  private val startedClients: StartedClients,
-  private val shutdownBus: EventBus<ServerShutdownEvent>,
-  private val appEnvironment: AppDevEnvironment,
-  private val preferences: ProxyPreferences,
-  status: ProxyStatus,
+    @param:Named("app_scope") private val appScope: CoroutineScope,
+    @param:ServerInternalApi private val serverDispatcherFactory: ServerDispatcher.Factory,
+    @param:ServerInternalApi private val factory: ProxyManager.Factory,
+    private val enforcer: ThreadEnforcer,
+    private val clientEraser: ClientEraser,
+    private val startedClients: StartedClients,
+    private val shutdownBus: EventBus<ServerShutdownEvent>,
+    private val appEnvironment: AppDevEnvironment,
+    private val preferences: ProxyPreferences,
+    status: ProxyStatus,
 ) : BaseServer(status), SharedProxy {
 
-  private val overallState = MutableStateFlow(
-    ProxyState(
-      http = false, socks = false, netty = false,
-    )
-  )
+  private val overallState =
+      MutableStateFlow(
+          ProxyState(
+              http = false,
+              socks = false,
+              netty = false,
+          )
+      )
 
   private fun adjustState(type: SharedProxy.Type, ready: Boolean) {
     overallState.update { s ->
@@ -112,44 +115,44 @@ internal constructor(
   }
 
   private suspend fun beginProxyLoop(
-    type: SharedProxy.Type,
-    lock: Locker.Lock,
-    info: BroadcastNetworkStatus.ConnectionInfo.Connected,
-    socketCreator: SocketCreator,
-    serverDispatcher: ServerDispatcher,
+      type: SharedProxy.Type,
+      lock: Locker.Lock,
+      info: BroadcastNetworkStatus.ConnectionInfo.Connected,
+      socketCreator: SocketCreator,
+      serverDispatcher: ServerDispatcher,
   ) {
     enforcer.assertOffMainThread()
 
     try {
       Timber.d { "${type.name} Begin proxy server loop: $info" }
       factory
-        .create(
-          type = type,
-          info = info,
-          socketCreator = socketCreator,
-          serverDispatcher = serverDispatcher,
-        )
-        .loop(
-          lock = lock,
-          onOpened = { readyState(type) },
-          onClosing = {
-            // Closing, we mark as stopping early
-            status.set(RunningStatus.Stopping)
-            unreadyState(type)
-          },
-          onError = { e -> e.ifNotCancellation { handleServerLoopError(e = e, type = type) } },
-        )
+          .create(
+              type = type,
+              info = info,
+              socketCreator = socketCreator,
+              serverDispatcher = serverDispatcher,
+          )
+          .loop(
+              lock = lock,
+              onOpened = { readyState(type) },
+              onClosing = {
+                // Closing, we mark as stopping early
+                status.set(RunningStatus.Stopping)
+                unreadyState(type)
+              },
+              onError = { e -> e.ifNotCancellation { handleServerLoopError(e = e, type = type) } },
+          )
     } catch (e: Throwable) {
       e.ifNotCancellation { handleServerLoopError(e = e, type = type) }
     }
   }
 
   private suspend fun proxyLoop(
-    scope: CoroutineScope,
-    lock: Locker.Lock,
-    info: BroadcastNetworkStatus.ConnectionInfo.Connected,
-    socketCreator: SocketCreator,
-    serverDispatcher: ServerDispatcher,
+      scope: CoroutineScope,
+      lock: Locker.Lock,
+      info: BroadcastNetworkStatus.ConnectionInfo.Connected,
+      socketCreator: SocketCreator,
+      serverDispatcher: ServerDispatcher,
   ) {
     val fakeError = appEnvironment.isProxyFakeError
     if (fakeError.first()) {
@@ -166,22 +169,22 @@ internal constructor(
     if (isNettyEnabled) {
       scope.launch(context = Dispatchers.Default) {
         beginProxyLoop(
-          type = SharedProxy.Type.NETTY,
-          lock = lock,
-          info = info,
-          socketCreator = socketCreator,
-          serverDispatcher = serverDispatcher,
+            type = SharedProxy.Type.NETTY,
+            lock = lock,
+            info = info,
+            socketCreator = socketCreator,
+            serverDispatcher = serverDispatcher,
         )
       }
     } else {
       if (isHttpEnabled) {
         scope.launch(context = Dispatchers.Default) {
           beginProxyLoop(
-            type = SharedProxy.Type.HTTP,
-            lock = lock,
-            info = info,
-            socketCreator = socketCreator,
-            serverDispatcher = serverDispatcher,
+              type = SharedProxy.Type.HTTP,
+              lock = lock,
+              info = info,
+              socketCreator = socketCreator,
+              serverDispatcher = serverDispatcher,
           )
         }
       }
@@ -189,11 +192,11 @@ internal constructor(
       if (isSocksEnabled) {
         scope.launch(context = Dispatchers.Default) {
           beginProxyLoop(
-            type = SharedProxy.Type.SOCKS,
-            lock = lock,
-            info = info,
-            socketCreator = socketCreator,
-            serverDispatcher = serverDispatcher,
+              type = SharedProxy.Type.SOCKS,
+              lock = lock,
+              info = info,
+              socketCreator = socketCreator,
+              serverDispatcher = serverDispatcher,
           )
         }
       }
@@ -202,7 +205,7 @@ internal constructor(
     if (!isHttpEnabled && !isSocksEnabled) {
       Timber.w { "Cannot run proxy. HTTP and SOCKS both disabled" }
       status.set(
-        RunningStatus.ProxyError(RuntimeException("Must enable either HTTP or SOCKS server"))
+          RunningStatus.ProxyError(RuntimeException("Must enable either HTTP or SOCKS server"))
       )
     }
   }
@@ -215,40 +218,40 @@ internal constructor(
   }
 
   private suspend fun broadcastProxyStop() =
-    withContext(context = NonCancellable) {
-      enforcer.assertOffMainThread()
+      withContext(context = NonCancellable) {
+        enforcer.assertOffMainThread()
 
-      // Update status if we were running
-      if (status.get() is RunningStatus.Running) {
-        status.set(RunningStatus.Stopping)
+        // Update status if we were running
+        if (status.get() is RunningStatus.Running) {
+          status.set(RunningStatus.Stopping)
+        }
+
+        reset()
+        status.set(RunningStatus.NotRunning)
       }
-
-      reset()
-      status.set(RunningStatus.NotRunning)
-    }
 
   private fun CoroutineScope.watchServerReadyStatus() {
     // When all proxy bits declare they are ready, the proxy status is "ready"
     overallState
-      .map { it.isReady(preferences) }
-      .filter { it }
-      .also { f ->
-        launch(context = Dispatchers.Default) {
-          f.collect { ready ->
-            if (ready) {
-              Timber.d { "Proxy has fully launched, update status!" }
-              status.set(RunningStatus.Running)
+        .map { it.isReady(preferences) }
+        .filter { it }
+        .also { f ->
+          launch(context = Dispatchers.Default) {
+            f.collect { ready ->
+              if (ready) {
+                Timber.d { "Proxy has fully launched, update status!" }
+                status.set(RunningStatus.Running)
+              }
             }
           }
         }
-      }
   }
 
   private suspend fun startServer(
-    lock: Locker.Lock,
-    info: BroadcastNetworkStatus.ConnectionInfo.Connected,
-    socketCreator: SocketCreator,
-    serverDispatcher: ServerDispatcher,
+      lock: Locker.Lock,
+      info: BroadcastNetworkStatus.ConnectionInfo.Connected,
+      socketCreator: SocketCreator,
+      serverDispatcher: ServerDispatcher,
   ) {
     try {
       // Launch a new scope so this function won't proceed to finally block until the scope is
@@ -268,11 +271,11 @@ internal constructor(
         // Start the proxy server loop
         launch(context = Dispatchers.Default) {
           proxyLoop(
-            scope = this,
-            lock = lock,
-            info = info,
-            socketCreator = socketCreator,
-            serverDispatcher = serverDispatcher,
+              scope = this,
+              lock = lock,
+              info = info,
+              socketCreator = socketCreator,
+              serverDispatcher = serverDispatcher,
           )
         }
       }
@@ -287,141 +290,141 @@ internal constructor(
   }
 
   override suspend fun start(
-    lock: Locker.Lock,
-    connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
+      lock: Locker.Lock,
+      connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
   ) =
-    withContext(context = Dispatchers.IO) {
-      // Scope local
-      val mutex = Mutex()
+      withContext(context = Dispatchers.IO) {
+        // Scope local
+        val mutex = Mutex()
 
-      var proxyJob: Job? = null
-      var killTimerJob: Job? = null
+        var proxyJob: Job? = null
+        var killTimerJob: Job? = null
 
-      // Create the server dispatcher here that future proxy bits will use
-      val serverDispatcher = serverDispatcherFactory.create()
+        // Create the server dispatcher here that future proxy bits will use
+        val serverDispatcher = serverDispatcherFactory.create()
 
-      // Create the socket creator for socket connections
-      val socketCreator =
-        SocketCreator.create(
-          appScope = appScope,
-          appEnvironment = appEnvironment,
-          dispatcher = serverDispatcher,
-        )
+        // Create the socket creator for socket connections
+        val socketCreator =
+            SocketCreator.create(
+                appScope = appScope,
+                appEnvironment = appEnvironment,
+                dispatcher = serverDispatcher,
+            )
 
-      // Watch the connection status
-      try {
-        // Launch a new scope so this function won't proceed to finally block until the scope is
-        // completed/cancelled
-        //
-        // This will suspend until the proxy server loop dies
-        coroutineScope {
+        // Watch the connection status
+        try {
+          // Launch a new scope so this function won't proceed to finally block until the scope is
+          // completed/cancelled
+          //
+          // This will suspend until the proxy server loop dies
+          coroutineScope {
 
-          // Watch the connection status for valid info
-          connectionStatus.distinctUntilChanged().collect { info ->
-            when (info) {
-              is BroadcastNetworkStatus.ConnectionInfo.Connected -> {
-                // Connected is good, we can launch
-                // This will re-launch any time the connection info changes
+            // Watch the connection status for valid info
+            connectionStatus.distinctUntilChanged().collect { info ->
+              when (info) {
+                is BroadcastNetworkStatus.ConnectionInfo.Connected -> {
+                  // Connected is good, we can launch
+                  // This will re-launch any time the connection info changes
 
-                mutex.withLock {
-                  // Kill timer, we have something now
-                  killTimerJob?.cancelAndJoin()
-                  killTimerJob = null
+                  mutex.withLock {
+                    // Kill timer, we have something now
+                    killTimerJob?.cancelAndJoin()
+                    killTimerJob = null
 
-                  proxyJob?.stopProxyLoop()
-                  proxyJob = null
-                }
+                    proxyJob?.stopProxyLoop()
+                    proxyJob = null
+                  }
 
-                // Reset old
-                reset()
+                  // Reset old
+                  reset()
 
-                mutex.withLock {
+                  mutex.withLock {
 
-                  // Hold onto the job here so we can cancel it if we need to
-                  proxyJob =
-                    launch(context = Dispatchers.Default) {
-                      startServer(
-                        lock = lock,
-                        info = info,
-                        socketCreator = socketCreator,
-                        serverDispatcher = serverDispatcher,
-                      )
-                    }
-                }
-              }
-
-              is BroadcastNetworkStatus.ConnectionInfo.Empty -> {
-                Timber.w { "Connection EMPTY, shut down Proxy" }
-
-                // Empty is missing the channel, bad
-                mutex.withLock {
-                  proxyJob?.stopProxyLoop()
-                  proxyJob = null
-                }
-
-                broadcastProxyStop()
-
-                // Mark us as starting
-                // don't clear errors if they exist
-                status.set(RunningStatus.Starting)
-
-                mutex.withLock {
-                  // Assign kill timer when we first see EMPTY
-                  if (killTimerJob == null) {
-                    killTimerJob =
-                      launch(context = Dispatchers.Default) {
-                        delay(5.seconds)
-
-                        Timber.w { "Connection has been EMPTY for too long!" }
-
-                        // Stop the proxy again so the user can interact with UI
-                        broadcastProxyStop()
-                      }
+                    // Hold onto the job here so we can cancel it if we need to
+                    proxyJob =
+                        launch(context = Dispatchers.Default) {
+                          startServer(
+                              lock = lock,
+                              info = info,
+                              socketCreator = socketCreator,
+                              serverDispatcher = serverDispatcher,
+                          )
+                        }
                   }
                 }
-              }
 
-              is BroadcastNetworkStatus.ConnectionInfo.Error -> {
-                Timber.w { "Connection ERROR, shut down Proxy" }
+                is BroadcastNetworkStatus.ConnectionInfo.Empty -> {
+                  Timber.w { "Connection EMPTY, shut down Proxy" }
 
-                // Error is bad, shut down the proxy
-                mutex.withLock {
-                  // Kill timer, we are dead
-                  killTimerJob?.cancelAndJoin()
-                  killTimerJob = null
+                  // Empty is missing the channel, bad
+                  mutex.withLock {
+                    proxyJob?.stopProxyLoop()
+                    proxyJob = null
+                  }
 
-                  proxyJob?.stopProxyLoop()
-                  proxyJob = null
+                  broadcastProxyStop()
+
+                  // Mark us as starting
+                  // don't clear errors if they exist
+                  status.set(RunningStatus.Starting)
+
+                  mutex.withLock {
+                    // Assign kill timer when we first see EMPTY
+                    if (killTimerJob == null) {
+                      killTimerJob =
+                          launch(context = Dispatchers.Default) {
+                            delay(5.seconds)
+
+                            Timber.w { "Connection has been EMPTY for too long!" }
+
+                            // Stop the proxy again so the user can interact with UI
+                            broadcastProxyStop()
+                          }
+                    }
+                  }
                 }
-                broadcastProxyStop()
-              }
 
-              is BroadcastNetworkStatus.ConnectionInfo.Unchanged -> {
-                Timber.w { "UNCHANGED SHOULD NOT HAPPEN" }
-                shutdownProxyServerWithCause(UNCHANGED_SHOULD_NOT_HAPPEN_ERROR)
+                is BroadcastNetworkStatus.ConnectionInfo.Error -> {
+                  Timber.w { "Connection ERROR, shut down Proxy" }
+
+                  // Error is bad, shut down the proxy
+                  mutex.withLock {
+                    // Kill timer, we are dead
+                    killTimerJob?.cancelAndJoin()
+                    killTimerJob = null
+
+                    proxyJob?.stopProxyLoop()
+                    proxyJob = null
+                  }
+                  broadcastProxyStop()
+                }
+
+                is BroadcastNetworkStatus.ConnectionInfo.Unchanged -> {
+                  Timber.w { "UNCHANGED SHOULD NOT HAPPEN" }
+                  shutdownProxyServerWithCause(UNCHANGED_SHOULD_NOT_HAPPEN_ERROR)
+                }
               }
             }
           }
-        }
-      } finally {
-        withContext(context = NonCancellable) {
-          Timber.d { "Shutting down proxy..." }
+        } finally {
+          withContext(context = NonCancellable) {
+            Timber.d { "Shutting down proxy..." }
 
-          // Kill proxy job
-          mutex.withLock {
-            killTimerJob?.cancelAndJoin()
-            proxyJob?.stopProxyLoop()
+            // Kill proxy job
+            mutex.withLock {
+              killTimerJob?.cancelAndJoin()
+              proxyJob?.stopProxyLoop()
+            }
+            // Stop dispatcher looper
+            serverDispatcher.shutdown()
+
+            // Broadcast server shutdown
+            broadcastProxyStop()
+
+            Timber.d { "Proxy Server is Done!" }
           }
-          // Stop dispatcher looper
-          serverDispatcher.shutdown()
-
-          // Broadcast server shutdown
-          broadcastProxyStop()
-
-          Timber.d { "Proxy Server is Done!" }
         }
       }
-    }
 
   private data class ProxyState(val http: Boolean, val socks: Boolean, val netty: Boolean) {
 
@@ -456,6 +459,6 @@ internal constructor(
   companion object {
 
     private val UNCHANGED_SHOULD_NOT_HAPPEN_ERROR =
-      AssertionError("ConnectionInfo.Unchanged should never escape the server-module internals.")
+        AssertionError("ConnectionInfo.Unchanged should never escape the server-module internals.")
   }
 }

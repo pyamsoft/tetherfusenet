@@ -32,22 +32,21 @@ import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.v4.Socks4CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 
-internal abstract class SocksProxyHandler<T : SocksMessage> internal constructor(
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  isDebug: Boolean,
-  serverSocketTimeout: ServerSocketTimeout,
-) : DefaultProxyHandler(
-  socketTagger = socketTagger,
-  androidPreferredNetwork = androidPreferredNetwork,
-  isDebug = isDebug,
-  serverSocketTimeout = serverSocketTimeout,
-) {
+internal abstract class SocksProxyHandler<T : SocksMessage>
+internal constructor(
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    isDebug: Boolean,
+    serverSocketTimeout: ServerSocketTimeout,
+) :
+    DefaultProxyHandler(
+        socketTagger = socketTagger,
+        androidPreferredNetwork = androidPreferredNetwork,
+        isDebug = isDebug,
+        serverSocketTimeout = serverSocketTimeout,
+    ) {
 
-  protected fun handleSocksConnectRequest(
-    ctx: ChannelHandlerContext,
-    msg: T
-  ) {
+  protected fun handleSocksConnectRequest(ctx: ChannelHandlerContext, msg: T) {
     if (!isConnectMessageType(msg)) {
       sendErrorAndClose(ctx, msg)
       return
@@ -63,17 +62,19 @@ internal abstract class SocksProxyHandler<T : SocksMessage> internal constructor
       }
 
       else -> {
-        Timber.w { "Invalid MSG interface type $msg. Expected Socks4CommandRequest Socks5CommandRequest" }
+        Timber.w {
+          "Invalid MSG interface type $msg. Expected Socks4CommandRequest Socks5CommandRequest"
+        }
         sendErrorAndClose(ctx, msg)
       }
     }
   }
 
   private fun performSocksConnectRequest(
-    ctx: ChannelHandlerContext,
-    msg: T,
-    dstAddr: String?,
-    dstPort: Int,
+      ctx: ChannelHandlerContext,
+      msg: T,
+      dstAddr: String?,
+      dstPort: Int,
   ) {
     val channel = ctx.channel()
 
@@ -88,17 +89,18 @@ internal abstract class SocksProxyHandler<T : SocksMessage> internal constructor
     }
 
     val connectSocket =
-      newOutboundConnection(
-        isDebug = isDebug,
-        channel = channel,
-        hostName = dstAddr,
-        port = dstPort,
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-      )
+        newOutboundConnection(
+            isDebug = isDebug,
+            channel = channel,
+            hostName = dstAddr,
+            port = dstPort,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = androidPreferredNetwork,
+        )
     val outbound = connectSocket.channel()
     connectSocket.addListener { future ->
       if (!future.isSuccess) {
+        Timber.e(future.cause()) { "SOCKS proxied outbound failed" }
         sendFailureAndClose(ctx, msg)
         return@addListener
       }
@@ -118,21 +120,21 @@ internal abstract class SocksProxyHandler<T : SocksMessage> internal constructor
 
       // Add a relay for the internet outbound
       pipeline.addLast(
-        RelayHandler(
-          "SOCKS${msg.version()}-CONNECT-${dstAddr}:${dstPort}",
-          outbound
-        )
+          RelayHandler(
+              id = "SOCKS${msg.version()}-CONNECT-${dstAddr}:${dstPort}",
+              clientChannel = outbound,
+              serverSocketTimeout = serverSocketTimeout,
+          )
       )
     }
   }
 
-  @CheckResult
-  protected abstract fun isConnectMessageType(msg: T): Boolean
+  @CheckResult protected abstract fun isConnectMessageType(msg: T): Boolean
 
   protected abstract fun publishConnectSuccess(
-    ctx: ChannelHandlerContext,
-    msg: T,
-    outbound: Channel,
+      ctx: ChannelHandlerContext,
+      msg: T,
+      outbound: Channel,
   )
 
   protected abstract fun dropSocksHandlers(pipeline: ChannelPipeline)
@@ -142,5 +144,4 @@ internal abstract class SocksProxyHandler<T : SocksMessage> internal constructor
   companion object {
     protected val VALID_PORT_RANGE = 1..<65535
   }
-
 }

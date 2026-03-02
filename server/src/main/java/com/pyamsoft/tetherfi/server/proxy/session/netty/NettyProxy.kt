@@ -27,12 +27,12 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 
 abstract class NettyProxy
 protected constructor(
-  private val socketTagger: SocketTagger,
-  private val host: String,
-  private val port: Int,
-  private val onOpened: () -> Unit,
-  private val onClosing: () -> Unit,
-  private val onError: (Throwable) -> Unit,
+    private val socketTagger: SocketTagger,
+    private val host: String,
+    private val port: Int,
+    private val onOpened: () -> Unit,
+    private val onClosing: () -> Unit,
+    private val onError: (Throwable) -> Unit,
 ) {
 
   @CheckResult
@@ -42,46 +42,46 @@ protected constructor(
     val workerGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
 
     val bootstrap =
-      ServerBootstrap()
-        .group(bossGroup, workerGroup)
-        .channel(NioServerSocketChannel::class.java)
-        .childHandler(
-          object : io.netty.channel.ChannelInitializer<SocketChannel>() {
-            override fun initChannel(ch: SocketChannel) {
-              onChannelInitialized(ch)
-            }
-          }
-        )
+        ServerBootstrap()
+            .group(bossGroup, workerGroup)
+            .channel(NioServerSocketChannel::class.java)
+            .childHandler(
+                object : io.netty.channel.ChannelInitializer<SocketChannel>() {
+                  override fun initChannel(ch: SocketChannel) {
+                    onChannelInitialized(ch)
+                  }
+                }
+            )
 
     // Tag the server socket
     socketTagger.tagSocket()
 
     val serverChannel =
-      bootstrap
-        .bind(host, port)
-        .apply {
-          addListener { future ->
-            if (future.isSuccess) {
-              Timber.d { "Netty server started" }
-              onOpened()
-            } else {
-              val err = future.cause()
-              Timber.e(err) { "Failed to bind netty server" }
-              onError(err)
+        bootstrap
+            .bind(host, port)
+            .apply {
+              addListener { future ->
+                if (future.isSuccess) {
+                  Timber.d { "Netty server started" }
+                  onOpened()
+                } else {
+                  val err = future.cause()
+                  Timber.e(err) { "Failed to bind netty server" }
+                  onError(err)
+                }
+              }
             }
-          }
-        }
-        .channel()
-        .apply {
-          closeFuture().addListener {
-            Timber.d { "Netty server is closing!" }
-            onClosing()
+            .channel()
+            .apply {
+              closeFuture().addListener {
+                Timber.d { "Netty server is closing!" }
+                onClosing()
 
-            Timber.d { "Shutdown thread pools" }
-            bossGroup.shutdownGracefully()
-            workerGroup.shutdownGracefully()
-          }
-        }
+                Timber.d { "Shutdown thread pools" }
+                bossGroup.shutdownGracefully()
+                workerGroup.shutdownGracefully()
+              }
+            }
 
     return {
       Timber.d { "Stopping Netty server gracefully" }

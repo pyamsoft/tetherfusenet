@@ -32,7 +32,7 @@ object Timber {
     }
   }
 
-  inline fun e(throwable: Throwable, message: () -> String) {
+  inline fun e(throwable: Throwable?, message: () -> String) {
     if (RealTimber.treeCount > 0) {
       RealTimber.e(throwable, message())
     }

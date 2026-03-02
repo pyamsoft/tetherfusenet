@@ -24,8 +24,5 @@ import dagger.Module
 @Module
 abstract class BehaviorAppModule {
 
-  @Binds
-  internal abstract fun bindScreenOnHandler(
-    impl: DefaultScreenOnHandler
-  ): ScreenOnHandler
+  @Binds internal abstract fun bindScreenOnHandler(impl: DefaultScreenOnHandler): ScreenOnHandler
 }

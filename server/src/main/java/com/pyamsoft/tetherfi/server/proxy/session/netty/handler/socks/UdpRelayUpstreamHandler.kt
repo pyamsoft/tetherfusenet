@@ -20,6 +20,7 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.tetherfi.core.Timber
+import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import io.ktor.util.network.address
 import io.ktor.util.network.port
@@ -29,31 +30,31 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.socket.DatagramPacket
+import io.netty.handler.timeout.IdleState
 import io.netty.handler.timeout.IdleStateEvent
 import io.netty.handler.timeout.IdleStateHandler
 import io.netty.util.ReferenceCountUtil
 import java.net.InetSocketAddress
+import java.util.concurrent.TimeUnit
 
-internal class UdpRelayUpstreamHandler internal constructor(
-  private val udpControlChannel: Channel,
-  private val client: InetSocketAddress,
-  private val packet: DatagramPacket
+internal class UdpRelayUpstreamHandler
+internal constructor(
+    private val udpControlChannel: Channel,
+    private val client: InetSocketAddress,
+    private val packet: DatagramPacket,
+    private val serverSocketTimeout: ServerSocketTimeout,
 ) : ChannelInboundHandlerAdapter() {
 
   private var id: String = "UDP-UPSTREAM-UNKNOWN"
 
   @CheckResult
-  private fun wrapUdpResponse(
-    alloc: ByteBufAllocator,
-    msg: DatagramPacket
-  ): ByteBuf {
+  private fun wrapUdpResponse(alloc: ByteBufAllocator, msg: DatagramPacket): ByteBuf {
     val sourceAddr = udpControlChannel.localAddress().cast<InetSocketAddress>().requireNotNull()
 
     // May be able to initialize with 3
     return alloc.ioBuffer().apply {
       // 2 reserved
-      val res =
-        RESERVED_BYTE_INT
+      val res = RESERVED_BYTE_INT
       writeByte(res)
       writeByte(res)
 
@@ -61,10 +62,7 @@ internal class UdpRelayUpstreamHandler internal constructor(
       writeByte(FRAGMENT_ZERO_INT)
 
       // Address
-      writeByte(
-        resolveSocks5AddressType(
-          sourceAddr
-        ).byteValue().toInt())
+      writeByte(resolveSocks5AddressType(sourceAddr).byteValue().toInt())
       writeBytes(sourceAddr.address.address)
 
       // Port
@@ -76,8 +74,8 @@ internal class UdpRelayUpstreamHandler internal constructor(
   }
 
   private fun handleReply(
-    ctx: ChannelHandlerContext,
-    msg: DatagramPacket,
+      ctx: ChannelHandlerContext,
+      msg: DatagramPacket,
   ) {
     val response = wrapUdpResponse(ctx.alloc(), msg)
     udpControlChannel.writeAndFlush(DatagramPacket(response, client))
@@ -86,32 +84,35 @@ internal class UdpRelayUpstreamHandler internal constructor(
   private fun closeChannels(ctx: ChannelHandlerContext) {
     if (udpControlChannel.isActive) {
       Timber.d { "close control channel $udpControlChannel" }
-      flushAndClose(
-        udpControlChannel
-      )
+      flushAndClose(udpControlChannel)
     }
 
     val channel = ctx.channel()
     if (channel.isActive) {
       Timber.d { "close owner channel $channel" }
-      flushAndClose(
-        channel
-      )
+      flushAndClose(channel)
     }
   }
 
   override fun channelRegistered(ctx: ChannelHandlerContext) {
-    Timber.d { "Add idle timeout handler" }
-    ctx.pipeline().addFirst("idle", IdleStateHandler(0, 0, 60))
+    val timeout = serverSocketTimeout.timeoutDuration
+    if (timeout.isInfinite()) {
+      Timber.d { "Add idle timeout handler $timeout" }
+      ctx.pipeline()
+          .addFirst(IdleStateHandler(0, 0, timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS))
+    } else {
+      Timber.d { "Not adding idle timeout, infinite timeout configured!" }
+    }
   }
 
   override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
     if (evt is IdleStateEvent) {
-      Timber.d { "Closing idle connection: $ctx $evt" }
-      closeChannels(ctx)
+      if (evt.state() == IdleState.ALL_IDLE) {
+        Timber.d { "Closing idle connection: $ctx $evt" }
+        closeChannels(ctx)
+      }
     }
   }
-
 
   override fun channelActive(ctx: ChannelHandlerContext) {
     val addr = ctx.channel().localAddress()
@@ -124,10 +125,7 @@ internal class UdpRelayUpstreamHandler internal constructor(
       closeChannels(ctx)
     }
 
-    ctx.writeAndFlush(packet)
-      .addListener {
-        ReferenceCountUtil.release(packet)
-      }
+    ctx.writeAndFlush(packet).addListener { ReferenceCountUtil.release(packet) }
   }
 
   override fun channelInactive(ctx: ChannelHandlerContext) {
@@ -146,15 +144,11 @@ internal class UdpRelayUpstreamHandler internal constructor(
     }
   }
 
-  override fun channelRead(
-    ctx: ChannelHandlerContext,
-    msg: Any
-  ) {
+  override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
     if (msg is DatagramPacket) {
       handleReply(ctx, msg)
     } else {
       Timber.w { "Invalid message received: $msg" }
     }
   }
-
 }

@@ -27,23 +27,25 @@ import io.netty.handler.timeout.IdleStateHandler
 import io.netty.util.ReferenceCountUtil
 import java.util.concurrent.TimeUnit
 
-internal abstract class DefaultProxyHandler internal constructor(
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  isDebug: Boolean,
-  private val serverSocketTimeout: ServerSocketTimeout,
-) : ProxyHandler(
-  socketTagger = socketTagger,
-  androidPreferredNetwork = androidPreferredNetwork,
-  isDebug = isDebug,
-) {
+internal abstract class DefaultProxyHandler
+internal constructor(
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    isDebug: Boolean,
+    protected val serverSocketTimeout: ServerSocketTimeout,
+) :
+    ProxyHandler(
+        socketTagger = socketTagger,
+        androidPreferredNetwork = androidPreferredNetwork,
+        isDebug = isDebug,
+    ) {
 
   override fun channelRegistered(ctx: ChannelHandlerContext) {
     val timeout = serverSocketTimeout.timeoutDuration
     if (timeout.isInfinite()) {
       Timber.d { "Add idle timeout handler $timeout" }
       ctx.pipeline()
-        .addFirst(IdleStateHandler(0, 0, timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS))
+          .addFirst(IdleStateHandler(0, 0, timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS))
     } else {
       Timber.d { "Not adding idle timeout, infinite timeout configured!" }
     }
