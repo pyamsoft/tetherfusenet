@@ -21,6 +21,7 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.UdpRelayHandler
 import io.netty.bootstrap.ServerBootstrap
+import io.netty.channel.ChannelOption
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.socket.SocketChannel
@@ -78,6 +79,9 @@ protected constructor(
         ServerBootstrap()
             .group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel::class.java)
+            .childOption(ChannelOption.AUTO_READ, true)
+            .childOption(ChannelOption.AUTO_CLOSE, true)
+            .childOption(ChannelOption.TCP_NODELAY, true)
             .childHandler(
                 object : io.netty.channel.ChannelInitializer<SocketChannel>() {
                   override fun initChannel(ch: SocketChannel) {
