@@ -38,21 +38,12 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandStatus
 import io.netty.handler.timeout.IdleState
 import io.netty.handler.timeout.IdleStateEvent
 import io.netty.handler.timeout.IdleStateHandler
-import io.netty.resolver.dns.AuthoritativeDnsServerCache
-import io.netty.resolver.dns.DefaultAuthoritativeDnsServerCache
-import io.netty.resolver.dns.DefaultDnsCache
-import io.netty.resolver.dns.DefaultDnsCnameCache
-import io.netty.resolver.dns.DnsCache
-import io.netty.resolver.dns.DnsCnameCache
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.getAndUpdate
-import kotlinx.coroutines.flow.update
 
 internal class UdpRelayHandler
 internal constructor(
@@ -69,8 +60,6 @@ internal constructor(
         socketTagger = socketTagger,
         androidPreferredNetwork = androidPreferredNetwork,
     ) {
-
-  private val allKnownOutbounds = MutableStateFlow<Set<Channel>>(emptySet())
 
   private var id: String = "UDP-RELAY-UNKNOWN"
 
@@ -185,26 +174,11 @@ internal constructor(
             return@resolveDestination
           }
 
-          val bindAddress =
-              when (val type = resolveSocks5AddressType(destination)) {
-                Socks5AddressType.IPv4 -> "0.0.0.0"
-                Socks5AddressType.IPv6 -> "::"
-                else -> {
-                  Timber.w {
-                    "DROP: Unable to send datapacket upstream to invalid type address: $type $destination"
-                  }
-                  data.release()
-                  sendErrorAndClose(ctx, msg)
-                  return@resolveDestination
-                }
-              }
-
           val serverChannel = ctx.channel()
           val udpRelaySocket =
               newDatagramServer(
                   isDebug = isDebug,
                   channel = serverChannel,
-                  hostName = bindAddress,
                   socketTagger = socketTagger,
                   androidPreferredNetwork = androidPreferredNetwork,
                   onChannelOpened = { ch ->
@@ -218,7 +192,10 @@ internal constructor(
                         )
                   },
               )
+
           val outbound = udpRelaySocket.channel()
+          serverChannel.closeFuture().addListener { flushAndClose(outbound) }
+
           udpRelaySocket.addListener { future ->
             if (!future.isSuccess) {
               Timber.e(future.cause()) { "Failed to standup outbound connection!" }
@@ -227,14 +204,8 @@ internal constructor(
               return@addListener
             }
 
-            Timber.d { "Opened UDP relay outbound connection $outbound" }
-
-            // Don't assign the channel here as it can cause previous connections to close
-            // prematurely
-            // assignOutboundChannel(outbound)
-            allKnownOutbounds.update { it + outbound }
-
             val packet = DatagramPacket(data, destination)
+            Timber.d { "Opened UDP relay outbound connection $outbound $packet" }
             outbound.writeAndFlush(packet).addListener { packet.release() }
           }
         },
@@ -376,14 +347,6 @@ internal constructor(
       Timber.d { "close control channel $tcpControlChannel" }
       flushAndClose(tcpControlChannel)
     }
-
-    val outbounds = allKnownOutbounds.getAndUpdate { emptySet() }
-    outbounds.forEach { o ->
-      if (o.isActive) {
-        Timber.d { "close outbound channel $o" }
-        flushAndClose(o)
-      }
-    }
   }
 
   override fun createErrorResponse(msg: Any): Any? {
@@ -401,61 +364,5 @@ internal constructor(
       // Then close everyone
       closeChannels(ctx)
     }
-  }
-
-  companion object {
-
-    /** Actually drop the DNS caches */
-    internal fun dropCaches() {
-      REAL_DNS_CACHE.clear()
-      REAL_DNS_CNAME_CACHE.clear()
-      REAL_AUTHORITATIVE_SERVER_CACHE.clear()
-    }
-
-    // Re-use the same caches for all requests
-    private val REAL_DNS_CACHE = DefaultDnsCache()
-    private val DEFAULT_DNS_CACHE =
-        object : DnsCache by REAL_DNS_CACHE {
-
-          // Never allow clearing to always keep cache entries alive
-          override fun clear() {
-            Timber.w { "Clear is not supported for this DnsCache" }
-          }
-
-          override fun clear(hostname: String?): Boolean {
-            Timber.w { "Clear is not supported for this DnsCache(${hostname})" }
-            return false
-          }
-        }
-
-    private val REAL_DNS_CNAME_CACHE = DefaultDnsCnameCache()
-    private val DEFAULT_DNS_CNAME_CACHE =
-        object : DnsCnameCache by REAL_DNS_CNAME_CACHE {
-
-          // Never allow clearing to always keep cache entries alive
-          override fun clear() {
-            Timber.w { "Clear is not supported for this DnsCnameCache" }
-          }
-
-          override fun clear(hostname: String?): Boolean {
-            Timber.w { "Clear is not supported for this DnsCnameCache(${hostname})" }
-            return false
-          }
-        }
-
-    private val REAL_AUTHORITATIVE_SERVER_CACHE = DefaultAuthoritativeDnsServerCache()
-    private val DEFAULT_DNS_AUTHORITATIVE_SERVER_CACHE =
-        object : AuthoritativeDnsServerCache by REAL_AUTHORITATIVE_SERVER_CACHE {
-
-          // Never allow clearing to always keep cache entries alive
-          override fun clear() {
-            Timber.w { "Clear is not supported for this AuthoritativeDnsServerCache" }
-          }
-
-          override fun clear(hostname: String?): Boolean {
-            Timber.w { "Clear is not supported for this AuthoritativeDnsServerCache(${hostname})" }
-            return false
-          }
-        }
   }
 }

@@ -19,7 +19,6 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty
 import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.UdpRelayHandler
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelOption
 import io.netty.channel.MultiThreadIoEventLoopGroup
@@ -43,15 +42,8 @@ protected constructor(
 ) {
 
   private fun proxyDead() {
-    clearDnsCache()
-
     Timber.d { "Netty is completely shutdown!" }
     onClosed()
-  }
-
-  private fun clearDnsCache() {
-    Timber.d { "Clear DNS caches" }
-    UdpRelayHandler.dropCaches()
   }
 
   private fun waitForDeath(

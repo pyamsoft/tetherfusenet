@@ -161,9 +161,6 @@ internal constructor(
               relayControl.port,
           )
       )
-
-      assignOutboundChannel(controlSocket)
-      replayQueuedMessages(controlSocket)
     }
   }
 

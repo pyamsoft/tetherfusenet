@@ -17,8 +17,6 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks
 
 import androidx.annotation.CheckResult
-import com.pyamsoft.pydroid.core.cast
-import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
@@ -46,9 +44,11 @@ internal constructor(
   private var id: String = "UDP-UPSTREAM-UNKNOWN"
 
   @CheckResult
-  private fun wrapUdpResponse(alloc: ByteBufAllocator, msg: DatagramPacket): ByteBuf {
-    val sourceAddr = udpControlChannel.localAddress().cast<InetSocketAddress>().requireNotNull()
-
+  private fun wrapUdpResponse(
+      alloc: ByteBufAllocator,
+      sender: InetSocketAddress,
+      content: ByteBuf,
+  ): ByteBuf {
     // May be able to initialize with 3
     return alloc.ioBuffer().apply {
       // 2 reserved
@@ -60,14 +60,14 @@ internal constructor(
       writeByte(FRAGMENT_ZERO_INT)
 
       // Address
-      writeByte(resolveSocks5AddressType(sourceAddr).byteValue().toInt())
-      writeBytes(sourceAddr.address.address)
+      writeByte(resolveSocks5AddressType(sender).byteValue().toInt())
+      writeBytes(sender.address.address)
 
       // Port
-      writeShort(sourceAddr.port)
+      writeShort(sender.port)
 
       // Content
-      writeBytes(msg.content())
+      writeBytes(content)
     }
   }
 
@@ -75,8 +75,15 @@ internal constructor(
       ctx: ChannelHandlerContext,
       msg: DatagramPacket,
   ) {
-    val response = wrapUdpResponse(ctx.alloc(), msg)
-    udpControlChannel.writeAndFlush(DatagramPacket(response, client))
+    val sender = msg.sender()
+    if (sender == null) {
+      Timber.w { "Remote UDP packet had NULL sender. Drop!" }
+      return
+    }
+
+    val content = msg.retain().content()
+    val response = wrapUdpResponse(alloc = ctx.alloc(), sender = sender, content = content)
+    udpControlChannel.writeAndFlush(DatagramPacket(response, client)).addListener { msg.release() }
   }
 
   private fun closeChannels(ctx: ChannelHandlerContext) {

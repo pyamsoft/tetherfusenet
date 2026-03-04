@@ -67,6 +67,26 @@ private fun createOutboundChannel(
 }
 
 @CheckResult
+internal fun newOutboundConnection(
+    isDebug: Boolean,
+    channel: Channel,
+    hostName: String,
+    port: Int,
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    onChannelOpened: (Channel) -> Unit = {},
+): ChannelFuture {
+  return createOutboundChannel(
+          isDebug = isDebug,
+          channel = channel,
+          socketTagger = socketTagger,
+          androidPreferredNetwork = androidPreferredNetwork,
+          onChannelOpened = onChannelOpened,
+      )
+      .connect(hostName, port)
+}
+
+@CheckResult
 private fun createOutboundDatagramChannel(
     isDebug: Boolean,
     channel: Channel,
@@ -97,32 +117,12 @@ private fun createOutboundDatagramChannel(
 }
 
 @CheckResult
-internal fun newOutboundConnection(
-    isDebug: Boolean,
-    channel: Channel,
-    hostName: String,
-    port: Int,
-    socketTagger: SocketTagger,
-    androidPreferredNetwork: Network?,
-    onChannelOpened: (Channel) -> Unit = {},
-): ChannelFuture {
-  return createOutboundChannel(
-          isDebug = isDebug,
-          channel = channel,
-          socketTagger = socketTagger,
-          androidPreferredNetwork = androidPreferredNetwork,
-          onChannelOpened = onChannelOpened,
-      )
-      .connect(hostName, port)
-}
-
-@CheckResult
 internal fun newDatagramServer(
     isDebug: Boolean,
     channel: Channel,
-    hostName: String,
     socketTagger: SocketTagger,
     androidPreferredNetwork: Network?,
+    hostName: String? = null,
     onChannelOpened: (Channel) -> Unit = {},
 ): ChannelFuture {
   return createOutboundDatagramChannel(
@@ -132,5 +132,11 @@ internal fun newDatagramServer(
           androidPreferredNetwork = androidPreferredNetwork,
           onChannelOpened = onChannelOpened,
       )
-      .bind(hostName, 0)
+      .run {
+        if (hostName.isNullOrBlank()) {
+          bind(0)
+        } else {
+          bind(hostName, 0)
+        }
+      }
 }
