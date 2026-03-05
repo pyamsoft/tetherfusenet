@@ -20,9 +20,12 @@ from traceback import print_exc
 FAILED_RESP: bytes = bytes([])
 
 class NormalUdpRequest:
-    def __init__(self):
+    def __init__(self, family):
         try:
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s = socket.socket(family, socket.SOCK_DGRAM)
+            s.settimeout(3)
+            self.s = s
+            self.family = family
         except socket.error:
             print_exc()
 
@@ -33,9 +36,27 @@ class NormalUdpRequest:
         remote_port: int,
     ) -> bytes:
         try:
-            self.s.sendto(request, (remote_host,  remote_port))
-            (resp, _)= self.s.recvfrom(4096)
+            if self.family == socket.AF_INET:
+                self.s.sendto(request, (remote_host,  remote_port))
+            else:
+                self.s.bind(("::", 0))
+                self.s.connect((remote_host,  remote_port, 0, 0))
+                self.s.sendto(request, (remote_host,  remote_port, 0, 0))
+            print("LOCAL:", self.s.getsockname())
+            (resp, remote)= self.s.recvfrom(4096)
+            print("RECV remote: ", remote)
             return resp
         except socket.error:
             print_exc()
         return FAILED_RESP
+
+if __name__ == "__main__":
+    n4 = NormalUdpRequest(socket.AF_INET)
+    n6 = NormalUdpRequest(socket.AF_INET6)
+
+    from main import build_dns_request
+    dns_request = build_dns_request(1234, "cloudflare.com", "A")
+    print(n4.request(dns_request, remote_host="8.8.8.8", remote_port=53))
+
+    dns_request = build_dns_request(1234, "cloudflare.com", "AAAA")
+    print(n6.request(dns_request, remote_host="2001:4860:4860::8844", remote_port=53))

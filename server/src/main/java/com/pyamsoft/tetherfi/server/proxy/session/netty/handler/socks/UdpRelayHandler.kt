@@ -38,7 +38,6 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandStatus
 import io.netty.handler.timeout.IdleState
 import io.netty.handler.timeout.IdleStateEvent
 import io.netty.handler.timeout.IdleStateHandler
-import io.netty.resolver.InetNameResolver
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetSocketAddress
@@ -50,7 +49,6 @@ internal constructor(
     isDebug: Boolean,
     socketTagger: SocketTagger,
     androidPreferredNetwork: Network?,
-    private val ip4Resolver: InetNameResolver?,
     private val tcpControlChannel: Channel,
     private val serverSocketTimeout: ServerSocketTimeout,
 ) :
@@ -61,52 +59,6 @@ internal constructor(
     ) {
 
   private var id: String = "UDP-RELAY-UNKNOWN"
-
-  private fun resolveDestination(
-      addressType: Socks5AddressType,
-      originalDestinationAddress: String,
-      port: Int,
-      onResolved: (InetSocketAddress?) -> Unit,
-  ) {
-    // We don't need to force resolve an IPv4, just continue
-    val forceIP4Resolver = ip4Resolver
-    if (forceIP4Resolver == null || addressType == Socks5AddressType.IPv4) {
-      val destination = InetSocketAddress(originalDestinationAddress, port)
-      onResolved(destination)
-      return
-    }
-
-    // TODO(Peter): Currently our proxy ONLY works over IPv4
-    // We resolve the hostname on our Android device here via DNS
-    // and then we proxy the connection from our requesting client
-    //
-    // If we are unable to find an IPv4 address to use, we must fail
-    //
-    // We can't use the Netty built in DnsResolver? It never resolves for some reason...
-    Timber.d { "Forcing UDP over IPv4 connection $addressType $originalDestinationAddress" }
-
-    forceIP4Resolver.resolve(originalDestinationAddress).addListener { future ->
-      if (!future.isSuccess) {
-        Timber.e(future.cause()) {
-          "Unable to resolve IPv4 address for dest=$originalDestinationAddress"
-        }
-        Timber.w { "Currently SOCKS5 UDP-ASSOCIATE proxy only works over IPv4" }
-        onResolved(null)
-        return@addListener
-      }
-
-      val forcedIPv4Address = future.now.cast<Inet4Address>()
-      if (forcedIPv4Address == null) {
-        Timber.w { "No IPv4 address could be found for dest=$originalDestinationAddress" }
-        Timber.w { "Currently SOCKS5 UDP-ASSOCIATE proxy only works over IPv4" }
-        onResolved(null)
-      } else {
-        val destination = InetSocketAddress(forcedIPv4Address, port)
-        Timber.d { "RESOLVED IPv4 $destination" }
-        onResolved(destination)
-      }
-    }
-  }
 
   private fun unwrapUdpResponse(
       ctx: ChannelHandlerContext,
@@ -155,56 +107,46 @@ internal constructor(
     // We must retain this slice or the underlying buffer will be cleaned up too early
     val data = buf.readRetainedSlice(buf.readableBytes())
 
+    // Build the destination
+    val destination = InetSocketAddress(destinationAddr, destinationPort)
+
     // NOTE(Peter): Currently this tunnel only works over IPv4
     //              If we receive a non-ipv4 address, we must DNS lookup the IPv4 equivalent
     //              and map the address over.
-    resolveDestination(
-        addressType = addrType,
-        originalDestinationAddress = destinationAddr,
-        port = destinationPort,
-        onResolved = { destination ->
-          if (destination == null) {
-            data.release()
-            sendErrorAndClose(ctx, msg)
-            return@resolveDestination
-          }
+    val serverChannel = ctx.channel()
+    val udpRelaySocket =
+        newDatagramServer(
+            isDebug = isDebug,
+            channel = serverChannel,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = androidPreferredNetwork,
+            onChannelOpened = { ch ->
+              ch.pipeline()
+                  .addLast(
+                      UdpRelayUpstreamHandler(
+                          serverSocketTimeout = serverSocketTimeout,
+                          udpControlChannel = serverChannel,
+                          client = sentFrom,
+                      )
+                  )
+            },
+        )
 
-          val serverChannel = ctx.channel()
-          val udpRelaySocket =
-              newDatagramServer(
-                  isDebug = isDebug,
-                  channel = serverChannel,
-                  socketTagger = socketTagger,
-                  androidPreferredNetwork = androidPreferredNetwork,
-                  onChannelOpened = { ch ->
-                    ch.pipeline()
-                        .addLast(
-                            UdpRelayUpstreamHandler(
-                                serverSocketTimeout = serverSocketTimeout,
-                                udpControlChannel = serverChannel,
-                                client = sentFrom,
-                            )
-                        )
-                  },
-              )
+    val outbound = udpRelaySocket.channel()
+    serverChannel.closeFuture().addListener { flushAndClose(outbound) }
 
-          val outbound = udpRelaySocket.channel()
-          serverChannel.closeFuture().addListener { flushAndClose(outbound) }
+    udpRelaySocket.addListener { future ->
+      if (!future.isSuccess) {
+        Timber.e(future.cause()) { "Failed to standup outbound connection!" }
+        data.release()
+        sendErrorAndClose(ctx, msg)
+        return@addListener
+      }
 
-          udpRelaySocket.addListener { future ->
-            if (!future.isSuccess) {
-              Timber.e(future.cause()) { "Failed to standup outbound connection!" }
-              data.release()
-              sendErrorAndClose(ctx, msg)
-              return@addListener
-            }
-
-            val packet = DatagramPacket(data, destination)
-            Timber.d { "Opened UDP relay outbound connection $outbound $packet" }
-            outbound.writeAndFlush(packet).addListener { packet.release() }
-          }
-        },
-    )
+      val packet = DatagramPacket(data, destination)
+      Timber.d { "Opened UDP relay outbound connection $outbound $packet" }
+      outbound.writeAndFlush(packet).addListener { packet.release() }
+    }
   }
 
   private fun readAddress(buf: ByteBuf, type: Socks5AddressType): String {
@@ -248,6 +190,11 @@ internal constructor(
 
         Socks5AddressType.DOMAIN -> {
           val addressLength = buf.readUnsignedByte().toInt()
+          if (addressLength == 0) {
+            // SOCKS spec says we must fall back to 0 address
+            return "0.0.0.0"
+          }
+
           val sequence = buf.readCharSequence(addressLength, StandardCharsets.US_ASCII).toString()
           if (addressLength == 1 && sequence == "0") {
             // PySocks delivers a random port with an address of "0"

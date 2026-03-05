@@ -59,6 +59,7 @@ class ProxyUdpRequest:
         remote_port: int,
     ) -> bytes:
         try:
+            print("TRY SEND: ", remote_host, remote_port)
             self.s.sendto(request, (remote_host,  remote_port))
             (resp, _)= self.s.recvfrom(4096)
             return resp

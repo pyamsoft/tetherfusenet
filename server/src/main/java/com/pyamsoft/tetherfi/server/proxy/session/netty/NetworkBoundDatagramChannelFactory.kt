@@ -20,6 +20,7 @@ import android.net.Network
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import io.netty.channel.ChannelFactory
 import io.netty.channel.socket.nio.NioDatagramChannel
+import java.net.StandardSocketOptions
 import java.nio.channels.DatagramChannel
 
 internal class NetworkBoundDatagramChannelFactory
@@ -31,7 +32,12 @@ internal constructor(
   override fun newChannel(): NioDatagramChannel {
     socketTagger.tagSocket()
 
-    val outboundSocketChannel = DatagramChannel.open().apply { configureBlocking(false) }
+    val outboundSocketChannel =
+        DatagramChannel.open().apply {
+          configureBlocking(false)
+
+          setOption(StandardSocketOptions.SO_REUSEADDR, true)
+        }
 
     val socket = outboundSocketChannel.socket()
     androidPreferredNetwork?.bindSocket(socket)

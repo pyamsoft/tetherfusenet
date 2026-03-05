@@ -396,7 +396,7 @@ def main(args: list[str]) -> int:
 
     transaction_id = 0x1234
 
-    normal = NormalUdpRequest()
+    normal = NormalUdpRequest(socket.AF_INET)
     proxy = ProxyUdpRequest(
         proxy_server_host="192.168.49.1",
         # Netty based
