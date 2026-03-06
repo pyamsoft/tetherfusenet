@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 pyamsoft
+ * Copyright 2026 pyamsoft
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,13 @@
  * limitations under the License.
  */
 
-package com.pyamsoft.tetherfi.server.proxy
+package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks
 
-import com.pyamsoft.tetherfi.server.Server
-import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
-import com.pyamsoft.tetherfi.server.lock.Locker
-import kotlinx.coroutines.flow.Flow
+import io.netty.channel.ChannelFuture
 
-interface SharedProxy : Server {
-
-  suspend fun start(
-      lock: Locker.Lock,
-      connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
-  )
-
-  enum class Type {
-    HTTP,
-    SOCKS,
-
-    /** New engine */
-    NETTY,
-  }
-}
+@ConsistentCopyVisibility
+internal data class UdpUpstream
+internal constructor(
+    val upstreamFuture: ChannelFuture,
+    var lastActivityTimeMillis: Long,
+)

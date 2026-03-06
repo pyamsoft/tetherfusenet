@@ -19,6 +19,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks
 import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.DefaultProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import io.ktor.util.network.address
 import io.ktor.util.network.port
@@ -26,22 +27,18 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.socket.DatagramPacket
-import io.netty.handler.timeout.IdleState
-import io.netty.handler.timeout.IdleStateEvent
-import io.netty.handler.timeout.IdleStateHandler
 import java.net.InetSocketAddress
-import java.util.concurrent.TimeUnit
 
 internal class UdpRelayUpstreamHandler
 internal constructor(
     private val udpControlChannel: Channel,
     private val client: InetSocketAddress,
-    private val serverSocketTimeout: ServerSocketTimeout,
-) : ChannelInboundHandlerAdapter() {
-
-  private var id: String = "UDP-UPSTREAM-UNKNOWN"
+    serverSocketTimeout: ServerSocketTimeout,
+) :
+    DefaultProxyHandler(
+        serverSocketTimeout = serverSocketTimeout,
+    ) {
 
   @CheckResult
   private fun wrapUdpResponse(
@@ -77,81 +74,33 @@ internal constructor(
   ) {
     val sender = msg.sender()
     if (sender == null) {
-      Timber.w { "Remote UDP packet had NULL sender. Drop!" }
+      Timber.w { "(${channelId}) Remote UDP packet had NULL sender. Drop!" }
       return
     }
 
     val content = msg.retain().content()
     val response = wrapUdpResponse(alloc = ctx.alloc(), sender = sender, content = content)
-    udpControlChannel.writeAndFlush(DatagramPacket(response, client)).addListener { msg.release() }
+    val packet = DatagramPacket(response, client)
+
+    udpControlChannel.writeAndFlush(packet).addListener { msg.release() }
   }
 
-  private fun closeChannels(ctx: ChannelHandlerContext) {
-    if (udpControlChannel.isActive) {
-      Timber.d { "close control channel $udpControlChannel" }
-      flushAndClose(udpControlChannel)
-    }
-
-    val channel = ctx.channel()
-    if (channel.isActive) {
-      Timber.d { "close owner channel $channel" }
-      flushAndClose(channel)
-    }
-  }
-
-  override fun channelRegistered(ctx: ChannelHandlerContext) {
-    val timeout = serverSocketTimeout.timeoutDuration
-    if (timeout.isInfinite()) {
-      Timber.d { "Not adding idle timeout, infinite timeout configured!" }
-    } else {
-      Timber.d { "Add idle timeout handler $timeout" }
-      ctx.pipeline()
-          .addFirst(IdleStateHandler(0, 0, timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS))
-    }
-  }
-
-  override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
-    if (evt is IdleStateEvent) {
-      if (evt.state() == IdleState.ALL_IDLE) {
-        Timber.d { "Closing idle connection: $ctx $evt" }
-        closeChannels(ctx)
-      }
-    }
-  }
-
-  override fun channelActive(ctx: ChannelHandlerContext) {
+  override fun onChannelActive(ctx: ChannelHandlerContext) {
     val addr = ctx.channel().localAddress()
-    id = "UDP-UPSTREAM-${addr.address}:${addr.port}"
-    Timber.d { "Active outbound UDP channel $id" }
-
-    // Close UDP relay when control socket closes
-    udpControlChannel.closeFuture().addListener {
-      Timber.d { "Closing UDP upstream relay because UDP control closed" }
-      closeChannels(ctx)
-    }
+    setChannelId("UDP-UPSTREAM-${addr.address}:${addr.port}")
   }
 
-  override fun channelInactive(ctx: ChannelHandlerContext) {
-    try {
-      Timber.d { "($id) Close inactive relay channel: $ctx" }
-    } finally {
-      closeChannels(ctx)
-    }
-  }
-
-  override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-    try {
-      Timber.e(cause) { "($id) exception caught $ctx" }
-    } finally {
-      closeChannels(ctx)
-    }
+  override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
+    // Do not send any unexpected traffic over this pipe
+    flushAndClose(ctx.channel())
   }
 
   override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
     if (msg is DatagramPacket) {
       handleReply(ctx, msg)
     } else {
-      Timber.w { "Invalid message received: $msg" }
+      Timber.w { "(${channelId}) Invalid message received: $msg" }
+      super.channelRead(ctx, msg)
     }
   }
 }

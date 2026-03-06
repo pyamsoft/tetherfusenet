@@ -40,15 +40,18 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandType
 import io.netty.handler.codec.socksx.v5.Socks5InitialRequest
 import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5Message
+import io.netty.util.ReferenceCountUtil
 import java.net.InetSocketAddress
+import java.time.Clock
 
 internal class Socks5ProxyHandler
 internal constructor(
-    private val serverHostName: String,
-    socketTagger: SocketTagger,
-    androidPreferredNetwork: Network?,
-    isDebug: Boolean,
     serverSocketTimeout: ServerSocketTimeout,
+    private val serverHostName: String,
+    private val clock: Clock,
+    private val isDebug: Boolean,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
 ) :
     SocksProxyHandler<Socks5CommandRequest>(
         socketTagger = socketTagger,
@@ -106,6 +109,7 @@ internal constructor(
                       socketTagger = socketTagger,
                       androidPreferredNetwork = androidPreferredNetwork,
                       serverSocketTimeout = serverSocketTimeout,
+                      clock = clock,
                       tcpControlChannel = channel,
                   )
               )
@@ -218,37 +222,51 @@ internal constructor(
     )
   }
 
-  override fun createErrorResponse(msg: Any): Any? {
+  override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
+    var response: Socks5CommandResponse? = null
     if (msg is Socks5Message) {
       if (msg is Socks5CommandRequest) {
-        return createSOCKS5CommandErrorResponse(msg)
+        response = createSOCKS5CommandErrorResponse(msg)
       }
     }
 
     // Otherwise this is either a socks5 init call, or an unknown message
     // according to spec, we do NOT respond to the client
-    return null
+    if (response == null) {
+      closeChannels(ctx)
+    } else {
+      ctx.writeAndFlush(response).addListener { closeChannels(ctx) }
+    }
   }
 
-  override fun onChannelRead(ctx: ChannelHandlerContext, msg: Any) {
-    if (msg is Socks5Message) {
-      when (msg) {
-        is Socks5InitialRequest -> {
-          handleSocks5InitialRequest(ctx, msg)
-        }
+  override fun onChannelActive(ctx: ChannelHandlerContext) {
+    val addr = ctx.channel().localAddress()
+    setChannelId("SOCKS4-INBOUND-${addr.address}:${addr.port}")
+  }
 
-        is Socks5CommandRequest -> {
-          handleSocks5CommandRequest(ctx, msg)
-        }
+  override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+    try {
+      if (msg is Socks5Message) {
+        when (msg) {
+          is Socks5InitialRequest -> {
+            handleSocks5InitialRequest(ctx, msg)
+          }
 
-        else -> {
-          Timber.w { "Unknown SOCKS5 Message: $msg" }
-          sendErrorAndClose(ctx, msg)
+          is Socks5CommandRequest -> {
+            handleSocks5CommandRequest(ctx, msg)
+          }
+
+          else -> {
+            Timber.w { "Unknown SOCKS5 Message: $msg" }
+            sendErrorAndClose(ctx, msg)
+          }
         }
+      } else {
+        Timber.w { "Unknown Message: $msg" }
+        super.channelRead(ctx, msg)
       }
-    } else {
-      Timber.w { "Unknown Message: $msg" }
-      sendErrorAndClose(ctx, msg)
+    } finally {
+      ReferenceCountUtil.release(msg)
     }
   }
 }

@@ -24,8 +24,12 @@ import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.dropHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.DefaultProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.RelayHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.newOutboundConnection
+import io.ktor.util.network.address
+import io.ktor.util.network.port
 import io.netty.buffer.Unpooled
+import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.DefaultFullHttpResponse
 import io.netty.handler.codec.http.HttpClientCodec
@@ -36,20 +40,66 @@ import io.netty.handler.codec.http.HttpResponse
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.codec.http.HttpVersion
+import io.netty.util.ReferenceCountUtil
 
 internal class Http1ProxyHandler
 internal constructor(
-    socketTagger: SocketTagger,
-    androidPreferredNetwork: Network?,
-    isDebug: Boolean,
     serverSocketTimeout: ServerSocketTimeout,
+    private val isDebug: Boolean,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
 ) :
     DefaultProxyHandler(
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-        isDebug = isDebug,
         serverSocketTimeout = serverSocketTimeout,
     ) {
+
+  private val messageQueue = mutableListOf<Any>()
+
+  private var outboundChannel: Channel? = null
+
+  private fun assignOutboundChannel(channel: Channel) {
+    outboundChannel?.let { old ->
+      Timber.d { "Re-assigning outbound channel $old -> $channel" }
+      if (old.isActive) {
+        Timber.d { "Close old outbound channel $old" }
+        flushAndClose(old)
+      }
+    }
+
+    outboundChannel = channel
+  }
+
+  private fun setOutboundAutoRead(isAutoRead: Boolean) {
+    outboundChannel?.config()?.isAutoRead = isAutoRead
+  }
+
+  private fun queueOrDeliverOutboundMessage(msg: Any) {
+    val outbound = outboundChannel
+    if (outbound == null) {
+      messageQueue.add(msg)
+    } else {
+      outbound.writeAndFlush(msg)
+    }
+  }
+
+  private fun replayQueuedMessages(channel: Channel) {
+    var needsFlush = false
+    try {
+      val queued = messageQueue
+      needsFlush = queued.isNotEmpty()
+      if (needsFlush) {
+        for (q in queued) {
+          channel.write(q)
+        }
+      }
+    } finally {
+      if (needsFlush) {
+        channel.flush()
+      }
+
+      messageQueue.clear()
+    }
+  }
 
   @CheckResult
   private fun createHttpErrorResponse(): HttpResponse {
@@ -60,10 +110,6 @@ internal constructor(
     )
   }
 
-  override fun createErrorResponse(msg: Any): Any {
-    return createHttpErrorResponse()
-  }
-
   private fun handleHttpsConnect(ctx: ChannelHandlerContext, msg: HttpRequest) {
     val parsed = parseUriAndPort(msg.uri(), 443)
     if (parsed == null) {
@@ -71,12 +117,12 @@ internal constructor(
       return
     }
 
-    val clientChannel = ctx.channel()
+    val serverChannel = ctx.channel()
 
     val future =
         newOutboundConnection(
             isDebug = isDebug,
-            channel = clientChannel,
+            channel = serverChannel,
             hostName = parsed.resolvedHostName,
             port = parsed.resolvedPort,
             socketTagger = socketTagger,
@@ -89,13 +135,17 @@ internal constructor(
                   RelayHandler(
                       id =
                           "HTTPS-CONNECT-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-                      writeToChannel = clientChannel,
+                      writeToChannel = serverChannel,
                       serverSocketTimeout = serverSocketTimeout,
                   )
               )
             },
         )
     val outbound = future.channel()
+
+    // When this socket closes, close the outbound
+    serverChannel.closeFuture().addListener { flushAndClose(outbound) }
+
     future.addListener { future ->
       if (!future.isSuccess) {
         Timber.e(future.cause()) { "Unable to connect to $parsed" }
@@ -107,7 +157,7 @@ internal constructor(
       val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
 
       // Enable auto-read once connection is established
-      clientChannel.config().isAutoRead = true
+      serverChannel.config().isAutoRead = true
 
       // Drop down to raw TCP
       val pipeline = ctx.pipeline()
@@ -140,12 +190,12 @@ internal constructor(
       return
     }
 
-    val clientChannel = ctx.channel()
+    val serverChannel = ctx.channel()
 
     val future =
         newOutboundConnection(
             isDebug = isDebug,
-            channel = clientChannel,
+            channel = serverChannel,
             hostName = parsed.resolvedHostName,
             port = parsed.resolvedPort,
             socketTagger = socketTagger,
@@ -160,7 +210,7 @@ internal constructor(
               pipeline.addLast(
                   RelayHandler(
                       id = "HTTP-FORWARD-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-                      writeToChannel = clientChannel,
+                      writeToChannel = serverChannel,
                       serverSocketTimeout = serverSocketTimeout,
                   )
               )
@@ -168,6 +218,10 @@ internal constructor(
         )
 
     val outbound = future.channel()
+
+    // When this socket closes, close the outbound
+    serverChannel.closeFuture().addListener { flushAndClose(outbound) }
+
     future.addListener { future ->
       if (!future.isSuccess) {
         Timber.e(future.cause()) { "Unable to connect to $parsed" }
@@ -179,7 +233,7 @@ internal constructor(
       msg.uri = parsed.proxyCorrectedFilePath
 
       // Enable auto-read once connection is established
-      clientChannel.config().isAutoRead = true
+      serverChannel.config().isAutoRead = true
 
       // Drop down to raw TCP
       val pipeline = ctx.pipeline()
@@ -215,18 +269,50 @@ internal constructor(
     }
   }
 
-  override fun onChannelRead(ctx: ChannelHandlerContext, msg: Any) {
-    if (msg is HttpRequest) {
-      if (msg.method() == HttpMethod.CONNECT) {
-        handleHttpsConnect(ctx, msg)
+  override fun channelWritabilityChanged(ctx: ChannelHandlerContext) {
+    try {
+      val isWritable = ctx.channel().isWritable
+      Timber.d { "Owner write changed: $ctx $isWritable" }
+      setOutboundAutoRead(isWritable)
+    } finally {
+      super.channelWritabilityChanged(ctx)
+    }
+  }
+
+  override fun onCloseChannels(ctx: ChannelHandlerContext) {
+    Timber.d { "Clear pending message queue" }
+    messageQueue.clear()
+
+    outboundChannel?.also { flushAndClose(it) }
+    outboundChannel = null
+  }
+
+  override fun onChannelActive(ctx: ChannelHandlerContext) {
+    val addr = ctx.channel().localAddress()
+    setChannelId("HTTP-INBOUND-${addr.address}:${addr.port}")
+  }
+
+  override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
+    val response = createHttpErrorResponse()
+    ctx.writeAndFlush(response).addListener { closeChannels(ctx) }
+  }
+
+  override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+    try {
+      if (msg is HttpRequest) {
+        if (msg.method() == HttpMethod.CONNECT) {
+          handleHttpsConnect(ctx, msg)
+        } else {
+          handleHttpForward(ctx, msg)
+        }
+      } else if (msg is HttpContent) {
+        queueOrDeliverOutboundMessage(msg)
       } else {
-        handleHttpForward(ctx, msg)
+        Timber.w { "MSG was not HTTP based: $msg" }
+        super.channelRead(ctx, msg)
       }
-    } else if (msg is HttpContent) {
-      queueOrDeliverOutboundMessage(msg)
-    } else {
-      Timber.w { "MSG was not HTTP based: $msg" }
-      sendErrorAndClose(ctx, msg)
+    } finally {
+      ReferenceCountUtil.release(msg)
     }
   }
 

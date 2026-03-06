@@ -34,6 +34,7 @@ import io.netty.handler.codec.socksx.v4.Socks4CommandStatus
 import io.netty.handler.codec.socksx.v4.Socks4CommandType
 import io.netty.handler.codec.socksx.v4.Socks4Message
 import io.netty.handler.codec.socksx.v4.Socks4ServerDecoder
+import io.netty.util.ReferenceCountUtil
 
 internal class Socks4ProxyHandler
 internal constructor(
@@ -107,29 +108,43 @@ internal constructor(
     sendErrorAndClose(ctx, msg)
   }
 
-  override fun createErrorResponse(msg: Any): Any? {
+  override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
+    var response: Socks4CommandResponse? = null
     if (msg is Socks4Message) {
       if (msg is Socks4CommandRequest) {
-        return createSOCKS4ErrorResponse()
+        response = createSOCKS4ErrorResponse()
       }
     }
 
     // Otherwise this is either a socks5 init call, or an unknown message
     // according to spec, we do NOT respond to the client
-    return null
+    if (response == null) {
+      closeChannels(ctx)
+    } else {
+      ctx.writeAndFlush(response).addListener { closeChannels(ctx) }
+    }
   }
 
-  override fun onChannelRead(ctx: ChannelHandlerContext, msg: Any) {
-    if (msg is Socks4Message) {
-      if (msg is Socks4CommandRequest) {
-        handleSocks4CommandRequest(ctx, msg)
+  override fun onChannelActive(ctx: ChannelHandlerContext) {
+    val addr = ctx.channel().localAddress()
+    setChannelId("SOCKS4-INBOUND-${addr.address}:${addr.port}")
+  }
+
+  override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+    try {
+      if (msg is Socks4Message) {
+        if (msg is Socks4CommandRequest) {
+          handleSocks4CommandRequest(ctx, msg)
+        } else {
+          Timber.w { "Unknown SOCKS4 Message: $msg" }
+          sendErrorAndClose(ctx, msg)
+        }
       } else {
-        Timber.w { "Unknown SOCKS4 Message: $msg" }
-        sendErrorAndClose(ctx, msg)
+        Timber.w { "Unknown Message: $msg" }
+        super.channelRead(ctx, msg)
       }
-    } else {
-      Timber.w { "Unknown Message: $msg" }
-      sendErrorAndClose(ctx, msg)
+    } finally {
+      ReferenceCountUtil.release(msg)
     }
   }
 }

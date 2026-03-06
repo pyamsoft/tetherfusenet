@@ -16,10 +16,7 @@
 
 package com.pyamsoft.tetherfi.server.broadcast
 
-import android.content.Context
-import android.net.ConnectivityManager
 import androidx.annotation.CheckResult
-import androidx.core.content.getSystemService
 import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.cast
@@ -77,7 +74,6 @@ internal constructor(
     private val wifiDirectImplementation: WifiDirectServer,
     private val rndisImplementation: RNDISServer,
     status: BroadcastStatus,
-    appContext: Context,
 ) :
     BaseServer(status),
     BroadcastNetwork,
@@ -97,10 +93,6 @@ internal constructor(
       MutableStateFlow<BroadcastNetworkStatus.ConnectionInfo>(
           BroadcastNetworkStatus.ConnectionInfo.Empty
       )
-
-  private val connectivityManager by lazy {
-    appContext.getSystemService<ConnectivityManager>().requireNotNull()
-  }
 
   private var lastConnectionRefreshTime = LocalDateTime.MIN
 
@@ -589,7 +581,6 @@ internal constructor(
     scope.launch(context = Dispatchers.Default) {
       proxy.start(
           lock = lock,
-          connectivityManager = connectivityManager,
           connectionStatus = connectionStatus,
       )
     }

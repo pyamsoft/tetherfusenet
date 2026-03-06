@@ -49,8 +49,6 @@ protected constructor(
     private val onError: (Throwable) -> Unit,
 ) {
 
-  private val deathCallbacks = mutableSetOf<() -> Unit>()
-
   private fun proxyDead() {
     Timber.d { "Netty is completely shutdown!" }
     onClosed()
@@ -78,9 +76,6 @@ protected constructor(
   }
 
   private fun serverStopped() {
-    deathCallbacks.forEach { it() }
-    deathCallbacks.clear()
-
     onClosing()
 
     onServerStopped()
@@ -88,10 +83,6 @@ protected constructor(
 
   private fun channelInitialized(channel: SocketChannel) {
     onChannelInitialized(channel)
-  }
-
-  protected fun doOnShutdown(block: () -> Unit) {
-    deathCallbacks.add(block)
   }
 
   @CheckResult

@@ -17,12 +17,12 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks
 
 import android.net.Network
+import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.cast
-import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProxyHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.DefaultProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.newDatagramServer
 import io.ktor.util.network.address
@@ -33,32 +33,30 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
 import io.netty.handler.codec.socksx.v5.DefaultSocks5CommandResponse
 import io.netty.handler.codec.socksx.v5.Socks5AddressType
-import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5CommandStatus
-import io.netty.handler.timeout.IdleState
-import io.netty.handler.timeout.IdleStateEvent
-import io.netty.handler.timeout.IdleStateHandler
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.TimeUnit
+import java.time.Clock
+import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 
 internal class UdpRelayHandler
 internal constructor(
-    isDebug: Boolean,
-    socketTagger: SocketTagger,
-    androidPreferredNetwork: Network?,
-    private val tcpControlChannel: Channel,
-    private val serverSocketTimeout: ServerSocketTimeout,
+    tcpControlChannel: Channel,
+    serverSocketTimeout: ServerSocketTimeout,
+    private val clock: Clock,
+    private val isDebug: Boolean,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
 ) :
-    ProxyHandler(
-        isDebug = isDebug,
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
+    DefaultProxyHandler(
+        serverSocketTimeout = serverSocketTimeout,
     ) {
 
-  private var id: String = "UDP-RELAY-UNKNOWN"
+  private val upstreamMap: MutableMap<InetSocketAddress, UdpUpstream> = ConcurrentHashMap()
+  private val clientAddress by lazy { tcpControlChannel.remoteAddress().cast<InetSocketAddress>() }
 
   private fun unwrapUdpResponse(
       ctx: ChannelHandlerContext,
@@ -68,28 +66,28 @@ internal constructor(
     val buf = msg.content()
     // Drop bad connection
     if (buf == null) {
-      Timber.w { "Null buffer in packet, drop" }
+      Timber.w { "(${channelId}) DROP: Null buffer in packet" }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     val reservedByteOne = buf.readByte()
     if (reservedByteOne != RESERVED_BYTE) {
-      Timber.w { "DROP: Expected reserve byte one, but got data: $reservedByteOne" }
+      Timber.w { "(${channelId}) DROP: Expected reserve byte one, but got data: $reservedByteOne" }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     val reservedByteTwo = buf.readByte()
     if (reservedByteTwo != RESERVED_BYTE) {
-      Timber.w { "DROP: Expected reserve byte two, but got data: $reservedByteTwo" }
+      Timber.w { "(${channelId}) DROP: Expected reserve byte two, but got data: $reservedByteTwo" }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     val fragment = buf.readByte()
     if (fragment != FRAGMENT_ZERO) {
-      Timber.w { "DROP: Fragments not supported: $fragment" }
+      Timber.w { "(${channelId}) DROP: Fragments not supported: $fragment" }
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -97,6 +95,10 @@ internal constructor(
     val addressTypeByte = buf.readByte()
     val addrType = Socks5AddressType.valueOf(addressTypeByte)
     val destinationAddr = readAddress(buf, addrType)
+    if (destinationAddr.isBlank()) {
+      Timber.w { "(${channelId}) DROP: No destination address could be resolved: $destinationAddr" }
+      sendErrorAndClose(ctx, msg)
+    }
 
     // A short max is 32767 but ports can go up to 65k
     // Sometimes the short value is negative, in that case, we
@@ -115,41 +117,59 @@ internal constructor(
     //              and map the address over.
     val serverChannel = ctx.channel()
     val udpRelaySocket =
-        newDatagramServer(
-            isDebug = isDebug,
-            channel = serverChannel,
-            socketTagger = socketTagger,
-            androidPreferredNetwork = androidPreferredNetwork,
-            onChannelOpened = { ch ->
-              ch.pipeline()
-                  .addLast(
-                      UdpRelayUpstreamHandler(
-                          serverSocketTimeout = serverSocketTimeout,
-                          udpControlChannel = serverChannel,
-                          client = sentFrom,
-                      )
-                  )
-            },
-        )
+        upstreamMap.getOrPut(sentFrom) {
+          val future =
+              newDatagramServer(
+                  isDebug = isDebug,
+                  channel = serverChannel,
+                  socketTagger = socketTagger,
+                  androidPreferredNetwork = androidPreferredNetwork,
+                  onChannelOpened = { ch ->
+                    ch.pipeline()
+                        .addLast(
+                            UdpRelayUpstreamHandler(
+                                serverSocketTimeout = serverSocketTimeout,
+                                udpControlChannel = serverChannel,
+                                client = sentFrom,
+                            )
+                        )
+                  },
+              )
 
-    val outbound = udpRelaySocket.channel()
+          return@getOrPut UdpUpstream(
+              upstreamFuture = future,
+              lastActivityTimeMillis = 0,
+          )
+        }
+
+    // Update the last active time
+    udpRelaySocket.lastActivityTimeMillis = Instant.now(clock).toEpochMilli()
+
+    val udpFuture = udpRelaySocket.upstreamFuture
+    val outbound = udpFuture.channel()
+
+    // When this socket closes, close the outbound
     serverChannel.closeFuture().addListener { flushAndClose(outbound) }
 
-    udpRelaySocket.addListener { future ->
+    udpFuture.addListener { future ->
       if (!future.isSuccess) {
-        Timber.e(future.cause()) { "Failed to standup outbound connection!" }
+        Timber.e(future.cause()) { "(${channelId}) Failed to standup outbound connection!" }
         data.release()
         sendErrorAndClose(ctx, msg)
         return@addListener
       }
 
       val packet = DatagramPacket(data, destination)
-      Timber.d { "Opened UDP relay outbound connection $outbound $packet" }
+      Timber.d { "(${channelId}) Opened UDP relay outbound connection $outbound" }
       outbound.writeAndFlush(packet).addListener { packet.release() }
     }
   }
 
-  private fun readAddress(buf: ByteBuf, type: Socks5AddressType): String {
+  @CheckResult
+  private fun readAddress(
+      buf: ByteBuf,
+      type: Socks5AddressType,
+  ): String {
     try {
       when (type) {
         Socks5AddressType.IPv4 -> {
@@ -157,13 +177,13 @@ internal constructor(
           buf.readBytes(bytes)
           val addr = Inet4Address.getByAddress(bytes)
           if (addr == null) {
-            Timber.w { "Unable to construct IPv4 from byte array $bytes" }
+            Timber.w { "(${channelId}) Unable to construct IPv4 from byte array $bytes" }
             return ""
           }
 
           val host = addr.hostAddress
           if (host.isNullOrBlank()) {
-            Timber.w { "Empty address from IPv4 bytes: $addr" }
+            Timber.w { "(${channelId}) Empty address from IPv4 bytes: $addr" }
             return ""
           }
 
@@ -175,13 +195,13 @@ internal constructor(
           buf.readBytes(bytes)
           val addr = Inet6Address.getByAddress(bytes)
           if (addr == null) {
-            Timber.w { "Unable to construct IPv6 from byte array $bytes" }
+            Timber.w { "(${channelId}) Unable to construct IPv6 from byte array $bytes" }
             return ""
           }
 
           val host = addr.hostAddress
           if (host.isNullOrBlank()) {
-            Timber.w { "Empty address from IPv6 bytes: $addr" }
+            Timber.w { "(${channelId}) Empty address from IPv6 bytes: $addr" }
             return ""
           }
 
@@ -206,68 +226,61 @@ internal constructor(
         }
 
         else -> {
-          Timber.w { "Invalid datapacket address type $type" }
+          Timber.w { "(${channelId}) Invalid datapacket address type $type" }
           return ""
         }
       }
     } catch (e: Throwable) {
-      Timber.e(e) { "Error when reading address from data type $type" }
+      Timber.e(e) { "(${channelId}) Error when reading address from data type $type" }
       return ""
     }
   }
 
-  override fun channelRegistered(ctx: ChannelHandlerContext) {
-    val timeout = serverSocketTimeout.timeoutDuration
-    if (timeout.isInfinite()) {
-      Timber.d { "Not adding idle timeout, infinite timeout configured!" }
-    } else {
-      Timber.d { "Add idle timeout handler $timeout" }
-      ctx.pipeline()
-          .addFirst(IdleStateHandler(0, 0, timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS))
-    }
-  }
-
-  override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
-    if (evt is IdleStateEvent) {
-      if (evt.state() == IdleState.ALL_IDLE) {
-        Timber.d { "Closing idle connection: $ctx $evt" }
-        closeChannels(ctx)
-      }
-    }
-  }
-
-  override fun channelActive(ctx: ChannelHandlerContext) {
+  override fun onChannelActive(ctx: ChannelHandlerContext) {
     val addr = ctx.channel().localAddress()
-    id = "UDP-RELAY-${addr.address}:${addr.port}"
+    setChannelId("UDP-RELAY-${addr.address}:${addr.port}")
+  }
 
-    // Close UDP relay when control socket closes
-    tcpControlChannel.closeFuture().addListener {
-      Timber.d { "Closing UDP relay because TCP control closed" }
-      closeChannels(ctx)
-    }
+  override fun onCloseChannels(ctx: ChannelHandlerContext) {
+    // Clear the map so that we can close any UDP upstream connections
+    upstreamMap.forEach { (_, udp) -> flushAndClose(udp.upstreamFuture.channel()) }
+    upstreamMap.clear()
+  }
+
+  override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
+    // Write a "0" response back to the UDP control channel
+    val response =
+        DefaultSocks5CommandResponse(
+            Socks5CommandStatus.FAILURE,
+            Socks5AddressType.IPv4,
+            "0.0.0.0",
+            0,
+        )
+
+    ctx.writeAndFlush(response).addListener { closeChannels(ctx) }
   }
 
   override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
     if (msg is DatagramPacket) {
       val sender = msg.sender()
       if (sender == null) {
-        Timber.w { "Null sender in packet, drop" }
+        Timber.w { "(${channelId}) DROP: Null sender in packet" }
         sendErrorAndClose(ctx, msg)
         return
       }
 
-      val clientAddress = tcpControlChannel.remoteAddress().cast<InetSocketAddress>()
-      if (clientAddress == null) {
-        Timber.w { "SOCKS TCP control channel remote==null" }
+      val client = clientAddress
+      if (client == null) {
+        Timber.w { "(${channelId}) DROP: SOCKS TCP control channel remote==null" }
         sendErrorAndClose(ctx, msg)
         return
       }
 
       // The sender of this packet is a REMOTE that we interacted with
-      val isValid = clientAddress.address == sender.address
+      val isValid = client.address == sender.address
       if (!isValid) {
         Timber.w {
-          "Sender address did not match expected client sender=${sender.address} client=${clientAddress.address}"
+          "(${channelId}) DROP: Sender address did not match expected client sender=${sender.address} client=${client.address}"
         }
         sendErrorAndClose(ctx, msg)
         return
@@ -275,49 +288,8 @@ internal constructor(
 
       unwrapUdpResponse(ctx, msg, sender)
     } else {
-      Timber.w { "Invalid message seen: $msg" }
-    }
-  }
-
-  override fun channelInactive(ctx: ChannelHandlerContext) {
-    try {
-      Timber.d { "($id) Close inactive relay channel: $ctx" }
-    } finally {
-      closeChannels(ctx)
-    }
-  }
-
-  override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-    try {
-      Timber.e(cause) { "($id) exception caught $ctx" }
-    } finally {
-      closeChannels(ctx)
-    }
-  }
-
-  override fun closeChannels(ctx: ChannelHandlerContext) {
-    super.closeChannels(ctx)
-
-    if (tcpControlChannel.isActive) {
-      Timber.d { "close control channel $tcpControlChannel" }
-      flushAndClose(tcpControlChannel)
-    }
-  }
-
-  override fun createErrorResponse(msg: Any): Any? {
-    return null
-  }
-
-  override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
-    // Tell TCP control we are dead
-    val response =
-        DefaultSocks5CommandResponse(
-            Socks5CommandStatus.FAILURE,
-            msg.cast<Socks5CommandRequest>().requireNotNull().dstAddrType(),
-        )
-    tcpControlChannel.writeAndFlush(response).addListener {
-      // Then close everyone
-      closeChannels(ctx)
+      Timber.w { "(${channelId}): Invalid message seen: $msg" }
+      super.channelRead(ctx, msg)
     }
   }
 }

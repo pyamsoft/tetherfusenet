@@ -16,7 +16,6 @@
 
 package com.pyamsoft.tetherfi.server.proxy.manager.factory
 
-import android.net.ConnectivityManager
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.bus.EventConsumer
 import com.pyamsoft.pydroid.core.ThreadEnforcer
@@ -37,6 +36,7 @@ import com.pyamsoft.tetherfi.server.proxy.manager.TcpProxyManager
 import com.pyamsoft.tetherfi.server.proxy.manager.netty.NettyDelegatingProxyManager
 import com.pyamsoft.tetherfi.server.proxy.session.ProxySession
 import com.pyamsoft.tetherfi.server.proxy.session.tcp.TcpProxyData
+import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Named
 import kotlin.time.Duration.Companion.seconds
@@ -53,6 +53,7 @@ internal constructor(
     @param:Named("app_scope") private val appScope: CoroutineScope,
     @param:Named("http") private val httpSession: ProxySession<TcpProxyData>,
     @param:Named("socks") private val socksSession: ProxySession<TcpProxyData>,
+    private val clock: Clock,
     private val expertPreferences: ExpertPreferences,
     private val socketTagger: SocketTagger,
     private val enforcer: ThreadEnforcer,
@@ -92,7 +93,6 @@ internal constructor(
 
   @CheckResult
   private suspend fun createNetty(
-      connectivityManager: ConnectivityManager,
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
   ): ProxyManager {
     enforcer.assertOffMainThread()
@@ -107,9 +107,9 @@ internal constructor(
     Timber.d { "Using new Netty server" }
     return NettyDelegatingProxyManager(
         isDebug = isDebug,
+        clock = clock,
         socketBinder = socketBinder,
         socketTagger = socketTagger,
-        connectivityManager = connectivityManager,
         isHttpEnabled = isHttpEnabled,
         isSocksEnabled = isSocksEnabled,
         serverSocketTimeout = socketTimeout,
@@ -160,7 +160,6 @@ internal constructor(
 
   override suspend fun create(
       type: SharedProxy.Type,
-      connectivityManager: ConnectivityManager,
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
       socketCreator: SocketCreator,
       serverDispatcher: ServerDispatcher,
@@ -169,7 +168,6 @@ internal constructor(
         return@withContext when (type) {
           SharedProxy.Type.NETTY ->
               createNetty(
-                  connectivityManager = connectivityManager,
                   info = info,
               )
 

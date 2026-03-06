@@ -24,6 +24,7 @@ import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.dropHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.DefaultProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.RelayHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.newOutboundConnection
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
@@ -34,15 +35,12 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 
 internal abstract class SocksProxyHandler<T : SocksMessage>
 internal constructor(
-    socketTagger: SocketTagger,
-    androidPreferredNetwork: Network?,
-    isDebug: Boolean,
     serverSocketTimeout: ServerSocketTimeout,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
+    private val isDebug: Boolean,
 ) :
     DefaultProxyHandler(
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-        isDebug = isDebug,
         serverSocketTimeout = serverSocketTimeout,
     ) {
 
@@ -88,7 +86,8 @@ internal constructor(
       return
     }
 
-    val clientChannel = ctx.channel()
+    val serverChannel = ctx.channel()
+
     val connectSocket =
         newOutboundConnection(
             isDebug = isDebug,
@@ -104,7 +103,7 @@ internal constructor(
               pipeline.addLast(
                   RelayHandler(
                       id = "${msg.version()}-CONNECT-INBOUND-${dstAddr}:${dstPort}",
-                      writeToChannel = clientChannel,
+                      writeToChannel = serverChannel,
                       serverSocketTimeout = serverSocketTimeout,
                   )
               )
@@ -112,6 +111,10 @@ internal constructor(
         )
 
     val outbound = connectSocket.channel()
+
+    // When this socket closes, close the outbound
+    serverChannel.closeFuture().addListener { flushAndClose(outbound) }
+
     connectSocket.addListener { future ->
       if (!future.isSuccess) {
         Timber.e(future.cause()) { "SOCKS CONNECT proxied outbound failed" }
@@ -121,8 +124,6 @@ internal constructor(
 
       // Tell proxy we've established connection
       publishConnectSuccess(ctx, msg, outbound)
-
-      assignOutboundChannel(outbound)
 
       // Drop down to raw TCP
       val pipeline = ctx.pipeline()

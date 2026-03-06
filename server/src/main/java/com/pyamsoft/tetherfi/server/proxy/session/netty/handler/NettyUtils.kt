@@ -18,6 +18,8 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
 import android.net.Network
 import androidx.annotation.CheckResult
+import com.pyamsoft.tetherfi.core.Timber
+import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.NetworkBoundDatagramChannelFactory
 import com.pyamsoft.tetherfi.server.proxy.session.netty.NetworkBoundSocketChannelFactory
@@ -26,12 +28,18 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
+import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
+import io.netty.channel.EventLoop
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
+import io.netty.handler.timeout.IdleState
+import io.netty.handler.timeout.IdleStateEvent
+import io.netty.handler.timeout.IdleStateHandler
+import java.util.concurrent.TimeUnit
 
 internal fun flushAndClose(channel: Channel) {
-  if (channel.isActive) {
+  if (channel.isOpen) {
     channel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
   }
 }
@@ -89,13 +97,13 @@ internal fun newOutboundConnection(
 @CheckResult
 private fun createOutboundDatagramChannel(
     isDebug: Boolean,
-    channel: Channel,
+    eventLoop: EventLoop,
     socketTagger: SocketTagger,
     androidPreferredNetwork: Network?,
     onChannelOpened: (Channel) -> Unit = {},
 ): Bootstrap {
   return Bootstrap()
-      .group(channel.eventLoop())
+      .group(eventLoop)
       .channelFactory(
           NetworkBoundDatagramChannelFactory(
               socketTagger = socketTagger,
@@ -119,7 +127,7 @@ private fun createOutboundDatagramChannel(
 @CheckResult
 internal fun newDatagramServer(
     isDebug: Boolean,
-    channel: Channel,
+    eventLoop: EventLoop,
     socketTagger: SocketTagger,
     androidPreferredNetwork: Network?,
     hostName: String? = null,
@@ -127,7 +135,7 @@ internal fun newDatagramServer(
 ): ChannelFuture {
   return createOutboundDatagramChannel(
           isDebug = isDebug,
-          channel = channel,
+          eventLoop = eventLoop,
           socketTagger = socketTagger,
           androidPreferredNetwork = androidPreferredNetwork,
           onChannelOpened = onChannelOpened,
@@ -139,4 +147,51 @@ internal fun newDatagramServer(
           bind(hostName, 0)
         }
       }
+}
+
+@CheckResult
+internal fun newDatagramServer(
+    isDebug: Boolean,
+    channel: Channel,
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    hostName: String? = null,
+    onChannelOpened: (Channel) -> Unit = {},
+): ChannelFuture {
+  return newDatagramServer(
+      isDebug = isDebug,
+      socketTagger = socketTagger,
+      androidPreferredNetwork = androidPreferredNetwork,
+      onChannelOpened = onChannelOpened,
+      hostName = hostName,
+      eventLoop = channel.eventLoop(),
+  )
+}
+
+internal fun ChannelHandlerContext.attachIdleStateHandler(
+    serverSocketTimeout: ServerSocketTimeout
+) {
+  val self = this
+  val timeout = serverSocketTimeout.timeoutDuration
+  if (timeout.isInfinite()) {
+    Timber.d { "Not adding idle timeout, infinite timeout configured!" }
+  } else {
+    Timber.d { "Add idle timeout handler $timeout" }
+    self
+        .pipeline()
+        .addFirst(IdleStateHandler(0, 0, timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS))
+  }
+}
+
+internal inline fun ChannelHandlerContext.handleIdleState(
+    evt: Any,
+    block: () -> Unit,
+) {
+  val self = this
+  if (evt is IdleStateEvent) {
+    if (evt.state() == IdleState.ALL_IDLE) {
+      Timber.d { "Closing idle connection: $self $evt" }
+      block()
+    }
+  }
 }
