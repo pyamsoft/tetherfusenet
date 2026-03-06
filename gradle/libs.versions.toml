@@ -5,7 +5,7 @@ targetSdk = "36"
 compileSdk = "36"
 
 # Android Gradle
-agp = "9.0.1"
+agp = "9.1.0"
 cacheFix = "3.0.3"
 
 # Kotlin
@@ -107,3 +107,4 @@ pydroid-util = { group = "com.github.pyamsoft.pydroid", name = "util", version.r
 qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin-android", version.ref = "qrCode" }
 
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
