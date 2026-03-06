@@ -25,7 +25,9 @@ import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http.Http1ProxyH
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks4ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks5ProxyHandler
 import io.netty.buffer.ByteBuf
+import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.ByteToMessageDecoder
 import io.netty.handler.codec.http.HttpServerCodec
@@ -37,6 +39,7 @@ import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5ServerEncoder
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
+import kotlinx.coroutines.CoroutineScope
 
 class NettyDelegatingProxy
 internal constructor(
@@ -64,6 +67,17 @@ internal constructor(
         onError = onError,
     ) {
 
+  override fun onServerStarted(
+      scope: CoroutineScope,
+      channel: Channel,
+      workerGroup: EventLoopGroup,
+  ) {
+    // TODO create a map of upstream UDP sockets
+    doOnShutdown {
+      // TODO clear map of upstream UDP sockets
+    }
+  }
+
   override fun onChannelInitialized(channel: SocketChannel) {
     Timber.d { "Netty proxy server initialized!" }
 
@@ -76,6 +90,8 @@ internal constructor(
     // And bind our proxy relay handler
     pipeline.addLast(
         DelegatingHandler(
+            // Pass a "creator" that given a client IP:port
+            // will either return an existing or make a new UDP upstream socket
             serverHostName = host,
             serverPort = port,
             isDebug = isDebug,

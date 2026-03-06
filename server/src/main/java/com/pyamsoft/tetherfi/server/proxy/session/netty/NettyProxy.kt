@@ -20,13 +20,20 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import io.netty.bootstrap.ServerBootstrap
+import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.util.concurrent.Future
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.updateAndGet
@@ -46,10 +53,6 @@ protected constructor(
 
   private fun proxyDead() {
     Timber.d { "Netty is completely shutdown!" }
-
-    deathCallbacks.forEach { it() }
-    deathCallbacks.clear()
-
     onClosed()
   }
 
@@ -68,7 +71,26 @@ protected constructor(
     }
   }
 
-  protected fun doOnDestroy(block: () -> Unit) {
+  private fun serverStarted(scope: CoroutineScope, channel: Channel, workerGroup: EventLoopGroup) {
+    onServerStarted(scope, channel, workerGroup)
+
+    onOpened()
+  }
+
+  private fun serverStopped() {
+    deathCallbacks.forEach { it() }
+    deathCallbacks.clear()
+
+    onClosing()
+
+    onServerStopped()
+  }
+
+  private fun channelInitialized(channel: SocketChannel) {
+    onChannelInitialized(channel)
+  }
+
+  protected fun doOnShutdown(block: () -> Unit) {
     deathCallbacks.add(block)
   }
 
@@ -88,7 +110,7 @@ protected constructor(
             .childHandler(
                 object : ChannelInitializer<SocketChannel>() {
                   override fun initChannel(ch: SocketChannel) {
-                    onChannelInitialized(ch)
+                    channelInitialized(ch)
                   }
                 }
             )
@@ -96,45 +118,65 @@ protected constructor(
     // Tag the server socket
     socketTagger.tagSocket()
 
-    val serverChannel =
-        bootstrap
-            .bind(host, port)
-            .apply {
-              addListener { future ->
-                if (future.isSuccess) {
-                  Timber.d { "Netty server started" }
-                  onOpened()
-                } else {
-                  val err = future.cause()
-                  Timber.e(err) { "Failed to bind netty server" }
-                  onError(err)
-                }
-              }
-            }
-            .channel()
-            .apply {
-              closeFuture().addListener {
-                Timber.d { "Netty server is closing!" }
-                onClosing()
+    val server = bootstrap.bind(host, port)
+    val channel = server.channel()
 
-                val bossDead = MutableStateFlow(false)
-                val workerDead = MutableStateFlow(false)
+    val scope =
+        CoroutineScope(
+            context = SupervisorJob() + Dispatchers.IO + CoroutineName(this::class.java.name)
+        )
 
-                // Wait for pools to actually be dead, not just "starting shutdown"
-                waitForDeath(bossGroup.terminationFuture(), bossDead, workerDead)
-                waitForDeath(workerGroup.terminationFuture(), workerDead, bossDead)
+    channel.closeFuture().addListener {
+      Timber.d { "Netty server is closing!" }
+      serverStopped()
 
-                Timber.d { "Shutdown thread pools" }
-                bossGroup.shutdownGracefully()
-                workerGroup.shutdownGracefully()
-              }
-            }
+      val bossDead = MutableStateFlow(false)
+      val workerDead = MutableStateFlow(false)
+
+      // Wait for pools to actually be dead, not just "starting shutdown"
+      waitForDeath(bossGroup.terminationFuture(), bossDead, workerDead)
+      waitForDeath(workerGroup.terminationFuture(), workerDead, bossDead)
+
+      Timber.d { "Shutdown thread pools" }
+      bossGroup.shutdownGracefully()
+      workerGroup.shutdownGracefully()
+
+      Timber.d { "Closing server CoroutineScope" }
+      scope.cancel()
+    }
+
+    server.apply {
+      addListener { future ->
+        if (future.isSuccess) {
+          Timber.d { "Netty server started" }
+          serverStarted(scope, channel, workerGroup)
+        } else {
+          val err = future.cause()
+          Timber.e(err) { "Failed to bind netty server" }
+          onError(err)
+
+          if (channel.isOpen) {
+            channel.close()
+          }
+        }
+      }
+    }
 
     return {
-      Timber.d { "Stopping Netty server gracefully" }
-      serverChannel.close()
+      if (channel.isOpen) {
+        Timber.d { "Stopping Netty server gracefully" }
+        channel.close()
+      }
     }
   }
+
+  protected open fun onServerStarted(
+      scope: CoroutineScope,
+      channel: Channel,
+      workerGroup: EventLoopGroup,
+  ) {}
+
+  protected open fun onServerStopped() {}
 
   protected open fun onChannelInitialized(channel: SocketChannel) {}
 }
