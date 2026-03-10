@@ -42,4 +42,9 @@ internal abstract class ProxyHandler internal constructor() : ChannelInboundHand
   protected open fun onCloseChannels(ctx: ChannelHandlerContext) {}
 
   protected abstract fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any)
+
+  companion object {
+
+    @JvmStatic protected val VALID_PORT_RANGE = 1..<65535
+  }
 }

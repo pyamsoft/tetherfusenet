@@ -21,9 +21,9 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.dropHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.DefaultProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.RelayHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.dropHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.newOutboundConnection
 import io.ktor.util.network.address
@@ -117,6 +117,20 @@ internal constructor(
       return
     }
 
+    if (parsed.resolvedHostName.isBlank()) {
+      Timber.w {
+        "(${channelId}) DROP: Invalid upstream destination address: ${parsed.resolvedHostName}"
+      }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    if (parsed.resolvedPort !in VALID_PORT_RANGE) {
+      Timber.w { "(${channelId}) DROP: Invalid upstream destination port: ${parsed.resolvedPort}" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
     val serverChannel = ctx.channel()
 
     val future =
@@ -187,6 +201,20 @@ internal constructor(
   private fun handleHttpForward(ctx: ChannelHandlerContext, msg: HttpRequest) {
     val parsed = parseUriAndPort(msg.uri(), 80)
     if (parsed == null) {
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    if (parsed.resolvedHostName.isBlank()) {
+      Timber.w {
+        "(${channelId}) DROP: Invalid upstream destination address: ${parsed.resolvedHostName}"
+      }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    if (parsed.resolvedPort !in VALID_PORT_RANGE) {
+      Timber.w { "(${channelId}) DROP: Invalid upstream destination port: ${parsed.resolvedPort}" }
       sendErrorAndClose(ctx, msg)
       return
     }

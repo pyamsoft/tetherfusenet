@@ -21,9 +21,9 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.dropHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.DefaultProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.RelayHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.dropHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.newOutboundConnection
 import io.netty.channel.Channel
@@ -77,11 +77,13 @@ internal constructor(
     val channel = ctx.channel()
 
     if (dstAddr.isNullOrBlank()) {
+      Timber.w { "(${channelId}) DROP: Invalid upstream destination address: $dstAddr" }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     if (dstPort !in VALID_PORT_RANGE) {
+      Timber.w { "(${channelId}) DROP: Invalid upstream destination port: $dstPort" }
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -156,8 +158,4 @@ internal constructor(
   protected abstract fun dropSocksHandlers(pipeline: ChannelPipeline)
 
   protected abstract fun sendFailureAndClose(ctx: ChannelHandlerContext, msg: T)
-
-  companion object {
-    private val VALID_PORT_RANGE = 1..<65535
-  }
 }

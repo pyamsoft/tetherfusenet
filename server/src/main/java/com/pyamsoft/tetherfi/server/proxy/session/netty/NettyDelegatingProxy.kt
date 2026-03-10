@@ -63,16 +63,16 @@ internal constructor(
 
     // And bind our proxy relay handler
     pipeline.addLast(
-      ProtocolDelegatingHandler(
-        clock = clock,
-        serverHostName = host,
-        isDebug = isDebug,
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-        isHttpEnabled = isHttpEnabled,
-        isSocksEnabled = isSocksEnabled,
-        serverSocketTimeout = serverSocketTimeout,
-      )
+        ProtocolDelegatingHandler(
+            clock = clock,
+            serverHostName = host,
+            isDebug = isDebug,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = androidPreferredNetwork,
+            isHttpEnabled = isHttpEnabled,
+            isSocksEnabled = isSocksEnabled,
+            serverSocketTimeout = serverSocketTimeout,
+        )
     )
   }
 }

@@ -24,19 +24,19 @@ import io.netty.channel.ChannelHandlerContext
 
 internal class RelayHandler
 internal constructor(
-  serverSocketTimeout: ServerSocketTimeout,
-  id: String,
-  private val writeToChannel: Channel,
-) : DefaultProxyHandler(
-  serverSocketTimeout = serverSocketTimeout,
-) {
+    serverSocketTimeout: ServerSocketTimeout,
+    id: String,
+    private val writeToChannel: Channel,
+) :
+    DefaultProxyHandler(
+        serverSocketTimeout = serverSocketTimeout,
+    ) {
 
   init {
     setChannelId(id)
   }
 
-  override fun onCloseChannels(ctx: ChannelHandlerContext) {
-  }
+  override fun onCloseChannels(ctx: ChannelHandlerContext) {}
 
   override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
     // Can't do as this is a bytes based implementation

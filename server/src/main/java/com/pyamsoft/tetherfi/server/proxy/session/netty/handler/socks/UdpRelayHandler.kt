@@ -95,15 +95,23 @@ internal constructor(
     val addressTypeByte = buf.readByte()
     val addrType = Socks5AddressType.valueOf(addressTypeByte)
     val destinationAddr = readAddress(buf, addrType)
-    if (destinationAddr.isBlank()) {
-      Timber.w { "(${channelId}) DROP: No destination address could be resolved: $destinationAddr" }
-      sendErrorAndClose(ctx, msg)
-    }
 
     // A short max is 32767 but ports can go up to 65k
     // Sometimes the short value is negative, in that case, we
     // "fix" it by converting back to an unsigned number
     val destinationPort = buf.readUnsignedShort()
+
+    if (destinationAddr.isBlank()) {
+      Timber.w { "(${channelId}) DROP: Invalid upstream destination address: $destinationAddr" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    if (destinationPort !in VALID_PORT_RANGE) {
+      Timber.w { "(${channelId}) DROP: Invalid upstream destination port: $destinationPort" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
 
     // The rest of the packet is data
     // We must retain this slice or the underlying buffer will be cleaned up too early
@@ -112,9 +120,7 @@ internal constructor(
     // Build the destination
     val destination = InetSocketAddress(destinationAddr, destinationPort)
 
-    // NOTE(Peter): Currently this tunnel only works over IPv4
-    //              If we receive a non-ipv4 address, we must DNS lookup the IPv4 equivalent
-    //              and map the address over.
+    // TODO(Peter): Close sockets that have not seen activity in a while?
     val serverChannel = ctx.channel()
     val udpRelaySocket =
         upstreamMap.getOrPut(sentFrom) {

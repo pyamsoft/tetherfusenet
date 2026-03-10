@@ -37,14 +37,14 @@ import java.time.Clock
 
 internal class ProtocolDelegatingHandler
 internal constructor(
-  private val clock: Clock,
-  private val serverHostName: String,
-  private val isDebug: Boolean,
-  private val socketTagger: SocketTagger,
-  private val androidPreferredNetwork: Network?,
-  private val isHttpEnabled: Boolean,
-  private val isSocksEnabled: Boolean,
-  private val serverSocketTimeout: ServerSocketTimeout,
+    private val clock: Clock,
+    private val serverHostName: String,
+    private val isDebug: Boolean,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
+    private val isHttpEnabled: Boolean,
+    private val isSocksEnabled: Boolean,
+    private val serverSocketTimeout: ServerSocketTimeout,
 ) : ByteToMessageDecoder() {
 
   override fun decode(ctx: ChannelHandlerContext, input: ByteBuf, out: List<Any>) {
@@ -78,12 +78,12 @@ internal constructor(
           pipeline.addLast(Socks4ServerDecoder())
 
           pipeline.addLast(
-            Socks4ProxyHandler(
-              isDebug = isDebug,
-              socketTagger = socketTagger,
-              androidPreferredNetwork = androidPreferredNetwork,
-              serverSocketTimeout = serverSocketTimeout,
-            )
+              Socks4ProxyHandler(
+                  isDebug = isDebug,
+                  socketTagger = socketTagger,
+                  androidPreferredNetwork = androidPreferredNetwork,
+                  serverSocketTimeout = serverSocketTimeout,
+              )
           )
         }
 
@@ -99,14 +99,14 @@ internal constructor(
           pipeline.addLast(Socks5CommandRequestDecoder())
 
           pipeline.addLast(
-            Socks5ProxyHandler(
-              clock = clock,
-              serverHostName = serverHostName,
-              isDebug = isDebug,
-              socketTagger = socketTagger,
-              androidPreferredNetwork = androidPreferredNetwork,
-              serverSocketTimeout = serverSocketTimeout,
-            )
+              Socks5ProxyHandler(
+                  clock = clock,
+                  serverHostName = serverHostName,
+                  isDebug = isDebug,
+                  socketTagger = socketTagger,
+                  androidPreferredNetwork = androidPreferredNetwork,
+                  serverSocketTimeout = serverSocketTimeout,
+              )
           )
         }
 
@@ -121,12 +121,12 @@ internal constructor(
 
           // And bind our proxy relay handler
           pipeline.addLast(
-            Http1ProxyHandler(
-              isDebug = isDebug,
-              socketTagger = socketTagger,
-              androidPreferredNetwork = androidPreferredNetwork,
-              serverSocketTimeout = serverSocketTimeout,
-            )
+              Http1ProxyHandler(
+                  isDebug = isDebug,
+                  socketTagger = socketTagger,
+                  androidPreferredNetwork = androidPreferredNetwork,
+                  serverSocketTimeout = serverSocketTimeout,
+              )
           )
         }
       }
