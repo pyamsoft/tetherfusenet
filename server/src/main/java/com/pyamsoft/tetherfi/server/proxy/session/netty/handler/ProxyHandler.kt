@@ -43,6 +43,25 @@ internal abstract class ProxyHandler internal constructor() : ChannelInboundHand
 
   protected abstract fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any)
 
+  final override fun channelInactive(ctx: ChannelHandlerContext) {
+    try {
+      Timber.d { "($channelId): Inactive! Close channel" }
+      closeChannels(ctx)
+    } finally {
+      super.channelInactive(ctx)
+    }
+  }
+
+  final override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+    try {
+      Timber.e(cause) { "($channelId): Exception caught! Close channel" }
+      closeChannels(ctx)
+    } finally {
+      super.exceptionCaught(ctx, cause)
+    }
+  }
+
+
   companion object {
 
     @JvmStatic protected val VALID_PORT_RANGE = 1..<65535

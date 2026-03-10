@@ -45,23 +45,5 @@ internal constructor(
     }
   }
 
-  final override fun channelInactive(ctx: ChannelHandlerContext) {
-    try {
-      Timber.d { "($channelId): Inactive! Close channel" }
-      closeChannels(ctx)
-    } finally {
-      super.channelInactive(ctx)
-    }
-  }
-
-  final override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-    try {
-      Timber.e(cause) { "($channelId): Exception caught! Close channel" }
-      closeChannels(ctx)
-    } finally {
-      super.exceptionCaught(ctx, cause)
-    }
-  }
-
   protected open fun onChannelActive(ctx: ChannelHandlerContext) {}
 }

@@ -18,33 +18,26 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks
 
 import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
-import com.pyamsoft.tetherfi.server.ServerSocketTimeout
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.DefaultProxyHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import io.ktor.util.network.address
 import io.ktor.util.network.port
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
-import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 
 internal class UdpRelayUpstreamHandler
 internal constructor(
-    private val udpControlChannel: Channel,
-    private val client: InetSocketAddress,
-    serverSocketTimeout: ServerSocketTimeout,
-) :
-    DefaultProxyHandler(
-        serverSocketTimeout = serverSocketTimeout,
-    ) {
+  private val getClient: (InetSocketAddress) -> UdpInfo?,
+) : ProxyHandler() {
 
   @CheckResult
   private fun wrapUdpResponse(
-      alloc: ByteBufAllocator,
-      sender: InetSocketAddress,
-      content: ByteBuf,
+    alloc: ByteBufAllocator,
+    sender: InetSocketAddress,
+    content: ByteBuf,
   ): ByteBuf {
     // May be able to initialize with 3
     return alloc.ioBuffer().apply {
@@ -69,8 +62,8 @@ internal constructor(
   }
 
   private fun handleReply(
-      ctx: ChannelHandlerContext,
-      msg: DatagramPacket,
+    ctx: ChannelHandlerContext,
+    msg: DatagramPacket,
   ) {
     val sender = msg.sender()
     if (sender == null) {
@@ -78,16 +71,26 @@ internal constructor(
       return
     }
 
+    val info = getClient(sender)
+    if (info == null) {
+      Timber.w { "(${channelId}) Remote UDP packet had NULL info. Drop!" }
+      return
+    }
+
     val content = msg.retain().content()
     val response = wrapUdpResponse(alloc = ctx.alloc(), sender = sender, content = content)
-    val packet = DatagramPacket(response, client)
+    val packet = DatagramPacket(response, info.clientAddress)
 
-    udpControlChannel.writeAndFlush(packet).addListener { msg.release() }
+    info.channel.writeAndFlush(packet).addListener { msg.release() }
   }
 
-  override fun onChannelActive(ctx: ChannelHandlerContext) {
-    val addr = ctx.channel().localAddress()
-    setChannelId("UDP-UPSTREAM-${addr.address}:${addr.port}")
+  override fun channelActive(ctx: ChannelHandlerContext) {
+    try {
+      val addr = ctx.channel().localAddress()
+      setChannelId("UDP-UPSTREAM-${addr.address}:${addr.port}")
+    } finally {
+      super.channelActive(ctx)
+    }
   }
 
   override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {

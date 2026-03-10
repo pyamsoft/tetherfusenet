@@ -19,6 +19,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty
 import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.SharedUdpControlRelay
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
@@ -90,6 +91,9 @@ protected constructor(
     // The boss group usually does not need more than a single thread allocated to it
     val bossGroup = MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory())
     val workerGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
+
+    Timber.d { "BOSS GROUP $bossGroup ${bossGroup.next()} -> ${bossGroup.next()}" }
+    Timber.d { "WORK GROUP $workerGroup ${workerGroup.next()} -> ${workerGroup.next()}" }
 
     val bootstrap =
         ServerBootstrap()

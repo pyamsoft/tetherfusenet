@@ -21,9 +21,12 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http.Http1ProxyHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.SharedUdpControlRelay
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks4ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks5ProxyHandler
 import io.netty.buffer.ByteBuf
+import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
 import io.netty.handler.codec.http.HttpServerCodec
@@ -37,14 +40,13 @@ import java.time.Clock
 
 internal class ProtocolDelegatingHandler
 internal constructor(
-    private val clock: Clock,
-    private val serverHostName: String,
-    private val isDebug: Boolean,
-    private val socketTagger: SocketTagger,
-    private val androidPreferredNetwork: Network?,
-    private val isHttpEnabled: Boolean,
-    private val isSocksEnabled: Boolean,
-    private val serverSocketTimeout: ServerSocketTimeout,
+  private val udpControlRelay: SharedUdpControlRelay<Channel>,
+  private val isDebug: Boolean,
+  private val socketTagger: SocketTagger,
+  private val androidPreferredNetwork: Network?,
+  private val isHttpEnabled: Boolean,
+  private val isSocksEnabled: Boolean,
+  private val serverSocketTimeout: ServerSocketTimeout,
 ) : ByteToMessageDecoder() {
 
   override fun decode(ctx: ChannelHandlerContext, input: ByteBuf, out: List<Any>) {
@@ -100,8 +102,7 @@ internal constructor(
 
           pipeline.addLast(
               Socks5ProxyHandler(
-                  clock = clock,
-                  serverHostName = serverHostName,
+                  udpControlRelay = udpControlRelay,
                   isDebug = isDebug,
                   socketTagger = socketTagger,
                   androidPreferredNetwork = androidPreferredNetwork,

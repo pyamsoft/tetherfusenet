@@ -21,36 +21,90 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProtocolDelegatingHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.SharedUdpControlRelay
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.UdpInfo
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.UdpRelayHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.UdpRelayUpstreamHandler
+import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
+import kotlinx.coroutines.CoroutineScope
 import java.time.Clock
 
 class NettyDelegatingProxy
 internal constructor(
-    private val clock: Clock,
-    private val host: String,
-    private val isDebug: Boolean,
-    private val socketTagger: SocketTagger,
-    private val androidPreferredNetwork: Network?,
-    private val isHttpEnabled: Boolean,
-    private val isSocksEnabled: Boolean,
-    private val serverSocketTimeout: ServerSocketTimeout,
-    port: Int,
-    onOpened: () -> Unit,
-    onClosing: () -> Unit,
-    onClosed: () -> Unit,
-    onError: (Throwable) -> Unit,
+  private val clock: Clock,
+  private val host: String,
+  private val isDebug: Boolean,
+  private val socketTagger: SocketTagger,
+  private val androidPreferredNetwork: Network?,
+  private val isHttpEnabled: Boolean,
+  private val isSocksEnabled: Boolean,
+  private val serverSocketTimeout: ServerSocketTimeout,
+  port: Int,
+  onOpened: () -> Unit,
+  onClosing: () -> Unit,
+  onClosed: () -> Unit,
+  onError: (Throwable) -> Unit,
 ) :
-    NettyProxy(
-        socketTagger = socketTagger,
-        host = host,
-        port = port,
-        onOpened = onOpened,
-        onClosing = onClosing,
-        onClosed = onClosed,
-        onError = onError,
-    ) {
+  NettyProxy(
+    socketTagger = socketTagger,
+    host = host,
+    port = port,
+    onOpened = onOpened,
+    onClosing = onClosing,
+    onClosed = onClosed,
+    onError = onError,
+  ) {
+
+  private var udpUpstreamRelay: SharedUdpControlRelay<UdpInfo>? = null
+  private var udpControlRelay: SharedUdpControlRelay<Channel>? = null
+
+  override fun onServerStarted(
+    scope: CoroutineScope,
+    channel: Channel,
+    workerGroup: EventLoopGroup
+  ) {
+    udpControlRelay?.close()
+
+    val upstream = SharedUdpControlRelay(
+      socketTagger = socketTagger,
+      androidPreferredNetwork = androidPreferredNetwork,
+      handler = { relay, _ ->
+        UdpRelayUpstreamHandler(
+          getClient = { relay.getClient(it) },
+        )
+      }
+    ).also {
+      udpUpstreamRelay = it
+    }
+
+    val relay = SharedUdpControlRelay<Channel>(
+      socketTagger = socketTagger,
+      androidPreferredNetwork = androidPreferredNetwork,
+      handler = { _, _ ->
+        UdpRelayHandler(
+          upstreamSharedRelay = upstream,
+        )
+      }
+    ).also {
+      udpControlRelay = it
+    }
+
+    upstream.start(workerGroup)
+    relay.start(serverHostName = host, eventLoop = workerGroup)
+  }
+
+  override fun onServerStopped() {
+    udpControlRelay?.close()
+    udpControlRelay = null
+
+    udpUpstreamRelay?.close()
+    udpUpstreamRelay = null
+  }
 
   override fun onChannelInitialized(channel: SocketChannel) {
     Timber.d { "Netty proxy server initialized!" }
@@ -61,18 +115,23 @@ internal constructor(
       pipeline.addLast(LoggingHandler(LogLevel.DEBUG))
     }
 
+    val relay = udpControlRelay
+    if (relay == null) {
+      Timber.w { "UDP control relay is null, cannot initialize" }
+      return
+    }
+
     // And bind our proxy relay handler
     pipeline.addLast(
-        ProtocolDelegatingHandler(
-            clock = clock,
-            serverHostName = host,
-            isDebug = isDebug,
-            socketTagger = socketTagger,
-            androidPreferredNetwork = androidPreferredNetwork,
-            isHttpEnabled = isHttpEnabled,
-            isSocksEnabled = isSocksEnabled,
-            serverSocketTimeout = serverSocketTimeout,
-        )
+      ProtocolDelegatingHandler(
+        udpControlRelay = relay,
+        isDebug = isDebug,
+        socketTagger = socketTagger,
+        androidPreferredNetwork = androidPreferredNetwork,
+        isHttpEnabled = isHttpEnabled,
+        isSocksEnabled = isSocksEnabled,
+        serverSocketTimeout = serverSocketTimeout,
+      )
     )
   }
 }
