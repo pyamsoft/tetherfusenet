@@ -28,60 +28,63 @@ import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
-import kotlinx.coroutines.CoroutineScope
 import java.time.Clock
+import kotlinx.coroutines.CoroutineScope
 
 class NettyDelegatingProxy
 internal constructor(
-  private val clock: Clock,
-  private val host: String,
-  private val isDebug: Boolean,
-  private val socketTagger: SocketTagger,
-  private val androidPreferredNetwork: Network?,
-  private val isHttpEnabled: Boolean,
-  private val isSocksEnabled: Boolean,
-  private val serverSocketTimeout: ServerSocketTimeout,
-  port: Int,
-  onOpened: () -> Unit,
-  onClosing: () -> Unit,
-  onClosed: () -> Unit,
-  onError: (Throwable) -> Unit,
+    private val clock: Clock,
+    host: String,
+    private val isDebug: Boolean,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
+    private val isHttpEnabled: Boolean,
+    private val isSocksEnabled: Boolean,
+    private val serverSocketTimeout: ServerSocketTimeout,
+    port: Int,
+    onOpened: () -> Unit,
+    onClosing: () -> Unit,
+    onClosed: () -> Unit,
+    onError: (Throwable) -> Unit,
 ) :
-  NettyProxy(
-    socketTagger = socketTagger,
-    host = host,
-    port = port,
-    onOpened = onOpened,
-    onClosing = onClosing,
-    onClosed = onClosed,
-    onError = onError,
-  ) {
+    NettyProxy(
+        socketTagger = socketTagger,
+        host = host,
+        port = port,
+        onOpened = onOpened,
+        onClosing = onClosing,
+        onClosed = onClosed,
+        onError = onError,
+    ) {
 
   private var udpControlSocketCreator: UdpControlSocketCreator? = null
 
   override fun onServerStarted(
-    scope: CoroutineScope,
-    channel: Channel,
-    workerGroup: EventLoopGroup
+      scope: CoroutineScope,
+      channel: Channel,
+      workerGroup: EventLoopGroup,
   ) {
+    Timber.d { "Netty proxy server initialized!" }
+
     if (isSocksEnabled) {
-      udpControlSocketCreator = UdpControlSocketCreator(
-        creator = UdpChannelCreator(
-          eventLoop = workerGroup,
-          socketTagger = socketTagger,
-          androidPreferredNetwork = androidPreferredNetwork,
-        ),
-      )
+      udpControlSocketCreator =
+          UdpControlSocketCreator(
+              creator =
+                  UdpChannelCreator(
+                      eventLoop = workerGroup,
+                      socketTagger = socketTagger,
+                      androidPreferredNetwork = androidPreferredNetwork,
+                  ),
+          )
     }
   }
 
   override fun onServerStopped() {
+    udpControlSocketCreator?.close()
     udpControlSocketCreator = null
   }
 
   override fun onChannelInitialized(channel: SocketChannel) {
-    Timber.d { "Netty proxy server initialized!" }
-
     val pipeline = channel.pipeline()
 
     if (isDebug) {
@@ -90,14 +93,14 @@ internal constructor(
 
     // And bind our proxy relay handler
     pipeline.addLast(
-      ProtocolDelegatingHandler(
-        udpControlSocketCreator = udpControlSocketCreator,
-        isDebug = isDebug,
-        socketTagger = socketTagger,
-        androidPreferredNetwork = androidPreferredNetwork,
-        isHttpEnabled = isHttpEnabled,
-        serverSocketTimeout = serverSocketTimeout,
-      )
+        ProtocolDelegatingHandler(
+            udpControlSocketCreator = udpControlSocketCreator,
+            isDebug = isDebug,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = androidPreferredNetwork,
+            isHttpEnabled = isHttpEnabled,
+            serverSocketTimeout = serverSocketTimeout,
+        )
     )
   }
 }

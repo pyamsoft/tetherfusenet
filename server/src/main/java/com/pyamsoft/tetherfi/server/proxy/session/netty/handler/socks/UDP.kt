@@ -34,9 +34,9 @@ object UDP {
 
   @CheckResult
   private fun readAddress(
-    channelId: String,
-    buf: ByteBuf,
-    type: Socks5AddressType,
+      channelId: String,
+      buf: ByteBuf,
+      type: Socks5AddressType,
   ): String {
     try {
       when (type) {
@@ -105,11 +105,11 @@ object UDP {
   }
 
   fun unwrap(
-    channelId: String,
-    executor: EventExecutor,
-    msg: DatagramPacket,
-    onUnwrapped: (ByteBuf, InetSocketAddress) -> Unit,
-    onError: () -> Unit,
+      channelId: String,
+      executor: EventExecutor,
+      msg: DatagramPacket,
+      onUnwrapped: (ByteBuf, InetSocketAddress) -> Unit,
+      onError: () -> Unit,
   ) {
     val buf = msg.content()
     // Drop bad connection
@@ -176,9 +176,9 @@ object UDP {
 
   @CheckResult
   fun wrap(
-    alloc: ByteBufAllocator,
-    sender: InetSocketAddress,
-    content: ByteBuf,
+      alloc: ByteBufAllocator,
+      sender: InetSocketAddress,
+      content: ByteBuf,
   ): ByteBuf {
     // May be able to initialize with 3
     return alloc.ioBuffer().apply {

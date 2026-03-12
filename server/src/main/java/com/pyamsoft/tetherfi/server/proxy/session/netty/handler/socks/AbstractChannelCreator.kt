@@ -24,23 +24,27 @@ import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
 
-internal abstract class AbstractChannelCreator<T : Channel> internal constructor(
-  private val eventLoop: EventLoopGroup,
-  private val channelFactoryCreator: () -> ChannelFactory<T>,
+internal abstract class AbstractChannelCreator<T : Channel>
+internal constructor(
+    private val eventLoop: EventLoopGroup,
+    private val channelFactoryCreator: () -> ChannelFactory<T>,
 ) : ChannelCreator {
 
   private val channelFactory by lazy { channelFactoryCreator() }
 
   @CheckResult
   private fun doBind(hostName: String?, onChannelInitialized: (Channel) -> Unit): ChannelFuture {
-    val server = Bootstrap().group(eventLoop).channelFactory(channelFactory)
-      .handler(
-        object : ChannelInitializer<Channel>() {
-          override fun initChannel(ch: Channel) {
-            onChannelInitialized(ch)
-          }
-        }
-      )
+    val server =
+        Bootstrap()
+            .group(eventLoop)
+            .channelFactory(channelFactory)
+            .handler(
+                object : ChannelInitializer<Channel>() {
+                  override fun initChannel(ch: Channel) {
+                    onChannelInitialized(ch)
+                  }
+                }
+            )
 
     return server.run {
       if (hostName.isNullOrBlank()) {
@@ -58,5 +62,4 @@ internal abstract class AbstractChannelCreator<T : Channel> internal constructor
   override fun bind(hostName: String, onChannelInitialized: (Channel) -> Unit): ChannelFuture {
     return doBind(hostName = hostName, onChannelInitialized = onChannelInitialized)
   }
-
 }

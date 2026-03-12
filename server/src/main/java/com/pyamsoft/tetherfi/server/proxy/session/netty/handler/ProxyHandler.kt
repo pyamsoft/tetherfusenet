@@ -17,10 +17,14 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
 import com.pyamsoft.tetherfi.core.Timber
+import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 
-internal abstract class ProxyHandler internal constructor() : ChannelInboundHandlerAdapter() {
+internal abstract class ProxyHandler
+internal constructor(
+    protected val serverSocketTimeout: ServerSocketTimeout,
+) : ChannelInboundHandlerAdapter() {
 
   protected var channelId = "CHANNEL-UNKNOWN"
     private set
@@ -34,21 +38,16 @@ internal abstract class ProxyHandler internal constructor() : ChannelInboundHand
 
     val channel = ctx.channel()
     if (channel.isOpen) {
-      Timber.d { "close owner channel $channel" }
       channel.flushAndClose()
     }
   }
 
-  protected open fun onCloseChannels(ctx: ChannelHandlerContext) {}
-
-  protected abstract fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any)
-
-  final override fun channelInactive(ctx: ChannelHandlerContext) {
+  final override fun channelActive(ctx: ChannelHandlerContext) {
     try {
-      Timber.d { "($channelId): Inactive! Close channel" }
-      closeChannels(ctx)
+      onChannelActive(ctx)
+      ctx.attachIdleStateHandler(serverSocketTimeout)
     } finally {
-      super.channelInactive(ctx)
+      super.channelActive(ctx)
     }
   }
 
@@ -61,6 +60,20 @@ internal abstract class ProxyHandler internal constructor() : ChannelInboundHand
     }
   }
 
+  final override fun channelInactive(ctx: ChannelHandlerContext) {
+    try {
+      Timber.d { "($channelId): Inactive! Close channel" }
+      closeChannels(ctx)
+    } finally {
+      super.channelInactive(ctx)
+    }
+  }
+
+  protected open fun onCloseChannels(ctx: ChannelHandlerContext) {}
+
+  protected open fun onChannelActive(ctx: ChannelHandlerContext) {}
+
+  protected abstract fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any)
 
   companion object {
 

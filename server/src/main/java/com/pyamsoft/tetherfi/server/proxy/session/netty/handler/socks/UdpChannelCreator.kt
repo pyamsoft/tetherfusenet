@@ -22,16 +22,18 @@ import com.pyamsoft.tetherfi.server.proxy.session.netty.factory.NetworkBoundData
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.DatagramChannel
 
-internal class UdpChannelCreator internal constructor(
-  eventLoop: EventLoopGroup,
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-) : AbstractChannelCreator<DatagramChannel>(
-  eventLoop = eventLoop,
-  channelFactoryCreator = {
-    NetworkBoundDatagramChannelFactory(
-      socketTagger = socketTagger,
-      androidPreferredNetwork = androidPreferredNetwork,
+internal class UdpChannelCreator
+internal constructor(
+    eventLoop: EventLoopGroup,
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+) :
+    AbstractChannelCreator<DatagramChannel>(
+        eventLoop = eventLoop,
+        channelFactoryCreator = {
+          NetworkBoundDatagramChannelFactory(
+              socketTagger = socketTagger,
+              androidPreferredNetwork = androidPreferredNetwork,
+          )
+        },
     )
-  }
-)

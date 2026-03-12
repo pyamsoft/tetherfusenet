@@ -187,7 +187,6 @@ internal inline fun ChannelHandlerContext.handleIdleState(
   val self = this
   if (evt is IdleStateEvent) {
     if (evt.state() == IdleState.ALL_IDLE) {
-      Timber.d { "Closing idle connection: $self $evt" }
       block()
     }
   }
@@ -208,7 +207,7 @@ internal fun Channel.flushAndClose() {
   }
 }
 
-internal fun ChannelHandlerContext.flushAndClose() {
+internal fun ChannelFuture.flushAndClose() {
   val self = this
   self.channel().flushAndClose()
 }

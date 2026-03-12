@@ -22,17 +22,11 @@ import io.netty.channel.ChannelHandlerContext
 
 internal abstract class DefaultProxyHandler
 internal constructor(
-    protected val serverSocketTimeout: ServerSocketTimeout,
-) : ProxyHandler() {
-
-  final override fun channelActive(ctx: ChannelHandlerContext) {
-    try {
-      onChannelActive(ctx)
-      ctx.attachIdleStateHandler(serverSocketTimeout)
-    } finally {
-      super.channelActive(ctx)
-    }
-  }
+    serverSocketTimeout: ServerSocketTimeout,
+) :
+    ProxyHandler(
+        serverSocketTimeout = serverSocketTimeout,
+    ) {
 
   final override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
     try {
@@ -44,6 +38,4 @@ internal constructor(
       super.userEventTriggered(ctx, evt)
     }
   }
-
-  protected open fun onChannelActive(ctx: ChannelHandlerContext) {}
 }

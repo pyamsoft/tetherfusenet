@@ -37,13 +37,13 @@ import io.netty.handler.codec.socksx.v5.Socks5ServerEncoder
 
 internal class ProtocolDelegatingHandler
 internal constructor(
-  // IF this is NULL, SOCKS is not enabled
-  private val udpControlSocketCreator: UdpControlSocketCreator?,
-  private val isDebug: Boolean,
-  private val socketTagger: SocketTagger,
-  private val androidPreferredNetwork: Network?,
-  private val isHttpEnabled: Boolean,
-  private val serverSocketTimeout: ServerSocketTimeout,
+    // IF this is NULL, SOCKS is not enabled
+    private val udpControlSocketCreator: UdpControlSocketCreator?,
+    private val isDebug: Boolean,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
+    private val isHttpEnabled: Boolean,
+    private val serverSocketTimeout: ServerSocketTimeout,
 ) : ByteToMessageDecoder() {
 
   override fun decode(ctx: ChannelHandlerContext, input: ByteBuf, out: List<Any>) {

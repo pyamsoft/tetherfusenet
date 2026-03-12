@@ -24,13 +24,12 @@ internal interface ChannelCreator {
 
   @CheckResult
   fun bind(
-    onChannelInitialized: (Channel) -> Unit,
+      onChannelInitialized: (Channel) -> Unit,
   ): ChannelFuture
 
   @CheckResult
   fun bind(
-    hostName: String,
-    onChannelInitialized: (Channel) -> Unit,
+      hostName: String,
+      onChannelInitialized: (Channel) -> Unit,
   ): ChannelFuture
-
 }

@@ -23,7 +23,6 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.dropHandler
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import io.ktor.util.network.address
 import io.ktor.util.network.port
 import io.netty.channel.Channel
@@ -42,36 +41,35 @@ import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5Message
 import io.netty.util.ReferenceCountUtil
 import java.net.InetSocketAddress
-import java.util.concurrent.ConcurrentHashMap
 
 internal class Socks5ProxyHandler
 internal constructor(
-  serverSocketTimeout: ServerSocketTimeout,
-  isDebug: Boolean,
-  socketTagger: SocketTagger,
-  androidPreferredNetwork: Network?,
-  private val udpControl: UdpControlSocketCreator,
+    serverSocketTimeout: ServerSocketTimeout,
+    isDebug: Boolean,
+    socketTagger: SocketTagger,
+    androidPreferredNetwork: Network?,
+    private val udpControl: UdpControlSocketCreator,
 ) :
-  SocksProxyHandler<Socks5CommandRequest>(
-    socketTagger = socketTagger,
-    androidPreferredNetwork = androidPreferredNetwork,
-    isDebug = isDebug,
-    serverSocketTimeout = serverSocketTimeout,
-  ) {
+    SocksProxyHandler<Socks5CommandRequest>(
+        socketTagger = socketTagger,
+        androidPreferredNetwork = androidPreferredNetwork,
+        isDebug = isDebug,
+        serverSocketTimeout = serverSocketTimeout,
+    ) {
 
   @CheckResult
   private fun createSOCKS5CommandErrorResponse(msg: Socks5CommandRequest): Socks5CommandResponse {
     return DefaultSocks5CommandResponse(
-      Socks5CommandStatus.COMMAND_UNSUPPORTED,
-      msg.dstAddrType(),
+        Socks5CommandStatus.COMMAND_UNSUPPORTED,
+        msg.dstAddrType(),
     )
   }
 
   @CheckResult
   private fun createSOCKS5CommandFailureResponse(msg: Socks5CommandRequest): Socks5CommandResponse {
     return DefaultSocks5CommandResponse(
-      Socks5CommandStatus.FAILURE,
-      msg.dstAddrType(),
+        Socks5CommandStatus.FAILURE,
+        msg.dstAddrType(),
     )
   }
 
@@ -81,29 +79,29 @@ internal constructor(
   }
 
   private fun handleSocksUdpAssociateRequest(
-    ctx: ChannelHandlerContext,
-    msg: Socks5CommandRequest,
+      ctx: ChannelHandlerContext,
+      msg: Socks5CommandRequest,
   ) {
     val serverChannel = ctx.channel()
 
-    val clientAddress = serverChannel.remoteAddress().cast<InetSocketAddress>()
-    if (clientAddress == null) {
+    val tcpControlAddress = serverChannel.remoteAddress().cast<InetSocketAddress>()
+    if (tcpControlAddress == null) {
       Timber.w { "SOCKS client remote==null" }
       sendFailureAndClose(ctx, msg)
       return
     }
 
-    val udpControl = udpControl.register(clientAddress)
+    Timber.d { "Register UDP for TCP control $tcpControlAddress" }
+    val udpControl = udpControl.register(tcpControlAddress)
 
     // When the shared UDP control socket closes, close this socket
-    val udpFuture = udpControl.channelFuture
+    val udpFuture = udpControl.socket
     val controlSocket = udpFuture.channel()
 
     // Register the client
     // When this channel closes, remove it from the registered list
     serverChannel.closeFuture().addListener { udpControl.unregister() }
 
-    Timber.d { "Connect to UDP control: ${controlSocket.localAddress()}" }
     udpFuture.addListener { future ->
       if (!future.isSuccess) {
         Timber.e(future.cause()) { "SOCKS UDP-ASSOC proxied outbound failed" }
@@ -135,14 +133,16 @@ internal constructor(
 
       // Tell proxy we've established connection so that NOW we can relay
       val type = resolveSocks5AddressType(relayControlAddress)
-      Timber.d { "Tell client about UDP control $type ${relayControl.address}:${relayControl.port}" }
+      Timber.d {
+        "Tell client about UDP control $type ${relayControl.address}:${relayControl.port}"
+      }
       ctx.writeAndFlush(
-        DefaultSocks5CommandResponse(
-          Socks5CommandStatus.SUCCESS,
-          type,
-          relayControl.address,
-          relayControl.port,
-        )
+          DefaultSocks5CommandResponse(
+              Socks5CommandStatus.SUCCESS,
+              type,
+              relayControl.address,
+              relayControl.port,
+          )
       )
     }
   }
@@ -183,9 +183,9 @@ internal constructor(
   }
 
   override fun publishConnectSuccess(
-    ctx: ChannelHandlerContext,
-    msg: Socks5CommandRequest,
-    outbound: Channel,
+      ctx: ChannelHandlerContext,
+      msg: Socks5CommandRequest,
+      outbound: Channel,
   ) {
     val remote = outbound.localAddress()
     if (remote == null) {
@@ -202,12 +202,12 @@ internal constructor(
     }
 
     ctx.writeAndFlush(
-      DefaultSocks5CommandResponse(
-        Socks5CommandStatus.SUCCESS,
-        resolveSocks5AddressType(remoteAddress),
-        remote.address,
-        remote.port,
-      )
+        DefaultSocks5CommandResponse(
+            Socks5CommandStatus.SUCCESS,
+            resolveSocks5AddressType(remoteAddress),
+            remote.address,
+            remote.port,
+        )
     )
   }
 

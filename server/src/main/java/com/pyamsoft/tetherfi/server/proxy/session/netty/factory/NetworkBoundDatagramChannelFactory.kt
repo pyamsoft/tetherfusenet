@@ -26,19 +26,19 @@ import java.nio.channels.DatagramChannel as JavaDatagramChannel
 
 internal class NetworkBoundDatagramChannelFactory
 internal constructor(
-  private val socketTagger: SocketTagger,
-  private val androidPreferredNetwork: Network?,
+    private val socketTagger: SocketTagger,
+    private val androidPreferredNetwork: Network?,
 ) : ChannelFactory<DatagramChannel> {
 
   override fun newChannel(): DatagramChannel {
     socketTagger.tagSocket()
 
     val outboundSocketChannel =
-      JavaDatagramChannel.open().apply {
-        configureBlocking(false)
+        JavaDatagramChannel.open().apply {
+          configureBlocking(false)
 
-        setOption(StandardSocketOptions.SO_REUSEADDR, true)
-      }
+          setOption(StandardSocketOptions.SO_REUSEADDR, true)
+        }
 
     val socket = outboundSocketChannel.socket()
     androidPreferredNetwork?.bindSocket(socket)
