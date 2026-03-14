@@ -49,6 +49,13 @@ internal constructor(
         serverSocketTimeout = serverSocketTimeout,
     ) {
 
+  private val relayHandlerFactory =
+      RelayHandler.factory(
+          scope = scope,
+          clientResolver = clientResolver,
+          serverSocketTimeout = serverSocketTimeout,
+      )
+
   protected fun handleSocksConnectRequest(ctx: ChannelHandlerContext, msg: T) {
     if (!isConnectMessageType(msg)) {
       sendErrorAndClose(ctx, msg)
@@ -109,11 +116,7 @@ internal constructor(
               val pipeline = ch.pipeline()
 
               // Read from the REMOTE and send back to the PROXY
-              pipeline.addLast(
-                  RelayHandler(
-                      serverSocketTimeout = serverSocketTimeout,
-                  )
-              )
+              pipeline.addLast(relayHandlerFactory.create(Unit))
             },
         )
 
@@ -123,11 +126,12 @@ internal constructor(
     serverChannel.closeFuture().addListener { outbound.flushAndClose() }
     outbound.closeFuture().addListener { serverChannel.flushAndClose() }
 
-    outbound.apply {
-      attr(RelayHandler.TAG).set("$tag-INBOUND-${dstAddr}:${dstPort}")
-      attr(RelayHandler.WRITE_BACK_CHANNEL).set(serverChannel)
-      attr(RelayHandler.CLIENT).set(client)
-    }
+    RelayHandler.applyChannelAttributes(
+        channel = outbound,
+        writeBackChannel = serverChannel,
+        tag = "$tag-INBOUND-${dstAddr}:${dstPort}",
+        client = client,
+    )
 
     connectSocket.addListener { future ->
       if (!future.isSuccess) {
@@ -136,11 +140,12 @@ internal constructor(
         return@addListener
       }
 
-      serverChannel.apply {
-        attr(RelayHandler.TAG).set("$tag-OUTBOUND-${dstAddr}:${dstPort}")
-        attr(RelayHandler.WRITE_BACK_CHANNEL).set(outbound)
-        attr(RelayHandler.CLIENT).set(client)
-      }
+      RelayHandler.applyChannelAttributes(
+          channel = serverChannel,
+          writeBackChannel = outbound,
+          tag = "$tag-OUTBOUND-${dstAddr}:${dstPort}",
+          client = client,
+      )
 
       // Tell proxy we've established connection
       publishConnectSuccess(tag, ctx, msg, outbound)
@@ -154,11 +159,7 @@ internal constructor(
       pipeline.dropHandler(this::class)
 
       // Add a relay for the internet outbound
-      pipeline.addLast(
-          RelayHandler(
-              serverSocketTimeout = serverSocketTimeout,
-          )
-      )
+      pipeline.addLast(relayHandlerFactory.create(Unit))
     }
   }
 

@@ -19,6 +19,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import io.ktor.util.network.address
 import io.ktor.util.network.port
@@ -26,12 +27,17 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.util.AttributeKey
+import kotlinx.coroutines.CoroutineScope
 
 internal class RelayHandler
-internal constructor(
+private constructor(
+    scope: CoroutineScope,
+    clientResolver: ClientResolver,
     serverSocketTimeout: ServerSocketTimeout,
 ) :
     ProxyHandler(
+        scope = scope,
+        clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
     ) {
 
@@ -113,14 +119,44 @@ internal constructor(
 
   companion object {
     @JvmStatic
-    val CLIENT: AttributeKey<TetherClient> =
+    private val CLIENT: AttributeKey<TetherClient> =
         AttributeKey.newInstance("${RelayHandler::class.simpleName}-CLIENT")
 
     @JvmStatic
-    val WRITE_BACK_CHANNEL: AttributeKey<Channel> =
+    private val WRITE_BACK_CHANNEL: AttributeKey<Channel> =
         AttributeKey.newInstance("${RelayHandler::class.simpleName}-WRITE_BACK_CHANNEL")
 
     @JvmStatic
-    val TAG: AttributeKey<String> = AttributeKey.newInstance("${RelayHandler::class.simpleName}-ID")
+    private val TAG: AttributeKey<String> =
+        AttributeKey.newInstance("${RelayHandler::class.simpleName}-ID")
+
+    @JvmStatic
+    @CheckResult
+    fun factory(
+        scope: CoroutineScope,
+        clientResolver: ClientResolver,
+        serverSocketTimeout: ServerSocketTimeout,
+    ): HandlerFactory<Unit> {
+      return {
+        RelayHandler(
+            scope = scope,
+            clientResolver = clientResolver,
+            serverSocketTimeout = serverSocketTimeout,
+        )
+      }
+    }
+
+    fun applyChannelAttributes(
+        channel: Channel,
+        writeBackChannel: Channel,
+        tag: String,
+        client: TetherClient,
+    ) {
+      channel.apply {
+        attr(TAG).set(tag)
+        attr(WRITE_BACK_CHANNEL).set(writeBackChannel)
+        attr(CLIENT).set(client)
+      }
+    }
   }
 }

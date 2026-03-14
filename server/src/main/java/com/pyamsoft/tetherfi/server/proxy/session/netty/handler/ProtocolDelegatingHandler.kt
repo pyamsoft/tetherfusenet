@@ -16,6 +16,7 @@
 
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
+import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.ClientResolver
@@ -36,7 +37,7 @@ import io.netty.handler.codec.socksx.v5.Socks5ServerEncoder
 import kotlinx.coroutines.CoroutineScope
 
 internal class ProtocolDelegatingHandler
-internal constructor(
+private constructor(
     // IF this is NULL, SOCKS is not enabled
     private val udpSocketCreator: ChannelCreator?,
     private val tcpSocketCreator: ChannelCreator,
@@ -45,6 +46,30 @@ internal constructor(
     private val clientResolver: ClientResolver,
     private val scope: CoroutineScope,
 ) : ByteToMessageDecoder() {
+
+  private val http1HandlerFactory =
+      Http1ProxyHandler.factory(
+          scope = scope,
+          clientResolver = clientResolver,
+          tcpSocketCreator = tcpSocketCreator,
+          serverSocketTimeout = serverSocketTimeout,
+      )
+
+  private val socks4HandlerFactory =
+      Socks4ProxyHandler.factory(
+          scope = scope,
+          clientResolver = clientResolver,
+          tcpSocketCreator = tcpSocketCreator,
+          serverSocketTimeout = serverSocketTimeout,
+      )
+
+  private val socks5HandlerFactory =
+      Socks5ProxyHandler.factory(
+          scope = scope,
+          clientResolver = clientResolver,
+          tcpSocketCreator = tcpSocketCreator,
+          serverSocketTimeout = serverSocketTimeout,
+      )
 
   override fun decode(ctx: ChannelHandlerContext, input: ByteBuf, out: List<Any>) {
     if (!input.isReadable) {
@@ -76,14 +101,7 @@ internal constructor(
           pipeline.addLast(Socks4ServerEncoder.INSTANCE)
           pipeline.addLast(Socks4ServerDecoder())
 
-          pipeline.addLast(
-              Socks4ProxyHandler(
-                  scope = scope,
-                  clientResolver = clientResolver,
-                  tcpSocketCreator = tcpSocketCreator,
-                  serverSocketTimeout = serverSocketTimeout,
-              )
-          )
+          pipeline.addLast(socks4HandlerFactory.create(Unit))
         }
 
         SocksVersion.SOCKS5 -> {
@@ -98,15 +116,7 @@ internal constructor(
           pipeline.addLast(Socks5InitialRequestDecoder())
           pipeline.addLast(Socks5CommandRequestDecoder())
 
-          pipeline.addLast(
-              Socks5ProxyHandler(
-                  scope = scope,
-                  clientResolver = clientResolver,
-                  udpSocketCreator = udpControl,
-                  tcpSocketCreator = tcpSocketCreator,
-                  serverSocketTimeout = serverSocketTimeout,
-              )
-          )
+          pipeline.addLast(socks5HandlerFactory.create(udpControl))
         }
 
         else -> {
@@ -119,18 +129,44 @@ internal constructor(
           pipeline.addLast(HttpServerCodec())
 
           // And bind our proxy relay handler
-          pipeline.addLast(
-              Http1ProxyHandler(
-                  scope = scope,
-                  clientResolver = clientResolver,
-                  tcpSocketCreator = tcpSocketCreator,
-                  serverSocketTimeout = serverSocketTimeout,
-              )
-          )
+          pipeline.addLast(http1HandlerFactory.create(Unit))
         }
       }
     } finally {
       pipeline.dropHandler(this::class)
+    }
+  }
+
+  @ConsistentCopyVisibility
+  internal data class Params
+  internal constructor(
+      val scope: CoroutineScope,
+      val tcp: ChannelCreator,
+      // IF this is NULL, SOCKS is not enabled
+      val udp: ChannelCreator?,
+  )
+
+  companion object {
+
+    @JvmStatic
+    @CheckResult
+    fun factory(
+        isHttpEnabled: Boolean,
+        serverSocketTimeout: ServerSocketTimeout,
+        clientResolver: ClientResolver,
+    ): HandlerFactory<Params> {
+      return { params ->
+        ProtocolDelegatingHandler(
+            isHttpEnabled = isHttpEnabled,
+            serverSocketTimeout = serverSocketTimeout,
+            clientResolver = clientResolver,
+            scope = params.scope,
+            tcpSocketCreator = params.tcp,
+
+            // IF this is NULL, SOCKS is not enabled
+            udpSocketCreator = params.udp,
+        )
+      }
     }
   }
 }

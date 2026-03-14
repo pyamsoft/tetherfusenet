@@ -21,6 +21,7 @@ import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.ClientResolver
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.HandlerFactory
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.dropHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
@@ -59,6 +60,13 @@ internal constructor(
         clientResolver = clientResolver,
         tcpSocketCreator = tcpSocketCreator,
     ) {
+
+  private val udpRelayHandlerFactory =
+      UdpRelayHandler.factory(
+          scope = scope,
+          clientResolver = clientResolver,
+          serverSocketTimeout = serverSocketTimeout,
+      )
 
   @CheckResult
   private fun createSOCKS5CommandErrorResponse(msg: Socks5CommandRequest): Socks5CommandResponse {
@@ -102,12 +110,7 @@ internal constructor(
           val pipeline = ch.pipeline()
 
           // Read from the REMOTE and send back to the PROXY
-          pipeline.addLast(
-              UdpRelayHandler(
-                  clientResolver = clientResolver,
-                  serverSocketTimeout = serverSocketTimeout,
-              )
-          )
+          pipeline.addLast(udpRelayHandlerFactory.create(Unit))
         }
 
     val udpRelay = udpControl.channel()
@@ -116,7 +119,10 @@ internal constructor(
     serverChannel.closeFuture().addListener { udpRelay.flushAndClose() }
     udpRelay.closeFuture().addListener { serverChannel.flushAndClose() }
 
-    udpRelay.apply { attr(UdpRelayHandler.TCP_CONTROL_ADDRESS).set(tcpControlAddress) }
+    UdpRelayHandler.applyChannelAttributes(
+        channel = udpRelay,
+        tcpControlAddress = tcpControlAddress,
+    )
 
     udpControl.addListener { future ->
       if (!future.isSuccess) {
@@ -273,6 +279,28 @@ internal constructor(
       }
     } finally {
       ReferenceCountUtil.release(msg)
+    }
+  }
+
+  companion object {
+
+    @JvmStatic
+    @CheckResult
+    fun factory(
+        scope: CoroutineScope,
+        serverSocketTimeout: ServerSocketTimeout,
+        clientResolver: ClientResolver,
+        tcpSocketCreator: ChannelCreator,
+    ): HandlerFactory<ChannelCreator> {
+      return { udpSocketCreator ->
+        Socks5ProxyHandler(
+            scope = scope,
+            clientResolver = clientResolver,
+            tcpSocketCreator = tcpSocketCreator,
+            serverSocketTimeout = serverSocketTimeout,
+            udpSocketCreator = udpSocketCreator,
+        )
+      }
     }
   }
 }

@@ -20,6 +20,7 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.ClientResolver
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.HandlerFactory
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.dropHandler
 import io.ktor.util.network.address
@@ -147,6 +148,27 @@ internal constructor(
       }
     } finally {
       ReferenceCountUtil.release(msg)
+    }
+  }
+
+  companion object {
+
+    @JvmStatic
+    @CheckResult
+    fun factory(
+        scope: CoroutineScope,
+        serverSocketTimeout: ServerSocketTimeout,
+        clientResolver: ClientResolver,
+        tcpSocketCreator: ChannelCreator,
+    ): HandlerFactory<Unit> {
+      return {
+        Socks4ProxyHandler(
+            scope = scope,
+            clientResolver = clientResolver,
+            tcpSocketCreator = tcpSocketCreator,
+            serverSocketTimeout = serverSocketTimeout,
+        )
+      }
     }
   }
 }

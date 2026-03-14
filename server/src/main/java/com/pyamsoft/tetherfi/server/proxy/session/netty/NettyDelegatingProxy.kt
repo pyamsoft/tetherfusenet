@@ -66,6 +66,13 @@ internal constructor(
   private var udpSocketCreator: ChannelCreator? = null
   private var tcpSocketCreator: ChannelCreator? = null
 
+  private val delegatingHandlerFactory =
+      ProtocolDelegatingHandler.factory(
+          isHttpEnabled = isHttpEnabled,
+          serverSocketTimeout = serverSocketTimeout,
+          clientResolver = clientResolver,
+      )
+
   override fun onServerStarted(
       scope: CoroutineScope,
       channel: Channel,
@@ -107,18 +114,17 @@ internal constructor(
 
     // And bind our proxy relay handler
     pipeline.addLast(
-        ProtocolDelegatingHandler(
-            isHttpEnabled = isHttpEnabled,
-            serverSocketTimeout = serverSocketTimeout,
-            clientResolver = clientResolver,
-            scope = scope,
+        delegatingHandlerFactory.create(
+            ProtocolDelegatingHandler.Params(
+                scope = scope,
 
-            // This will be resolved in time I am pretty sure :)
-            tcpSocketCreator = tcpSocketCreator.requireNotNull(),
+                // This will be resolved in time I am pretty sure :)
+                tcp = tcpSocketCreator.requireNotNull(),
 
-            // If this is NULL, then SOCKS is disabled.
-            // If non-null SOCKS is enabled
-            udpSocketCreator = udpSocketCreator,
+                // If this is NULL, then SOCKS is disabled.
+                // If non-null SOCKS is enabled
+                udp = udpSocketCreator,
+            ),
         )
     )
   }

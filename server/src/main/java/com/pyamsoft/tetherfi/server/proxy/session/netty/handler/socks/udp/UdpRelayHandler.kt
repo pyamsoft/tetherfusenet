@@ -23,10 +23,12 @@ import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.clients.ensure
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.HandlerFactory
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import io.ktor.util.network.address
 import io.ktor.util.network.port
+import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
 import io.netty.handler.codec.socksx.v5.DefaultSocks5CommandResponse
@@ -34,13 +36,16 @@ import io.netty.handler.codec.socksx.v5.Socks5AddressType
 import io.netty.handler.codec.socksx.v5.Socks5CommandStatus
 import io.netty.util.AttributeKey
 import java.net.InetSocketAddress
+import kotlinx.coroutines.CoroutineScope
 
 internal class UdpRelayHandler
-internal constructor(
+private constructor(
+    scope: CoroutineScope,
     clientResolver: ClientResolver,
     serverSocketTimeout: ServerSocketTimeout,
 ) :
     ProxyHandler(
+        scope = scope,
         clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
     ) {
@@ -196,7 +201,30 @@ internal constructor(
         AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-BACK_TO_CLIENT_ADDRESS")
 
     @JvmStatic
-    val TCP_CONTROL_ADDRESS: AttributeKey<InetSocketAddress> =
+    private val TCP_CONTROL_ADDRESS: AttributeKey<InetSocketAddress> =
         AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-TCP_CONTROL_ADDRESS")
+
+    @JvmStatic
+    @CheckResult
+    fun factory(
+        scope: CoroutineScope,
+        clientResolver: ClientResolver,
+        serverSocketTimeout: ServerSocketTimeout,
+    ): HandlerFactory<Unit> {
+      return {
+        UdpRelayHandler(
+            scope = scope,
+            clientResolver = clientResolver,
+            serverSocketTimeout = serverSocketTimeout,
+        )
+      }
+    }
+
+    fun applyChannelAttributes(
+        channel: Channel,
+        tcpControlAddress: InetSocketAddress,
+    ) {
+      channel.apply { attr(TCP_CONTROL_ADDRESS).set(tcpControlAddress) }
+    }
   }
 }

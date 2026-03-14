@@ -17,9 +17,12 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.ClientResolver
+import com.pyamsoft.tetherfi.server.clients.ensure
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.HandlerFactory
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.RelayHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
@@ -40,11 +43,12 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.codec.http.HttpVersion
 import io.netty.util.ReferenceCountUtil
+import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 
 // Cannot be shareable because of the local state messageQueue and outboundChannel
 internal class Http1ProxyHandler
-internal constructor(
+private constructor(
     scope: CoroutineScope,
     serverSocketTimeout: ServerSocketTimeout,
     clientResolver: ClientResolver,
@@ -55,6 +59,13 @@ internal constructor(
         clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
     ) {
+
+  private val relayHandlerFactory =
+      RelayHandler.factory(
+          scope = scope,
+          clientResolver = clientResolver,
+          serverSocketTimeout = serverSocketTimeout,
+      )
 
   private val messageQueue = mutableListOf<Any>()
 
@@ -114,6 +125,8 @@ internal constructor(
   }
 
   private fun handleHttpsConnect(ctx: ChannelHandlerContext, msg: HttpRequest) {
+    val tag = "HTTPS-CONNECT"
+
     val parsed = parseUriAndPort(msg.uri(), 443)
     if (parsed == null) {
       sendErrorAndClose(ctx, msg)
@@ -122,19 +135,28 @@ internal constructor(
 
     if (parsed.resolvedHostName.isBlank()) {
       Timber.w {
-        "(${channelId}) DROP: Invalid upstream destination address: ${parsed.resolvedHostName}"
+        "(${channelId}) DROP: $tag Invalid upstream destination address: ${parsed.resolvedHostName}"
       }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     if (parsed.resolvedPort !in VALID_PORT_RANGE) {
-      Timber.w { "(${channelId}) DROP: Invalid upstream destination port: ${parsed.resolvedPort}" }
+      Timber.w {
+        "(${channelId}) DROP: $tag Invalid upstream destination port: ${parsed.resolvedPort}"
+      }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     val serverChannel = ctx.channel()
+    val remoteClient = serverChannel.remoteAddress().cast<InetSocketAddress>()
+    if (remoteClient == null) {
+      Timber.w { "($channelId) DROP: $tag remoteClient IP is NULL" }
+      return
+    }
+
+    val client = clientResolver.ensure(remoteClient)
 
     val future =
         tcpSocketCreator.connect(
@@ -144,11 +166,7 @@ internal constructor(
               val pipeline = ch.pipeline()
 
               // Read from the REMOTE and send back to the PROXY
-              pipeline.addLast(
-                  RelayHandler(
-                      serverSocketTimeout = serverSocketTimeout,
-                  )
-              )
+              pipeline.addLast(relayHandlerFactory.create(Unit))
             },
         )
 
@@ -158,15 +176,16 @@ internal constructor(
     serverChannel.closeFuture().addListener { outbound.flushAndClose() }
     outbound.closeFuture().addListener { serverChannel.flushAndClose() }
 
-    outbound.apply {
-      attr(RelayHandler.TAG)
-          .set("HTTPS-CONNECT-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}")
-      attr(RelayHandler.WRITE_BACK_CHANNEL).set(serverChannel)
-    }
+    RelayHandler.applyChannelAttributes(
+        channel = outbound,
+        writeBackChannel = serverChannel,
+        tag = "$tag-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+        client = client,
+    )
 
     future.addListener { future ->
       if (!future.isSuccess) {
-        Timber.e(future.cause()) { "Unable to connect to $parsed" }
+        Timber.e(future.cause()) { "(${channelId}) $tag Unable to connect to $parsed" }
         sendErrorAndClose(ctx, msg)
         return@addListener
       }
@@ -184,20 +203,17 @@ internal constructor(
       pipeline.dropHandler(this::class)
 
       // Read from the PROXY and send to the remote
-      pipeline.addLast(
-          RelayHandler(
-              serverSocketTimeout = serverSocketTimeout,
-          )
+      pipeline.addLast(relayHandlerFactory.create(Unit))
+
+      RelayHandler.applyChannelAttributes(
+          channel = serverChannel,
+          writeBackChannel = outbound,
+          tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+          client = client,
       )
 
-      serverChannel.apply {
-        attr(RelayHandler.TAG)
-            .set("HTTPS-CONNECT-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}")
-        attr(RelayHandler.WRITE_BACK_CHANNEL).set(outbound)
-      }
-
       // Then establish connection
-      Timber.d { "Write HTTPS connect to $parsed" }
+      Timber.d { "(${channelId}) Write $tag to $parsed" }
       ctx.writeAndFlush(response)
 
       // Remove the http server codec
@@ -206,6 +222,8 @@ internal constructor(
   }
 
   private fun handleHttpForward(ctx: ChannelHandlerContext, msg: HttpRequest) {
+    val tag = "HTTP-FORWARD"
+
     val parsed = parseUriAndPort(msg.uri(), 80)
     if (parsed == null) {
       sendErrorAndClose(ctx, msg)
@@ -214,19 +232,28 @@ internal constructor(
 
     if (parsed.resolvedHostName.isBlank()) {
       Timber.w {
-        "(${channelId}) DROP: Invalid upstream destination address: ${parsed.resolvedHostName}"
+        "(${channelId}) DROP: $tag Invalid upstream destination address: ${parsed.resolvedHostName}"
       }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     if (parsed.resolvedPort !in VALID_PORT_RANGE) {
-      Timber.w { "(${channelId}) DROP: Invalid upstream destination port: ${parsed.resolvedPort}" }
+      Timber.w {
+        "(${channelId}) DROP: $tag Invalid upstream destination port: ${parsed.resolvedPort}"
+      }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     val serverChannel = ctx.channel()
+    val remoteClient = serverChannel.remoteAddress().cast<InetSocketAddress>()
+    if (remoteClient == null) {
+      Timber.w { "($channelId) DROP: $tag remoteClient IP is NULL" }
+      return
+    }
+
+    val client = clientResolver.ensure(remoteClient)
 
     val future =
         tcpSocketCreator.connect(
@@ -239,11 +266,7 @@ internal constructor(
               pipeline.addLast(HttpClientCodec())
 
               // Read from the REMOTE and send back to the PROXY
-              pipeline.addLast(
-                  RelayHandler(
-                      serverSocketTimeout = serverSocketTimeout,
-                  )
-              )
+              pipeline.addLast(relayHandlerFactory.create(Unit))
             },
         )
 
@@ -253,11 +276,12 @@ internal constructor(
     serverChannel.closeFuture().addListener { outbound.flushAndClose() }
     outbound.closeFuture().addListener { serverChannel.flushAndClose() }
 
-    outbound.apply {
-      attr(RelayHandler.TAG)
-          .set("HTTP-FORWARD-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}")
-      attr(RelayHandler.WRITE_BACK_CHANNEL).set(serverChannel)
-    }
+    RelayHandler.applyChannelAttributes(
+        channel = outbound,
+        writeBackChannel = serverChannel,
+        tag = "$tag-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+        client = client,
+    )
 
     future.addListener { future ->
       if (!future.isSuccess) {
@@ -279,17 +303,14 @@ internal constructor(
       pipeline.dropHandler(this::class)
 
       // Read from the PROXY and send to REMOTE
-      pipeline.addLast(
-          RelayHandler(
-              serverSocketTimeout = serverSocketTimeout,
-          )
-      )
+      pipeline.addLast(relayHandlerFactory.create(Unit))
 
-      serverChannel.apply {
-        attr(RelayHandler.TAG)
-            .set("HTTP-FORWARD-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}")
-        attr(RelayHandler.WRITE_BACK_CHANNEL).set(outbound)
-      }
+      RelayHandler.applyChannelAttributes(
+          channel = serverChannel,
+          writeBackChannel = outbound,
+          tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+          client = client,
+      )
 
       // Replay the initial request
       Timber.d { "Forward connect to $parsed" }
@@ -426,6 +447,24 @@ internal constructor(
           resolvedPort = port,
           proxyCorrectedFilePath = path,
       )
+    }
+
+    @JvmStatic
+    @CheckResult
+    fun factory(
+        scope: CoroutineScope,
+        serverSocketTimeout: ServerSocketTimeout,
+        clientResolver: ClientResolver,
+        tcpSocketCreator: ChannelCreator,
+    ): HandlerFactory<Unit> {
+      return {
+        Http1ProxyHandler(
+            scope = scope,
+            clientResolver = clientResolver,
+            tcpSocketCreator = tcpSocketCreator,
+            serverSocketTimeout = serverSocketTimeout,
+        )
+      }
     }
   }
 }
