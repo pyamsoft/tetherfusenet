@@ -40,8 +40,8 @@ internal constructor(
     host: String,
     port: Int,
     private val blockedClients: BlockedClients,
-    private val clientResolver: ClientResolver,
     private val allowedClients: AllowedClients,
+    private val clientResolver: ClientResolver,
     private val isDebug: Boolean,
     private val socketTagger: SocketTagger,
     private val androidPreferredNetwork: Network?,
@@ -95,7 +95,10 @@ internal constructor(
     tcpSocketCreator = null
   }
 
-  override fun onChannelInitialized(channel: SocketChannel) {
+  override fun onChannelInitialized(
+      scope: CoroutineScope,
+      channel: SocketChannel,
+  ) {
     val pipeline = channel.pipeline()
 
     if (isDebug) {
@@ -107,6 +110,8 @@ internal constructor(
         ProtocolDelegatingHandler(
             isHttpEnabled = isHttpEnabled,
             serverSocketTimeout = serverSocketTimeout,
+            clientResolver = clientResolver,
+            scope = scope,
 
             // This will be resolved in time I am pretty sure :)
             tcpSocketCreator = tcpSocketCreator.requireNotNull(),

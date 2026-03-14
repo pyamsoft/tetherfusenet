@@ -20,6 +20,7 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.dropHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
@@ -42,15 +43,20 @@ import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5Message
 import io.netty.util.ReferenceCountUtil
 import java.net.InetSocketAddress
+import kotlinx.coroutines.CoroutineScope
 
 internal class Socks5ProxyHandler
 internal constructor(
+    scope: CoroutineScope,
     serverSocketTimeout: ServerSocketTimeout,
     tcpSocketCreator: ChannelCreator,
+    clientResolver: ClientResolver,
     private val udpSocketCreator: ChannelCreator,
 ) :
     SocksProxyHandler<Socks5CommandRequest>(
+        scope = scope,
         serverSocketTimeout = serverSocketTimeout,
+        clientResolver = clientResolver,
         tcpSocketCreator = tcpSocketCreator,
     ) {
 
@@ -79,16 +85,18 @@ internal constructor(
       ctx: ChannelHandlerContext,
       msg: Socks5CommandRequest,
   ) {
+    val tag = "${msg.version()}-UDP_ASSOC"
+
     val serverChannel = ctx.channel()
 
     val tcpControlAddress = serverChannel.remoteAddress().cast<InetSocketAddress>()
     if (tcpControlAddress == null) {
-      Timber.w { "SOCKS client remote==null" }
+      Timber.w { "($channelId) DROP: $tag client remote==null" }
       sendFailureAndClose(ctx, msg)
       return
     }
 
-    Timber.d { "Register UDP for TCP control $tcpControlAddress" }
+    Timber.d { "(${channelId}) $tag Register UDP for TCP control $tcpControlAddress" }
     val udpControl =
         udpSocketCreator.bind { ch ->
           val pipeline = ch.pipeline()
@@ -96,6 +104,7 @@ internal constructor(
           // Read from the REMOTE and send back to the PROXY
           pipeline.addLast(
               UdpRelayHandler(
+                  clientResolver = clientResolver,
                   serverSocketTimeout = serverSocketTimeout,
               )
           )
@@ -111,21 +120,21 @@ internal constructor(
 
     udpControl.addListener { future ->
       if (!future.isSuccess) {
-        Timber.e(future.cause()) { "SOCKS UDP-ASSOC proxied outbound failed" }
+        Timber.e(future.cause()) { "($channelId) DROP $tag proxied outbound failed" }
         sendFailureAndClose(ctx, msg)
         return@addListener
       }
 
       val relayControl = udpRelay.localAddress()
       if (relayControl == null) {
-        Timber.w { "SOCKS UDP-ASSOC proxied outbound remote==null" }
+        Timber.w { "($channelId) DROP $tag proxied outbound remote==null" }
         sendFailureAndClose(ctx, msg)
         return@addListener
       }
 
       val relayControlAddress = relayControl.cast<InetSocketAddress>()
       if (relayControlAddress == null) {
-        Timber.w { "SOCKS UDP-ASSOC proxied outbound remote is not InetSocketAddress" }
+        Timber.w { "($channelId) DROP $tag proxied outbound remote is not InetSocketAddress" }
         sendFailureAndClose(ctx, msg)
         return@addListener
       }
@@ -141,7 +150,7 @@ internal constructor(
       // Tell proxy we've established connection so that NOW we can relay
       val type = resolveSocks5AddressType(relayControlAddress)
       Timber.d {
-        "Tell client about UDP control $type ${relayControl.address}:${relayControl.port}"
+        "(${channelId}) $tag Inform client of UDP $type ${relayControl.address}:${relayControl.port}"
       }
       ctx.writeAndFlush(
           DefaultSocks5CommandResponse(
@@ -190,20 +199,21 @@ internal constructor(
   }
 
   override fun publishConnectSuccess(
+      tag: String,
       ctx: ChannelHandlerContext,
       msg: Socks5CommandRequest,
       outbound: Channel,
   ) {
     val remote = outbound.localAddress()
     if (remote == null) {
-      Timber.w { "SOCKS5 Connect remote==null" }
+      Timber.w { "($channelId) DROP $tag remote==null" }
       sendFailureAndClose(ctx, msg)
       return
     }
 
     val remoteAddress = remote.cast<InetSocketAddress>()
     if (remoteAddress == null) {
-      Timber.w { "SOCKS5 Connect remoteAddress is not InetSocketAddress" }
+      Timber.w { "($channelId) DROP $tag remoteAddress is not InetSocketAddress" }
       sendFailureAndClose(ctx, msg)
       return
     }
@@ -237,7 +247,7 @@ internal constructor(
 
   override fun onChannelActive(ctx: ChannelHandlerContext) {
     val addr = ctx.channel().localAddress()
-    setChannelId("SOCKS4-INBOUND-${addr.address}:${addr.port}")
+    setChannelId("SOCKS5-INBOUND-${addr.address}:${addr.port}")
   }
 
   override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {

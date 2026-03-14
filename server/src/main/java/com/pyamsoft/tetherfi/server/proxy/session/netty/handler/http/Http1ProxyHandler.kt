@@ -19,6 +19,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http
 import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.RelayHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
@@ -39,14 +40,19 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.codec.http.HttpVersion
 import io.netty.util.ReferenceCountUtil
+import kotlinx.coroutines.CoroutineScope
 
 // Cannot be shareable because of the local state messageQueue and outboundChannel
 internal class Http1ProxyHandler
 internal constructor(
+    scope: CoroutineScope,
     serverSocketTimeout: ServerSocketTimeout,
+    clientResolver: ClientResolver,
     private val tcpSocketCreator: ChannelCreator,
 ) :
     ProxyHandler(
+        scope = scope,
+        clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
     ) {
 

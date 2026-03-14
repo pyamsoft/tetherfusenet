@@ -20,6 +20,9 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.clients.ClientResolver
+import com.pyamsoft.tetherfi.server.clients.TetherClient
+import com.pyamsoft.tetherfi.server.clients.ensure
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import io.ktor.util.network.address
@@ -34,19 +37,21 @@ import java.net.InetSocketAddress
 
 internal class UdpRelayHandler
 internal constructor(
+    clientResolver: ClientResolver,
     serverSocketTimeout: ServerSocketTimeout,
 ) :
     ProxyHandler(
+        clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
     ) {
 
   @CheckResult
-  private fun getClientAddress(ctx: ChannelHandlerContext): InetSocketAddress? {
-    return ctx.channel().attr(CLIENT_ADDRESS).get()
+  private fun getBackToClientAddress(ctx: ChannelHandlerContext): InetSocketAddress? {
+    return ctx.channel().attr(BACK_TO_CLIENT_ADDRESS).get()
   }
 
-  private fun setClientAddress(ctx: ChannelHandlerContext, address: InetSocketAddress) {
-    return ctx.channel().attr(CLIENT_ADDRESS).set(address)
+  private fun setBackToClientAddress(ctx: ChannelHandlerContext, address: InetSocketAddress) {
+    return ctx.channel().attr(BACK_TO_CLIENT_ADDRESS).set(address)
   }
 
   @CheckResult
@@ -97,7 +102,8 @@ internal constructor(
     ctx.channel().apply {
       attr(TAG).set(null)
       attr(TCP_CONTROL_ADDRESS).set(null)
-      attr(CLIENT_ADDRESS).set(null)
+      attr(BACK_TO_CLIENT_ADDRESS).set(null)
+      attr(CLIENT).set(null)
     }
   }
 
@@ -138,11 +144,11 @@ internal constructor(
         return
       }
 
-      val client = getClientAddress(ctx)
-      if (client == null || sender == client) {
+      val backToClient = getBackToClientAddress(ctx)
+      if (backToClient == null || sender == backToClient) {
         // We had no client so this traffic is our client sending -> destination
         // Or this is continuing traffic from the same sender
-        setClientAddress(ctx, sender)
+        setBackToClientAddress(ctx, sender)
 
         // Validate that the IP ADDRESS of the client and sender are the same
         if (tcpControlClient.address != sender.address) {
@@ -153,12 +159,21 @@ internal constructor(
           return
         }
 
+        val client = clientResolver.ensure(sender)
+
+        // TODO record
+
         unwrapUdpResponse(ctx, msg)
       } else {
         val content = msg.retain().content()
         val response = UDP.wrap(alloc = ctx.alloc(), sender = sender, content = content)
 
-        val packet = DatagramPacket(response, client)
+        val packet = DatagramPacket(response, backToClient)
+
+        val client = clientResolver.ensure(backToClient)
+
+        // TODO record
+
         ctx.writeAndFlush(packet).addListener { msg.release() }
       }
     } else {
@@ -173,8 +188,12 @@ internal constructor(
         AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-ID")
 
     @JvmStatic
-    private val CLIENT_ADDRESS: AttributeKey<InetSocketAddress> =
-        AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-CLIENT_ADDRESS")
+    private val CLIENT: AttributeKey<TetherClient> =
+        AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-CLIENT")
+
+    @JvmStatic
+    private val BACK_TO_CLIENT_ADDRESS: AttributeKey<InetSocketAddress> =
+        AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-BACK_TO_CLIENT_ADDRESS")
 
     @JvmStatic
     val TCP_CONTROL_ADDRESS: AttributeKey<InetSocketAddress> =

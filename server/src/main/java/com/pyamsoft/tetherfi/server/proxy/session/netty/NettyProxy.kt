@@ -81,12 +81,15 @@ protected constructor(
     onServerStopped()
   }
 
-  private fun channelInitialized(channel: SocketChannel) {
-    onChannelInitialized(channel)
+  private fun channelInitialized(
+      scope: CoroutineScope,
+      channel: SocketChannel,
+  ) {
+    onChannelInitialized(scope, channel)
   }
 
   @CheckResult
-  fun start(): NettyServerStopper {
+  fun start(scope: CoroutineScope): NettyServerStopper {
     // The boss group usually does not need more than a single thread allocated to it
     val bossGroup = MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory())
     val workerGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
@@ -104,7 +107,7 @@ protected constructor(
             .childHandler(
                 object : ChannelInitializer<SocketChannel>() {
                   override fun initChannel(ch: SocketChannel) {
-                    channelInitialized(ch)
+                    channelInitialized(scope, ch)
                   }
                 }
             )
@@ -172,5 +175,8 @@ protected constructor(
 
   protected open fun onServerStopped() {}
 
-  protected open fun onChannelInitialized(channel: SocketChannel) {}
+  protected open fun onChannelInitialized(
+      scope: CoroutineScope,
+      channel: SocketChannel,
+  ) {}
 }

@@ -18,12 +18,16 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
+import kotlinx.coroutines.CoroutineScope
 
 internal abstract class ProxyHandler
 internal constructor(
+    protected val clientResolver: ClientResolver,
     protected val serverSocketTimeout: ServerSocketTimeout,
+    protected val scope: CoroutineScope,
 ) : ChannelInboundHandlerAdapter() {
 
   protected var channelId = "CHANNEL-UNKNOWN"

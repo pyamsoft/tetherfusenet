@@ -17,8 +17,21 @@
 package com.pyamsoft.tetherfi.server.clients
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.core.requireNotNull
+import java.net.InetAddress
+import java.net.InetSocketAddress
 
 interface ClientResolver {
 
   @CheckResult fun ensure(hostNameOrIp: String): TetherClient
+}
+
+@CheckResult
+fun ClientResolver.ensure(address: InetSocketAddress): TetherClient {
+  return this.ensure(address.address.requireNotNull())
+}
+
+@CheckResult
+fun ClientResolver.ensure(address: InetAddress): TetherClient {
+  return this.ensure(address.hostAddress.requireNotNull())
 }

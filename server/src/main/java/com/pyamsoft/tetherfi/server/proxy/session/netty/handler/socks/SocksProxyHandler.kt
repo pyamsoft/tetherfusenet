@@ -17,8 +17,11 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.clients.ClientResolver
+import com.pyamsoft.tetherfi.server.clients.ensure
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.RelayHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
@@ -30,13 +33,19 @@ import io.netty.channel.ChannelPipeline
 import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.v4.Socks4CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
+import java.net.InetSocketAddress
+import kotlinx.coroutines.CoroutineScope
 
 internal abstract class SocksProxyHandler<T : SocksMessage>
 internal constructor(
+    scope: CoroutineScope,
     serverSocketTimeout: ServerSocketTimeout,
+    clientResolver: ClientResolver,
     private val tcpSocketCreator: ChannelCreator,
 ) :
     ProxyHandler(
+        scope = scope,
+        clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
     ) {
 
@@ -70,19 +79,27 @@ internal constructor(
       dstAddr: String?,
       dstPort: Int,
   ) {
+    val tag = "${msg.version()}-CONNECT"
     if (dstAddr.isNullOrBlank()) {
-      Timber.w { "(${channelId}) DROP: Invalid upstream destination address: $dstAddr" }
+      Timber.w { "(${channelId}) DROP: $tag Invalid upstream destination address: $dstAddr" }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     if (dstPort !in VALID_PORT_RANGE) {
-      Timber.w { "(${channelId}) DROP: Invalid upstream destination port: $dstPort" }
+      Timber.w { "(${channelId}) DROP: $tag Invalid upstream destination port: $dstPort" }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     val serverChannel = ctx.channel()
+    val remoteClient = serverChannel.remoteAddress().cast<InetSocketAddress>()
+    if (remoteClient == null) {
+      Timber.w { "($channelId) DROP: $tag remoteClient IP is NULL" }
+      return
+    }
+
+    val client = clientResolver.ensure(remoteClient)
 
     val connectSocket =
         tcpSocketCreator.connect(
@@ -107,24 +124,26 @@ internal constructor(
     outbound.closeFuture().addListener { serverChannel.flushAndClose() }
 
     outbound.apply {
-      attr(RelayHandler.TAG).set("${msg.version()}-CONNECT-INBOUND-${dstAddr}:${dstPort}")
+      attr(RelayHandler.TAG).set("$tag-INBOUND-${dstAddr}:${dstPort}")
       attr(RelayHandler.WRITE_BACK_CHANNEL).set(serverChannel)
+      attr(RelayHandler.CLIENT).set(client)
     }
 
     connectSocket.addListener { future ->
       if (!future.isSuccess) {
-        Timber.e(future.cause()) { "${msg.version()} CONNECT proxied outbound failed" }
+        Timber.e(future.cause()) { "$tag proxied outbound failed" }
         sendFailureAndClose(ctx, msg)
         return@addListener
       }
 
       serverChannel.apply {
-        attr(RelayHandler.TAG).set("${msg.version()}-CONNECT-OUTBOUND-${dstAddr}:${dstPort}")
+        attr(RelayHandler.TAG).set("$tag-OUTBOUND-${dstAddr}:${dstPort}")
         attr(RelayHandler.WRITE_BACK_CHANNEL).set(outbound)
+        attr(RelayHandler.CLIENT).set(client)
       }
 
       // Tell proxy we've established connection
-      publishConnectSuccess(ctx, msg, outbound)
+      publishConnectSuccess(tag, ctx, msg, outbound)
 
       // Drop down to raw TCP
       val pipeline = ctx.pipeline()
@@ -146,6 +165,7 @@ internal constructor(
   @CheckResult protected abstract fun isConnectMessageType(msg: T): Boolean
 
   protected abstract fun publishConnectSuccess(
+      tag: String,
       ctx: ChannelHandlerContext,
       msg: T,
       outbound: Channel,

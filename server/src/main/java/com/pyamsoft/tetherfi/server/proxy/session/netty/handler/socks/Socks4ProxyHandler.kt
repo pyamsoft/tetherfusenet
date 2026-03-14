@@ -19,6 +19,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks
 import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.dropHandler
 import io.ktor.util.network.address
@@ -34,13 +35,18 @@ import io.netty.handler.codec.socksx.v4.Socks4CommandType
 import io.netty.handler.codec.socksx.v4.Socks4Message
 import io.netty.handler.codec.socksx.v4.Socks4ServerDecoder
 import io.netty.util.ReferenceCountUtil
+import kotlinx.coroutines.CoroutineScope
 
 internal class Socks4ProxyHandler
 internal constructor(
+    clientResolver: ClientResolver,
     tcpSocketCreator: ChannelCreator,
     serverSocketTimeout: ServerSocketTimeout,
+    scope: CoroutineScope,
 ) :
     SocksProxyHandler<Socks4CommandRequest>(
+        scope = scope,
+        clientResolver = clientResolver,
         tcpSocketCreator = tcpSocketCreator,
         serverSocketTimeout = serverSocketTimeout,
     ) {
@@ -79,13 +85,14 @@ internal constructor(
   }
 
   override fun publishConnectSuccess(
+      tag: String,
       ctx: ChannelHandlerContext,
       msg: Socks4CommandRequest,
       outbound: Channel,
   ) {
     val remote = outbound.localAddress()
     if (remote == null) {
-      Timber.w { "SOCKS4 outbound remote==null" }
+      Timber.w { "(${channelId}) DROP $tag outbound remote==null" }
       sendFailureAndClose(ctx, msg)
       return
     }

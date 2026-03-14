@@ -18,6 +18,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http.Http1ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks4ProxyHandler
@@ -32,6 +33,7 @@ import io.netty.handler.codec.socksx.v4.Socks4ServerEncoder
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5ServerEncoder
+import kotlinx.coroutines.CoroutineScope
 
 internal class ProtocolDelegatingHandler
 internal constructor(
@@ -40,6 +42,8 @@ internal constructor(
     private val tcpSocketCreator: ChannelCreator,
     private val isHttpEnabled: Boolean,
     private val serverSocketTimeout: ServerSocketTimeout,
+    private val clientResolver: ClientResolver,
+    private val scope: CoroutineScope,
 ) : ByteToMessageDecoder() {
 
   override fun decode(ctx: ChannelHandlerContext, input: ByteBuf, out: List<Any>) {
@@ -74,6 +78,8 @@ internal constructor(
 
           pipeline.addLast(
               Socks4ProxyHandler(
+                  scope = scope,
+                  clientResolver = clientResolver,
                   tcpSocketCreator = tcpSocketCreator,
                   serverSocketTimeout = serverSocketTimeout,
               )
@@ -94,6 +100,8 @@ internal constructor(
 
           pipeline.addLast(
               Socks5ProxyHandler(
+                  scope = scope,
+                  clientResolver = clientResolver,
                   udpSocketCreator = udpControl,
                   tcpSocketCreator = tcpSocketCreator,
                   serverSocketTimeout = serverSocketTimeout,
@@ -113,6 +121,8 @@ internal constructor(
           // And bind our proxy relay handler
           pipeline.addLast(
               Http1ProxyHandler(
+                  scope = scope,
+                  clientResolver = clientResolver,
                   tcpSocketCreator = tcpSocketCreator,
                   serverSocketTimeout = serverSocketTimeout,
               )

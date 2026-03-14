@@ -19,6 +19,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.clients.TetherClient
 import io.ktor.util.network.address
 import io.ktor.util.network.port
 import io.netty.buffer.ByteBuf
@@ -61,6 +62,7 @@ internal constructor(
     ctx.channel().apply {
       attr(TAG).set(null)
       attr(WRITE_BACK_CHANNEL).set(null)
+      attr(CLIENT).set(null)
     }
   }
 
@@ -110,6 +112,10 @@ internal constructor(
   }
 
   companion object {
+    @JvmStatic
+    val CLIENT: AttributeKey<TetherClient> =
+        AttributeKey.newInstance("${RelayHandler::class.simpleName}-CLIENT")
+
     @JvmStatic
     val WRITE_BACK_CHANNEL: AttributeKey<Channel> =
         AttributeKey.newInstance("${RelayHandler::class.simpleName}-WRITE_BACK_CHANNEL")

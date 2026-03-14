@@ -17,6 +17,7 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty
 
 import androidx.annotation.CheckResult
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,20 +29,20 @@ abstract class SuspendingNettyProxy internal constructor() {
 
   private val proxy by lazy { provideProxy() }
 
-  private suspend fun startProxy() {
+  private suspend fun startProxy(scope: CoroutineScope) {
     var stopper: NettyServerStopper? = null
     try {
-      stopper = proxy.start()
+      stopper = proxy.start(scope)
       awaitCancellation()
     } finally {
       withContext(context = NonCancellable) { stopper?.also { s -> s.stop() } }
     }
   }
 
-  suspend fun start() {
+  suspend fun start(scope: CoroutineScope) {
     if (started.compareAndSet(expect = false, update = true)) {
       try {
-        startProxy()
+        startProxy(scope)
       } finally {
         withContext(context = NonCancellable) {
           started.compareAndSet(expect = true, update = false)
