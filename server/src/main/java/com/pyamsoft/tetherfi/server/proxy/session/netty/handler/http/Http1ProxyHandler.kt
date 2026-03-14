@@ -42,6 +42,8 @@ import io.netty.handler.codec.http.HttpResponse
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.codec.http.HttpVersion
+import io.netty.handler.logging.LogLevel
+import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
 import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
@@ -52,9 +54,11 @@ private constructor(
     scope: CoroutineScope,
     serverSocketTimeout: ServerSocketTimeout,
     clientResolver: ClientResolver,
+    isDebug: Boolean,
     private val tcpSocketCreator: ChannelCreator,
 ) :
     ProxyHandler(
+        isDebug = isDebug,
         scope = scope,
         clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
@@ -62,6 +66,7 @@ private constructor(
 
   private val relayHandlerFactory =
       RelayHandler.factory(
+          isDebug = isDebug,
           scope = scope,
           clientResolver = clientResolver,
           serverSocketTimeout = serverSocketTimeout,
@@ -165,6 +170,10 @@ private constructor(
             onChannelInitialized = { ch ->
               val pipeline = ch.pipeline()
 
+              if (isDebug) {
+                pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
+              }
+
               // Read from the REMOTE and send back to the PROXY
               pipeline.addLast(relayHandlerFactory.create(Unit))
             },
@@ -261,6 +270,10 @@ private constructor(
             port = parsed.resolvedPort,
             onChannelInitialized = { ch ->
               val pipeline = ch.pipeline()
+
+              if (isDebug) {
+                pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
+              }
 
               // Must speak HTTP to replay the initial message
               pipeline.addLast(HttpClientCodec())
@@ -452,6 +465,7 @@ private constructor(
     @JvmStatic
     @CheckResult
     fun factory(
+        isDebug: Boolean,
         scope: CoroutineScope,
         serverSocketTimeout: ServerSocketTimeout,
         clientResolver: ClientResolver,
@@ -459,6 +473,7 @@ private constructor(
     ): HandlerFactory<Unit> {
       return {
         Http1ProxyHandler(
+            isDebug = isDebug,
             scope = scope,
             clientResolver = clientResolver,
             tcpSocketCreator = tcpSocketCreator,

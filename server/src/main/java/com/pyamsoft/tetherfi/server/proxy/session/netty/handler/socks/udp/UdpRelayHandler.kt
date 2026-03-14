@@ -43,8 +43,10 @@ private constructor(
     scope: CoroutineScope,
     clientResolver: ClientResolver,
     serverSocketTimeout: ServerSocketTimeout,
+    isDebug: Boolean,
 ) :
     ProxyHandler(
+        isDebug = isDebug,
         scope = scope,
         clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
@@ -207,12 +209,14 @@ private constructor(
     @JvmStatic
     @CheckResult
     fun factory(
+        isDebug: Boolean,
         scope: CoroutineScope,
         clientResolver: ClientResolver,
         serverSocketTimeout: ServerSocketTimeout,
     ): HandlerFactory<Unit> {
       return {
         UdpRelayHandler(
+            isDebug = isDebug,
             scope = scope,
             clientResolver = clientResolver,
             serverSocketTimeout = serverSocketTimeout,

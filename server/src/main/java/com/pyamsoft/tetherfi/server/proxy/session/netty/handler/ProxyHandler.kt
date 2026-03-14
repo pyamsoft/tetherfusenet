@@ -28,6 +28,7 @@ internal constructor(
     protected val clientResolver: ClientResolver,
     protected val serverSocketTimeout: ServerSocketTimeout,
     protected val scope: CoroutineScope,
+    protected val isDebug: Boolean,
 ) : ChannelInboundHandlerAdapter() {
 
   protected var channelId = "CHANNEL-UNKNOWN"

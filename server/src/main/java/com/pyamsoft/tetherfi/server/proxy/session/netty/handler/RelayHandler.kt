@@ -34,11 +34,13 @@ private constructor(
     scope: CoroutineScope,
     clientResolver: ClientResolver,
     serverSocketTimeout: ServerSocketTimeout,
+    isDebug: Boolean,
 ) :
     ProxyHandler(
         scope = scope,
         clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
+        isDebug = isDebug,
     ) {
 
   @CheckResult
@@ -133,12 +135,14 @@ private constructor(
     @JvmStatic
     @CheckResult
     fun factory(
+        isDebug: Boolean,
         scope: CoroutineScope,
         clientResolver: ClientResolver,
         serverSocketTimeout: ServerSocketTimeout,
     ): HandlerFactory<Unit> {
       return {
         RelayHandler(
+            isDebug = isDebug,
             scope = scope,
             clientResolver = clientResolver,
             serverSocketTimeout = serverSocketTimeout,

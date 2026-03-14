@@ -71,6 +71,7 @@ internal constructor(
           isHttpEnabled = isHttpEnabled,
           serverSocketTimeout = serverSocketTimeout,
           clientResolver = clientResolver,
+          isDebug = isDebug,
       )
 
   override fun onServerStarted(
@@ -109,7 +110,7 @@ internal constructor(
     val pipeline = channel.pipeline()
 
     if (isDebug) {
-      pipeline.addLast(LoggingHandler(LogLevel.DEBUG))
+      pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
     }
 
     // And bind our proxy relay handler

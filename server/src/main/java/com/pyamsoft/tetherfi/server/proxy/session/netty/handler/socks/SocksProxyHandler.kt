@@ -33,6 +33,8 @@ import io.netty.channel.ChannelPipeline
 import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.v4.Socks4CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
+import io.netty.handler.logging.LogLevel
+import io.netty.handler.logging.LoggingHandler
 import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 
@@ -41,16 +43,19 @@ internal constructor(
     scope: CoroutineScope,
     serverSocketTimeout: ServerSocketTimeout,
     clientResolver: ClientResolver,
+    isDebug: Boolean,
     private val tcpSocketCreator: ChannelCreator,
 ) :
     ProxyHandler(
         scope = scope,
         clientResolver = clientResolver,
         serverSocketTimeout = serverSocketTimeout,
+        isDebug = isDebug,
     ) {
 
   private val relayHandlerFactory =
       RelayHandler.factory(
+          isDebug = isDebug,
           scope = scope,
           clientResolver = clientResolver,
           serverSocketTimeout = serverSocketTimeout,
@@ -114,6 +119,10 @@ internal constructor(
             port = dstPort,
             onChannelInitialized = { ch ->
               val pipeline = ch.pipeline()
+
+              if (isDebug) {
+                pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
+              }
 
               // Read from the REMOTE and send back to the PROXY
               pipeline.addLast(relayHandlerFactory.create(Unit))

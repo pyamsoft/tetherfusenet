@@ -34,6 +34,8 @@ import io.netty.handler.codec.socksx.v4.Socks4ServerEncoder
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5ServerEncoder
+import io.netty.handler.logging.LogLevel
+import io.netty.handler.logging.LoggingHandler
 import kotlinx.coroutines.CoroutineScope
 
 internal class ProtocolDelegatingHandler
@@ -45,10 +47,12 @@ private constructor(
     private val serverSocketTimeout: ServerSocketTimeout,
     private val clientResolver: ClientResolver,
     private val scope: CoroutineScope,
+    private val isDebug: Boolean,
 ) : ByteToMessageDecoder() {
 
   private val http1HandlerFactory =
       Http1ProxyHandler.factory(
+          isDebug = isDebug,
           scope = scope,
           clientResolver = clientResolver,
           tcpSocketCreator = tcpSocketCreator,
@@ -57,6 +61,7 @@ private constructor(
 
   private val socks4HandlerFactory =
       Socks4ProxyHandler.factory(
+          isDebug = isDebug,
           scope = scope,
           clientResolver = clientResolver,
           tcpSocketCreator = tcpSocketCreator,
@@ -65,6 +70,7 @@ private constructor(
 
   private val socks5HandlerFactory =
       Socks5ProxyHandler.factory(
+          isDebug = isDebug,
           scope = scope,
           clientResolver = clientResolver,
           tcpSocketCreator = tcpSocketCreator,
@@ -97,6 +103,10 @@ private constructor(
             return
           }
 
+          if (isDebug) {
+            pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
+          }
+
           // Assume SOCKS4
           pipeline.addLast(Socks4ServerEncoder.INSTANCE)
           pipeline.addLast(Socks4ServerDecoder())
@@ -111,6 +121,10 @@ private constructor(
             return
           }
 
+          if (isDebug) {
+            pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
+          }
+
           // Assume SOCKS5
           pipeline.addLast(Socks5ServerEncoder.DEFAULT)
           pipeline.addLast(Socks5InitialRequestDecoder())
@@ -123,6 +137,10 @@ private constructor(
           if (!isHttpEnabled) {
             Timber.w { "DROP: HTTP traffic received but HTTP was not enabled" }
             return
+          }
+
+          if (isDebug) {
+            pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
           }
 
           // Assume HTTP
@@ -154,9 +172,11 @@ private constructor(
         isHttpEnabled: Boolean,
         serverSocketTimeout: ServerSocketTimeout,
         clientResolver: ClientResolver,
+        isDebug: Boolean,
     ): HandlerFactory<Params> {
       return { params ->
         ProtocolDelegatingHandler(
+            isDebug = isDebug,
             isHttpEnabled = isHttpEnabled,
             serverSocketTimeout = serverSocketTimeout,
             clientResolver = clientResolver,

@@ -42,6 +42,8 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandType
 import io.netty.handler.codec.socksx.v5.Socks5InitialRequest
 import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5Message
+import io.netty.handler.logging.LogLevel
+import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
 import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
@@ -52,9 +54,11 @@ internal constructor(
     serverSocketTimeout: ServerSocketTimeout,
     tcpSocketCreator: ChannelCreator,
     clientResolver: ClientResolver,
+    isDebug: Boolean,
     private val udpSocketCreator: ChannelCreator,
 ) :
     SocksProxyHandler<Socks5CommandRequest>(
+        isDebug = isDebug,
         scope = scope,
         serverSocketTimeout = serverSocketTimeout,
         clientResolver = clientResolver,
@@ -63,6 +67,7 @@ internal constructor(
 
   private val udpRelayHandlerFactory =
       UdpRelayHandler.factory(
+          isDebug = isDebug,
           scope = scope,
           clientResolver = clientResolver,
           serverSocketTimeout = serverSocketTimeout,
@@ -108,6 +113,10 @@ internal constructor(
     val udpControl =
         udpSocketCreator.bind { ch ->
           val pipeline = ch.pipeline()
+
+          if (isDebug) {
+            pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
+          }
 
           // Read from the REMOTE and send back to the PROXY
           pipeline.addLast(udpRelayHandlerFactory.create(Unit))
@@ -287,6 +296,7 @@ internal constructor(
     @JvmStatic
     @CheckResult
     fun factory(
+        isDebug: Boolean,
         scope: CoroutineScope,
         serverSocketTimeout: ServerSocketTimeout,
         clientResolver: ClientResolver,
@@ -294,6 +304,7 @@ internal constructor(
     ): HandlerFactory<ChannelCreator> {
       return { udpSocketCreator ->
         Socks5ProxyHandler(
+            isDebug = isDebug,
             scope = scope,
             clientResolver = clientResolver,
             tcpSocketCreator = tcpSocketCreator,

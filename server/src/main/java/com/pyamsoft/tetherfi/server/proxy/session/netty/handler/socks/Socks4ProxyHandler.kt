@@ -43,6 +43,7 @@ internal constructor(
     clientResolver: ClientResolver,
     tcpSocketCreator: ChannelCreator,
     serverSocketTimeout: ServerSocketTimeout,
+    isDebug: Boolean,
     scope: CoroutineScope,
 ) :
     SocksProxyHandler<Socks4CommandRequest>(
@@ -50,6 +51,7 @@ internal constructor(
         clientResolver = clientResolver,
         tcpSocketCreator = tcpSocketCreator,
         serverSocketTimeout = serverSocketTimeout,
+        isDebug = isDebug,
     ) {
 
   @CheckResult
@@ -160,9 +162,11 @@ internal constructor(
         serverSocketTimeout: ServerSocketTimeout,
         clientResolver: ClientResolver,
         tcpSocketCreator: ChannelCreator,
+        isDebug: Boolean,
     ): HandlerFactory<Unit> {
       return {
         Socks4ProxyHandler(
+            isDebug = isDebug,
             scope = scope,
             clientResolver = clientResolver,
             tcpSocketCreator = tcpSocketCreator,
