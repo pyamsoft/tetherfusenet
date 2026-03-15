@@ -133,7 +133,7 @@ internal constructor(
 
     private const val CONNECTION_RESET_MESSAGE = "Connection reset by peer"
 
-    @JvmStatic protected val VALID_PORT_RANGE = 1..<65335
+    @JvmStatic protected val VALID_PORT_RANGE = 1..<65535
 
     @JvmStatic
     private val CLIENT: AttributeKey<TetherClient> =
