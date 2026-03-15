@@ -195,6 +195,7 @@ private constructor(
         channel = outbound,
         writeBackChannel = serverChannel,
         tag = "$tag-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+        direction = RelayHandler.Direction.INBOUND,
         client = client,
     )
 
@@ -224,6 +225,7 @@ private constructor(
           channel = serverChannel,
           writeBackChannel = outbound,
           tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+          direction = RelayHandler.Direction.OUTBOUND,
           client = client,
       )
 
@@ -309,6 +311,7 @@ private constructor(
         channel = outbound,
         writeBackChannel = serverChannel,
         tag = "$tag-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+        direction = RelayHandler.Direction.INBOUND,
         client = client,
     )
 
@@ -338,6 +341,7 @@ private constructor(
           channel = serverChannel,
           writeBackChannel = outbound,
           tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+          direction = RelayHandler.Direction.OUTBOUND,
           client = client,
       )
 

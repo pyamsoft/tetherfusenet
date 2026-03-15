@@ -77,6 +77,7 @@ private constructor(
       ctx: ChannelHandlerContext,
       channelId: String,
       msg: DatagramPacket,
+      sender: InetSocketAddress,
   ) {
     UDP.unwrap(
         channelId = channelId,
@@ -84,7 +85,15 @@ private constructor(
         msg = msg,
         onError = { sendErrorAndClose(ctx, msg) },
         onUnwrapped = { data, destination ->
-          setChannelTag(ctx, "UDP-RELAY-${destination.address}:${destination.port}")
+          val tag = "UDP-RELAY-${destination.address}:${destination.port}"
+          setChannelTag(ctx, tag)
+          setChannelId(tag)
+
+          val client = clientResolver.ensure(sender)
+          // TODO Record amount consumed (without header)
+          //      Timber.d { "(${hostName}:${port}) Read $byteCount bytes" }
+          // TODO bandwidth limit enforcement
+          // TODO client scope sideeffect mark seen
 
           val packet = DatagramPacket(data, destination)
           ctx.writeAndFlush(packet).addListener { packet.release() }
@@ -169,11 +178,7 @@ private constructor(
           return
         }
 
-        val client = clientResolver.ensure(sender)
-
-        // TODO record
-
-        unwrapUdpResponse(ctx, channelId, msg)
+        unwrapUdpResponse(ctx, channelId, msg, sender)
       } else {
         val content = msg.retain().content()
         val response = UDP.wrap(alloc = ctx.alloc(), sender = sender, content = content)
@@ -181,8 +186,10 @@ private constructor(
         val packet = DatagramPacket(response, backToClient)
 
         val client = clientResolver.ensure(backToClient)
-
-        // TODO record
+        // TODO Record amount consumed (without header)
+        //      Timber.d { "(${hostName}:${port}) Read $byteCount bytes" }
+        // TODO bandwidth limit enforcement
+        // TODO client scope sideeffect mark seen
 
         ctx.writeAndFlush(packet).addListener { msg.release() }
       }

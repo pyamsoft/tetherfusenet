@@ -38,16 +38,20 @@ internal constructor(
 
   protected inline fun applyChannelId(block: () -> String) {
     if (channelId.isBlank()) {
-      channelId = block()
+      setChannelId(block())
     }
   }
 
   @CheckResult
   protected fun getChannelId(): String {
     if (channelId.isBlank()) {
-      channelId = "CHANNEL-UNKNOWN"
+      setChannelId("CHANNEL-UNKNOWN")
     }
     return channelId
+  }
+
+  protected fun setChannelId(id: String) {
+    channelId = id
   }
 
   protected fun closeChannels(ctx: ChannelHandlerContext) {

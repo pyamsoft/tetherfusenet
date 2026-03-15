@@ -142,6 +142,7 @@ internal constructor(
         channel = outbound,
         writeBackChannel = serverChannel,
         tag = "$tag-INBOUND-${dstAddr}:${dstPort}",
+        direction = RelayHandler.Direction.INBOUND,
         client = client,
     )
 
@@ -156,6 +157,7 @@ internal constructor(
           channel = serverChannel,
           writeBackChannel = outbound,
           tag = "$tag-OUTBOUND-${dstAddr}:${dstPort}",
+          direction = RelayHandler.Direction.OUTBOUND,
           client = client,
       )
 

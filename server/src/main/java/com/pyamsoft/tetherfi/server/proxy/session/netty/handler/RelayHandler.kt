@@ -46,6 +46,11 @@ private constructor(
   }
 
   @CheckResult
+  private fun getDirection(ctx: ChannelHandlerContext): Direction? {
+    return ctx.channel().attr(DIRECTION).get()
+  }
+
+  @CheckResult
   private fun getChannelTag(ctx: ChannelHandlerContext): String? {
     return ctx.channel().attr(TAG).get()
   }
@@ -69,6 +74,7 @@ private constructor(
     ctx.channel().apply {
       attr(TAG).set(null)
       attr(WRITE_BACK_CHANNEL).set(null)
+      attr(DIRECTION).set(null)
     }
   }
 
@@ -97,10 +103,14 @@ private constructor(
     }
 
     if (msg is ByteBuf) {
-      msg.readableBytes().toLong()
-      // TODO Record amount consumed
-      //      Timber.d { "(${hostName}:${port}) Read $byteCount bytes" }
-      // TODO bandwidth limit enforcement
+      val direction = getDirection(ctx)
+      if (direction != null) {
+        msg.readableBytes().toLong()
+        // TODO Record amount consumed in direction
+        //      Timber.d { "(${hostName}:${port}) Read $byteCount bytes" }
+        // TODO bandwidth limit enforcement
+        // TODO client scope sideeffect mark seen
+      }
     }
 
     writeToChannel.writeAndFlush(msg)
@@ -125,6 +135,11 @@ private constructor(
     }
   }
 
+  internal enum class Direction {
+    INBOUND,
+    OUTBOUND,
+  }
+
   companion object {
 
     @JvmStatic
@@ -134,6 +149,10 @@ private constructor(
     @JvmStatic
     private val TAG: AttributeKey<String> =
         AttributeKey.newInstance("${RelayHandler::class.simpleName}-ID")
+
+    @JvmStatic
+    private val DIRECTION: AttributeKey<Direction> =
+        AttributeKey.newInstance("${RelayHandler::class.simpleName}-DIRECTION")
 
     @JvmStatic
     @CheckResult
@@ -154,12 +173,14 @@ private constructor(
     fun applyChannelAttributes(
         channel: Channel,
         writeBackChannel: Channel,
+        direction: Direction,
         tag: String,
         client: TetherClient,
     ) {
       channel.apply {
         attr(TAG).set(tag)
         attr(WRITE_BACK_CHANNEL).set(writeBackChannel)
+        attr(DIRECTION).set(direction)
       }
 
       ProxyHandler.applyChannelAttributes(
