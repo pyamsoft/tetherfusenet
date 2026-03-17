@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import com.deezer.caupain.policies.StabilityLevelPolicy
 import com.deezer.caupain.plugin.DependenciesUpdateTask
+import com.deezer.caupain.policies.StabilityLevelPolicy
 
 plugins {
   // Android AGP
