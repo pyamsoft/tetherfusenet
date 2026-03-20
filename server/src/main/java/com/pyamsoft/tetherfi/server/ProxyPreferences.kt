@@ -36,4 +36,8 @@ interface ProxyPreferences {
   @CheckResult fun listenForSocksEnabledChanges(): Flow<Boolean>
 
   fun setSocksEnabled(enabled: Boolean)
+
+  @CheckResult fun listenForNewEngineEnabled(): Flow<Boolean>
+
+  fun setNewEngine(enabled: Boolean)
 }

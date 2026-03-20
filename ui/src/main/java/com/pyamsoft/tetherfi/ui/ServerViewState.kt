@@ -41,4 +41,6 @@ interface ServerViewState : UiViewState {
 
   val wiDiStatus: StateFlow<RunningStatus>
   val proxyStatus: StateFlow<RunningStatus>
+
+  val isNewEngine: StateFlow<Boolean>
 }

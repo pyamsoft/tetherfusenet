@@ -166,13 +166,21 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
       getPreference(key = SSID, value = ServerDefaults.WIFI_SSID).flowOn(context = Dispatchers.IO)
 
   override fun setSsid(ssid: String) =
-      setPreference(key = SSID, fallbackValue = ServerDefaults.WIFI_SSID, value = { ssid })
+      setPreference(
+          key = SSID,
+          fallbackValue = ServerDefaults.WIFI_SSID,
+          value = { ssid },
+      )
 
   override fun listenForPasswordChanges(): Flow<String> =
       getPreference(key = PASSWORD, value = fallbackPassword).flowOn(context = Dispatchers.IO)
 
   override fun setPassword(password: String) =
-      setPreference(key = PASSWORD, fallbackValue = fallbackPassword, value = { password })
+      setPreference(
+          key = PASSWORD,
+          fallbackValue = fallbackPassword,
+          value = { password },
+      )
 
   override fun listenForHttpEnabledChanges(): Flow<Boolean> =
       getPreference(key = IS_HTTP_ENABLED, value = DEFAULT_IS_HTTP_ENABLED)
@@ -190,7 +198,11 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           .flowOn(context = Dispatchers.IO)
 
   override fun setHttpPort(port: Int) =
-      setPreference(key = HTTP_PORT, fallbackValue = ServerDefaults.HTTP_PORT, value = { port })
+      setPreference(
+          key = HTTP_PORT,
+          fallbackValue = ServerDefaults.HTTP_PORT,
+          value = { port },
+      )
 
   override fun listenForSocksEnabledChanges(): Flow<Boolean> =
       getPreference(key = IS_SOCKS_ENABLED, value = DEFAULT_IS_SOCKS_ENABLED)
@@ -208,7 +220,11 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           .flowOn(context = Dispatchers.IO)
 
   override fun setSocksPort(port: Int) =
-      setPreference(key = SOCKS_PORT, fallbackValue = ServerDefaults.SOCKS_PORT, value = { port })
+      setPreference(
+          key = SOCKS_PORT,
+          fallbackValue = ServerDefaults.SOCKS_PORT,
+          value = { port },
+      )
 
   override fun listenForNetworkBandChanges(): Flow<ServerNetworkBand> =
       getPreference(key = NETWORK_BAND, value = ServerDefaults.WIFI_NETWORK_BAND.name)
@@ -271,7 +287,11 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           .flowOn(context = Dispatchers.IO)
 
   override fun setKeepScreenOn(keep: Boolean) =
-      setPreference(key = KEEP_SCREEN_ON, fallbackValue = DEFAULT_KEEP_SCREEN_ON, value = { keep })
+      setPreference(
+          key = KEEP_SCREEN_ON,
+          fallbackValue = DEFAULT_KEEP_SCREEN_ON,
+          value = { keep },
+      )
 
   override fun listenForBroadcastType(): Flow<BroadcastType> =
       getPreference(key = BROADCAST_TYPE, value = BroadcastType.WIFI_DIRECT.name)
@@ -427,6 +447,19 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           },
       )
 
+  override fun listenForNewEngineEnabled(): Flow<Boolean> =
+      getPreference(
+          key = NEW_ENGINE,
+          value = DEFAULT_NEW_ENGINE,
+      )
+
+  override fun setNewEngine(enabled: Boolean) =
+      setPreference(
+          key = NEW_ENGINE,
+          fallbackValue = DEFAULT_NEW_ENGINE,
+          value = { enabled },
+      )
+
   private object PasswordGenerator {
 
     private const val ALL_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -491,5 +524,8 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
     private val PREFERRED_NETWORK = stringPreferencesKey("key_preferred_network_1")
 
     private val SOCKET_TIMEOUT = longPreferencesKey("key_socket_timeout_1")
+
+    private val NEW_ENGINE = booleanPreferencesKey("key_new_engine_1")
+    private const val DEFAULT_NEW_ENGINE = false
   }
 }

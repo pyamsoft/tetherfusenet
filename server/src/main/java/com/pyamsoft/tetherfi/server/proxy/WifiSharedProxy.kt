@@ -72,14 +72,7 @@ internal constructor(
     status: ProxyStatus,
 ) : BaseServer(status), SharedProxy {
 
-  private val overallState =
-      MutableStateFlow(
-          ProxyState(
-              http = false,
-              socks = false,
-              netty = false,
-          )
-      )
+  private val overallState = MutableStateFlow(ProxyState())
 
   private fun adjustState(type: SharedProxy.Type, ready: Boolean) {
     overallState.update { s ->
@@ -157,6 +150,9 @@ internal constructor(
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
       socketCreator: SocketCreator,
       serverDispatcher: ServerDispatcher,
+      isNewEngineEnabled: Boolean,
+      isHttpEnabled: Boolean,
+      isSocksEnabled: Boolean,
   ) {
     val fakeError = appEnvironment.isProxyFakeError
     if (fakeError.first()) {
@@ -164,13 +160,7 @@ internal constructor(
       status.set(RunningStatus.ProxyError(RuntimeException("DEBUG: Force Fake Proxy Error")))
       return
     }
-
-    // TODO netty preference
-    val isNettyEnabled = IS_NETTY_ENABLED
-    val isHttpEnabled = preferences.listenForHttpEnabledChanges().first()
-    val isSocksEnabled = preferences.listenForSocksEnabledChanges().first()
-
-    if (isNettyEnabled) {
+    if (isNewEngineEnabled) {
       scope.launch(context = Dispatchers.Default) {
         beginProxyLoop(
             type = SharedProxy.Type.NETTY,
@@ -233,10 +223,20 @@ internal constructor(
     status.set(RunningStatus.NotRunning)
   }
 
-  private fun CoroutineScope.watchServerReadyStatus() {
+  private fun CoroutineScope.watchServerReadyStatus(
+      isNewEngineEnabled: Boolean,
+      isHttpEnabled: Boolean,
+      isSocksEnabled: Boolean,
+  ) {
     // When all proxy bits declare they are ready, the proxy status is "ready"
     overallState
-        .map { it.isReady(preferences) }
+        .map {
+          it.isReady(
+              isNewEngineEnabled = isNewEngineEnabled,
+              isHttpEnabled = isHttpEnabled,
+              isSocksEnabled = isSocksEnabled,
+          )
+        }
         .filter { it }
         .also { f ->
           launch(context = Dispatchers.Default) {
@@ -255,6 +255,9 @@ internal constructor(
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
       socketCreator: SocketCreator,
       serverDispatcher: ServerDispatcher,
+      isNewEngineEnabled: Boolean,
+      isHttpEnabled: Boolean,
+      isSocksEnabled: Boolean,
   ) {
     try {
       // Launch a new scope so this function won't proceed to finally block until the scope is
@@ -266,7 +269,11 @@ internal constructor(
         Timber.d { "Starting proxy server ..." }
         status.set(RunningStatus.Starting, clearError = true)
 
-        watchServerReadyStatus()
+        watchServerReadyStatus(
+            isNewEngineEnabled = isNewEngineEnabled,
+            isHttpEnabled = isHttpEnabled,
+            isSocksEnabled = isSocksEnabled,
+        )
 
         // Notify the client connection watcher that we have started
         launch(context = Dispatchers.Default) { startedClients.started() }
@@ -279,6 +286,9 @@ internal constructor(
               info = info,
               socketCreator = socketCreator,
               serverDispatcher = serverDispatcher,
+              isNewEngineEnabled = isNewEngineEnabled,
+              isHttpEnabled = isHttpEnabled,
+              isSocksEnabled = isSocksEnabled,
           )
         }
       }
@@ -315,7 +325,12 @@ internal constructor(
             )
 
         // Watch the connection status
+        val isNewEngineEnabled = preferences.listenForNewEngineEnabled().first()
+        val isHttpEnabled = preferences.listenForHttpEnabledChanges().first()
+        val isSocksEnabled = preferences.listenForSocksEnabledChanges().first()
+
         try {
+
           // Launch a new scope so this function won't proceed to finally block until the scope is
           // completed/cancelled
           //
@@ -351,6 +366,9 @@ internal constructor(
                               info = info,
                               socketCreator = socketCreator,
                               serverDispatcher = serverDispatcher,
+                              isNewEngineEnabled = isNewEngineEnabled,
+                              isHttpEnabled = isHttpEnabled,
+                              isSocksEnabled = isSocksEnabled,
                           )
                         }
                   }
@@ -425,7 +443,13 @@ internal constructor(
             // We will then await the onClosed() event
             // but it may never come if the proxy server is in the ERROR state,
             // so in that case fire it ourselves.
-            if (overallState.value.isReady(preferences)) {
+            if (
+                overallState.value.isReady(
+                    isNewEngineEnabled = isNewEngineEnabled,
+                    isHttpEnabled = isHttpEnabled,
+                    isSocksEnabled = isSocksEnabled,
+                )
+            ) {
               Timber.d { "Awaiting proxy server close event..." }
             } else {
               Timber.d { "Manually firing Proxy CLOSE event!" }
@@ -435,26 +459,30 @@ internal constructor(
         }
       }
 
-  private data class ProxyState(val http: Boolean, val socks: Boolean, val netty: Boolean) {
+  private data class ProxyState(
+      val http: Boolean = false,
+      val socks: Boolean = false,
+      val netty: Boolean = false,
+  ) {
 
     @CheckResult
-    suspend fun isReady(preferences: ProxyPreferences): Boolean {
-      // TODO netty preference
-      val isNettyEnabled = IS_NETTY_ENABLED
-      if (isNettyEnabled) {
+    fun isReady(
+        isNewEngineEnabled: Boolean,
+        isHttpEnabled: Boolean,
+        isSocksEnabled: Boolean,
+    ): Boolean {
+      if (isNewEngineEnabled) {
         if (netty) {
           return true
         }
       }
 
-      val isHttpEnabled = preferences.listenForHttpEnabledChanges().first()
       if (isHttpEnabled) {
         if (!http) {
           return false
         }
       }
 
-      val isSocksEnabled = preferences.listenForSocksEnabledChanges().first()
       if (isSocksEnabled) {
         if (!socks) {
           return false
@@ -466,8 +494,6 @@ internal constructor(
   }
 
   companion object {
-
-    private const val IS_NETTY_ENABLED = true
 
     private val UNCHANGED_SHOULD_NOT_HAPPEN_ERROR =
         AssertionError("ConnectionInfo.Unchanged should never escape the server-module internals.")
