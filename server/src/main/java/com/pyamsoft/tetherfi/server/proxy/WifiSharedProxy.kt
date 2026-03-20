@@ -113,17 +113,28 @@ internal constructor(
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
       socketCreator: SocketCreator,
       serverDispatcher: ServerDispatcher,
+      isHttpEnabled: Boolean,
+      isSocksEnabled: Boolean,
   ) {
     enforcer.assertOffMainThread()
 
     try {
-      Timber.d { "${type.name} Begin proxy server loop: $info" }
+      val httpPort = preferences.listenForHttpPortChanges().first()
+      val socksPort = preferences.listenForSocksPortChanges().first()
+
+      Timber.d {
+        "${type.name} Begin proxy server loop: $info (HTTP=${httpPort} SOCKS=${socksPort})"
+      }
       factory
           .create(
               type = type,
               info = info,
               socketCreator = socketCreator,
               serverDispatcher = serverDispatcher,
+              isHttpEnabled = isHttpEnabled,
+              isSocksEnabled = isSocksEnabled,
+              httpPort = httpPort,
+              socksPort = socksPort,
           )
           .loop(
               lock = lock,
@@ -168,6 +179,8 @@ internal constructor(
             info = info,
             socketCreator = socketCreator,
             serverDispatcher = serverDispatcher,
+            isHttpEnabled = isHttpEnabled,
+            isSocksEnabled = isSocksEnabled,
         )
       }
     } else {
@@ -179,6 +192,8 @@ internal constructor(
               info = info,
               socketCreator = socketCreator,
               serverDispatcher = serverDispatcher,
+              isHttpEnabled = isHttpEnabled,
+              isSocksEnabled = isSocksEnabled,
           )
         }
       }
@@ -191,6 +206,8 @@ internal constructor(
               info = info,
               socketCreator = socketCreator,
               serverDispatcher = serverDispatcher,
+              isHttpEnabled = isHttpEnabled,
+              isSocksEnabled = isSocksEnabled,
           )
         }
       }

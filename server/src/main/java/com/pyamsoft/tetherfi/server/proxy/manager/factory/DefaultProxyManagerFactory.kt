@@ -22,7 +22,6 @@ import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.tetherfi.core.AppDevEnvironment
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ExpertPreferences
-import com.pyamsoft.tetherfi.server.ProxyPreferences
 import com.pyamsoft.tetherfi.server.ServerInternalApi
 import com.pyamsoft.tetherfi.server.SocketCreator
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
@@ -58,7 +57,6 @@ internal constructor(
     private val expertPreferences: ExpertPreferences,
     private val socketTagger: SocketTagger,
     private val enforcer: ThreadEnforcer,
-    private val proxyPreferences: ProxyPreferences,
     private val appEnvironment: AppDevEnvironment,
     private val serverStopConsumer: EventConsumer<ServerStopRequestEvent>,
     private val blockedClients: BlockedClients,
@@ -98,14 +96,12 @@ internal constructor(
   @CheckResult
   private suspend fun createNetty(
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
+      isHttpEnabled: Boolean,
+      isSocksEnabled: Boolean,
+      httpPort: Int,
   ): ProxyManager {
     enforcer.assertOffMainThread()
 
-    // In netty mode, we all share a port
-    val port = proxyPreferences.listenForHttpPortChanges().first()
-
-    val isHttpEnabled = proxyPreferences.listenForHttpEnabledChanges().first()
-    val isSocksEnabled = proxyPreferences.listenForSocksEnabledChanges().first()
     val socketTimeout = expertPreferences.listenForSocketTimeout().first()
 
     Timber.d { "Using new Netty server" }
@@ -120,19 +116,18 @@ internal constructor(
         isSocksEnabled = isSocksEnabled,
         serverSocketTimeout = socketTimeout,
         hostConnection = info,
-        port = port,
+        port = httpPort,
     )
   }
 
   @CheckResult
-  private suspend fun createHttp(
+  private fun createHttp(
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
       socketCreator: SocketCreator,
       dispatcher: ServerDispatcher,
+      httpPort: Int,
   ): ProxyManager {
     enforcer.assertOffMainThread()
-
-    val port = proxyPreferences.listenForHttpPortChanges().first()
 
     return createTcp(
         proxyType = SharedProxy.Type.HTTP,
@@ -140,19 +135,18 @@ internal constructor(
         info = info,
         socketCreator = socketCreator,
         dispatcher = dispatcher,
-        port = port,
+        port = httpPort,
     )
   }
 
   @CheckResult
-  private suspend fun createSocks(
+  private fun createSocks(
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
       socketCreator: SocketCreator,
       dispatcher: ServerDispatcher,
+      socksPort: Int,
   ): ProxyManager {
     enforcer.assertOffMainThread()
-
-    val port = proxyPreferences.listenForSocksPortChanges().first()
 
     return createTcp(
         proxyType = SharedProxy.Type.SOCKS,
@@ -160,7 +154,7 @@ internal constructor(
         info = info,
         socketCreator = socketCreator,
         dispatcher = dispatcher,
-        port = port,
+        port = socksPort,
     )
   }
 
@@ -169,12 +163,19 @@ internal constructor(
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
       socketCreator: SocketCreator,
       serverDispatcher: ServerDispatcher,
+      isHttpEnabled: Boolean,
+      isSocksEnabled: Boolean,
+      httpPort: Int,
+      socksPort: Int,
   ): ProxyManager =
       withContext(context = Dispatchers.Default) {
         return@withContext when (type) {
           SharedProxy.Type.NETTY ->
               createNetty(
                   info = info,
+                  isHttpEnabled = isHttpEnabled,
+                  isSocksEnabled = isSocksEnabled,
+                  httpPort = httpPort,
               )
 
           SharedProxy.Type.HTTP ->
@@ -182,6 +183,7 @@ internal constructor(
                   info = info,
                   socketCreator = socketCreator,
                   dispatcher = serverDispatcher,
+                  httpPort = httpPort,
               )
 
           SharedProxy.Type.SOCKS ->
@@ -189,6 +191,7 @@ internal constructor(
                   info = info,
                   socketCreator = socketCreator,
                   dispatcher = serverDispatcher,
+                  socksPort = socksPort,
               )
         }
       }

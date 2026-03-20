@@ -41,6 +41,10 @@ internal interface ProxyManager {
         info: BroadcastNetworkStatus.ConnectionInfo.Connected,
         socketCreator: SocketCreator,
         serverDispatcher: ServerDispatcher,
+        isHttpEnabled: Boolean,
+        isSocksEnabled: Boolean,
+        httpPort: Int,
+        socksPort: Int,
     ): ProxyManager
   }
 }
