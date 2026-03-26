@@ -94,11 +94,17 @@ internal fun EditHttpPort(
     serverViewState: ServerViewState,
     onPortChanged: (Int) -> Unit,
 ) {
+  val isNewEngine by serverViewState.isNewEngine.collectAsStateWithLifecycle()
+  val portLabelId =
+      remember(isNewEngine) {
+        if (isNewEngine) R.string.hotspot_proxy_port else R.string.hotspot_proxy_http_port
+      }
+
   val port by serverViewState.httpPort.collectAsStateWithLifecycle()
   EditPort(
       modifier = modifier,
       port = port,
-      portLabelRes = R.string.hotspot_proxy_http_port,
+      portLabelRes = portLabelId,
       onPortChanged = onPortChanged,
   )
 }

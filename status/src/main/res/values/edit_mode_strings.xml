@@ -31,6 +31,8 @@
   <!-- TODO(Peter): Need zh-rTW translation -->
   <string name="editmode_hotspot_proxy_mode_title">Proxy Mode</string>
 
+  <string name="editmode_hotspot_proxy_newengine_description">The New Engine uses a single port for all connection types, so different port numbers for HTTP and SOCKS are no longer required.</string>
+
   <string name="editmode_hotspot_proxy_http_title">HTTP/HTTPS Proxy</string>
   <string name="editmode_hotspot_proxy_http_description">
     This proxy mode is simple and fast. It is compatible with most webpages

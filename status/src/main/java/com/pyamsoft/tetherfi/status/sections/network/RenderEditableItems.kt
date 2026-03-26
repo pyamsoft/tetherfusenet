@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -127,6 +128,7 @@ internal fun LazyListScope.renderEditableItems(
   item(
       contentType = RenderEditableItemsContentTypes.EDIT_PORTS,
   ) {
+    val isNewEngine by serverViewState.isNewEngine.collectAsStateWithLifecycle()
     val isHttpEnabled by serverViewState.isHttpEnabled.collectAsStateWithLifecycle()
     val isSocksEnabled by serverViewState.isSocksEnabled.collectAsStateWithLifecycle()
 
@@ -150,8 +152,18 @@ internal fun LazyListScope.renderEditableItems(
                 ),
         )
 
+        if (isNewEngine) {
+          Text(
+              modifier =
+                  Modifier.padding(horizontal = MaterialTheme.keylines.content)
+                      .padding(bottom = MaterialTheme.keylines.content),
+              text = stringResource(R.string.editmode_hotspot_proxy_newengine_description),
+              style = MaterialTheme.typography.bodySmall,
+          )
+        }
+
         EditProxyPort(
-            modifier = modifier.padding(bottom = MaterialTheme.keylines.content),
+            modifier = modifier.padding(bottom = MaterialTheme.keylines.baseline),
             portType = ServerPortTypes.HTTP,
             titleRes = R.string.editmode_hotspot_proxy_http_title,
             descriptionRes = R.string.editmode_hotspot_proxy_http_description,
@@ -160,15 +172,17 @@ internal fun LazyListScope.renderEditableItems(
             onEnabledChanged = onHttpEnabledChanged,
             onEnableChangeFailed = onEnableChangeFailed,
         ) {
-          EditHttpPort(
-              modifier = Modifier.weight(1F).padding(end = MaterialTheme.keylines.content),
-              serverViewState = serverViewState,
-              onPortChanged = onHttpPortChanged,
-          )
+          if (!isNewEngine) {
+            EditHttpPort(
+                modifier = Modifier.weight(1F).padding(end = MaterialTheme.keylines.content),
+                serverViewState = serverViewState,
+                onPortChanged = onHttpPortChanged,
+            )
+          }
         }
 
         EditProxyPort(
-            modifier = modifier.padding(bottom = MaterialTheme.keylines.content),
+            modifier = modifier.padding(bottom = MaterialTheme.keylines.baseline),
             portType = ServerPortTypes.SOCKS,
             titleRes = R.string.editmode_hotspot_proxy_socks_title,
             descriptionRes = R.string.editmode_hotspot_proxy_socks_description,
@@ -177,10 +191,23 @@ internal fun LazyListScope.renderEditableItems(
             onEnabledChanged = onSocksEnabledChanged,
             onEnableChangeFailed = onEnableChangeFailed,
         ) {
-          EditSocksPort(
-              modifier = Modifier.weight(1F).padding(end = MaterialTheme.keylines.content),
+          if (!isNewEngine) {
+            EditSocksPort(
+                modifier = Modifier.weight(1F).padding(end = MaterialTheme.keylines.content),
+                serverViewState = serverViewState,
+                onPortChanged = onSocksPortChanged,
+            )
+          }
+        }
+
+        if (isNewEngine) {
+          EditHttpPort(
+              modifier =
+                  Modifier.fillMaxWidth()
+                      .padding(horizontal = MaterialTheme.keylines.content)
+                      .padding(bottom = MaterialTheme.keylines.content),
               serverViewState = serverViewState,
-              onPortChanged = onSocksPortChanged,
+              onPortChanged = onHttpPortChanged,
           )
         }
       }
@@ -301,11 +328,10 @@ private fun EditProxyPort(
     )
     Text(
         modifier =
-            Modifier.padding(horizontal = MaterialTheme.keylines.content)
-                .padding(
-                    top = MaterialTheme.keylines.content,
-                    bottom = MaterialTheme.keylines.baseline,
-                ),
+            Modifier.padding(
+                horizontal = MaterialTheme.keylines.content,
+                vertical = MaterialTheme.keylines.baseline,
+            ),
         text = stringResource(descriptionRes),
         style =
             MaterialTheme.typography.bodyMedium.copy(

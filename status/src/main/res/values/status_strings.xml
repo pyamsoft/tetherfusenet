@@ -31,6 +31,7 @@
   <string name="title_hotspot_status">Hotspot Status</string>
 
   <!-- TODO(Peter): Need zh-rTW translation -->
+  <string name="hotspot_proxy_port">HOTSPOT PROXY PORT</string>
   <string name="hotspot_proxy_http_port">HTTP PROXY PORT</string>
   <string name="hotspot_proxy_socks_port">SOCKS PROXY PORT</string>
 </resources>
