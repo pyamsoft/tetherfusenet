@@ -22,7 +22,7 @@ timber = "5.0.1"
 
 qrCode = "4.5.0"
 dagger = "2.59.2"
-netty = "4.2.10.Final"
+netty = "4.2.12.Final"
 
 # AndroidX
 core = "1.18.0"
