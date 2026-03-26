@@ -23,20 +23,44 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.tetherfi.behavior.R
+import com.pyamsoft.tetherfi.ui.ServerViewState
 import com.pyamsoft.tetherfi.ui.textAlpha
 
 @Composable
 internal fun PowerBalance(
     modifier: Modifier = Modifier,
+    serverViewState: ServerViewState,
     appName: String,
     isEditable: Boolean,
     onShowPowerBalance: () -> Unit,
 ) {
+  val isNewEngine by serverViewState.isNewEngine.collectAsStateWithLifecycle()
+
+  val descriptionId = remember(isNewEngine) {
+    if (isNewEngine) R.string.expert_power_balance_new_description else R.string.expert_power_balance_old_description
+  }
+
+  val buttonId = remember(isNewEngine) {
+    if (isNewEngine) R.string.expert_power_balance_new_button else R.string.expert_power_balance_old_button
+  }
+
+  val isButtonEnabled = remember(isEditable, isNewEngine) {
+    if (isNewEngine) {
+      // Never enabled for new engine
+      return@remember false
+    }
+
+    return@remember isEditable
+  }
+
   Column(
       modifier = modifier,
   ) {
@@ -53,7 +77,7 @@ internal fun PowerBalance(
     )
     Text(
         modifier = Modifier.padding(bottom = MaterialTheme.keylines.content),
-        text = stringResource(R.string.expert_power_balance_description, appName),
+        text = stringResource(descriptionId, appName),
         style =
             MaterialTheme.typography.bodyMedium.copy(
                 color =
@@ -66,10 +90,10 @@ internal fun PowerBalance(
     Button(
         modifier = Modifier.fillMaxWidth(),
         onClick = onShowPowerBalance,
-        enabled = isEditable,
+        enabled = isButtonEnabled,
     ) {
       Text(
-          text = stringResource(R.string.expert_power_balance_button),
+          text = stringResource(buttonId),
       )
     }
   }

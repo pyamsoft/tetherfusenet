@@ -355,7 +355,7 @@ internal fun LazyListScope.renderDeviceSetup(
                   painter =
                       if (showSocksOptions) IconPainters.keyboardArrowRight()
                       else IconPainters.keyboardArrowDown(),
-                  contentDescription = stringResource(R.string.view_http_options),
+                  contentDescription = stringResource(R.string.view_socks_options),
                   tint = MaterialTheme.colorScheme.onSurfaceVariant,
               )
             }
@@ -404,7 +404,10 @@ internal fun LazyListScope.renderDeviceSetup(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                   val socksPortNumber by serverViewState.socksPort.collectAsStateWithLifecycle()
-                  val socksPort = rememberPortNumber(socksPortNumber)
+                  val httpPortNumber by serverViewState.httpPort.collectAsStateWithLifecycle()
+                  val isNewEngine by serverViewState.isNewEngine.collectAsStateWithLifecycle()
+                  val portNumber = remember(isNewEngine) { if (isNewEngine) httpPortNumber else socksPortNumber }
+                  val socksPort = rememberPortNumber(portNumber)
 
                   Text(
                       text = stringResource(R.string.label_hotspot_socks_port),

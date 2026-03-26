@@ -106,6 +106,7 @@ internal fun LazyListScope.renderLoadedContent(
 
   renderExpertSettings(
       itemModifier = itemModifier,
+      serverViewState =serverViewState,
       isEditable = isEditable,
       appName = appName,
       onShowPowerBalance = onShowPowerBalance,

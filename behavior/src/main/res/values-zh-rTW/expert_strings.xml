@@ -23,9 +23,9 @@
 
   <string name="expert_power_balance_title">專業設定：性能平衡設定</string>
   <string
-    name="expert_power_balance_description"
+    name="expert_power_balance_old_description"
   >此設定僅提供給「進階使用者」使用。\n\n您可以透過調整分配給熱點網路的虛擬執行緒數量來調整 %1$s 網路熱點的效能表現跟資源使用量。\n\n更高的執行緒數量通常會促成更高的性能，但也會造成更高的電池電量使用且可能會使您的裝置更熱或更慢。</string>
-  <string name="expert_power_balance_button">調整性能</string>
+  <string name="expert_power_balance_old_button">調整性能</string>
 
   <string name="expert_balance_max_title">最大性能</string>
   <string
