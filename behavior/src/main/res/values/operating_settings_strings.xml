@@ -22,11 +22,12 @@
     name="operating_always_alive_description"
   >This will allow the %1$s Hotspot to continue running even if the app is closed.\n\nThis will significantly enhance your experience and network performance.\n(recommended)</string>
 
-  <string name="permission_notification_title"
-      >Show Hotspot Notification</string>
   <string
-      name="permission_notification_description"
-      >Keep the Hotspot alive on newer Android versions.\n\nWithout a notification, the Hotspot may be stopped randomly.</string>
+    name="permission_notification_title"
+  >Show Hotspot Notification</string>
+  <string
+    name="permission_notification_description"
+  >Keep the Hotspot alive on newer Android versions.\n\nWithout a notification, the Hotspot may be stopped randomly.</string>
 
   <string name="operating_new_engine_title">Use New Engine</string>
   <string name="operating_new_engine_description">

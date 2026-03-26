@@ -24,6 +24,6 @@
 
   <string name="permission_notification_title">顯示網路熱點通知</string>
   <string
-      name="permission_notification_description"
-      >在新的 Android 版本中使網路熱點保持存活。\n\n在沒有通知的情境下，網路熱點可能會被系統隨機中止。</string>
+    name="permission_notification_description"
+  >在新的 Android 版本中使網路熱點保持存活。\n\n在沒有通知的情境下，網路熱點可能會被系統隨機中止。</string>
 </resources>

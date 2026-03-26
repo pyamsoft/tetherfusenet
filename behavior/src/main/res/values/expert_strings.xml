@@ -27,8 +27,8 @@
   <string name="expert_power_balance_old_button">Adjust Power Balance</string>
 
   <string
-      name="expert_power_balance_new_description"
-      >The New Engine is powered by Netty which automatically scales performance up and down to match the current workload. As a result, the %1$s Hotspot will always run as fast as possible when needed, and will free us resources when not used. The manual selection of Power Balance controls is no longer needed.</string>
+    name="expert_power_balance_new_description"
+  >The New Engine is powered by Netty which automatically scales performance up and down to match the current workload. As a result, the %1$s Hotspot will always run as fast as possible when needed, and will free us resources when not used. The manual selection of Power Balance controls is no longer needed.</string>
   <string name="expert_power_balance_new_button">No Longer Needed</string>
 
   <string name="expert_balance_max_title">Max Performance</string>
