@@ -77,6 +77,7 @@ dependencies {
 
   implementation(libs.netty.codec.http)
   implementation(libs.netty.codec.socks)
+  implementation(libs.slf4j.nop)
 
   // PYDroid
   implementation(libs.pydroid.bus)

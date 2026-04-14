@@ -23,6 +23,8 @@ timber = "5.0.1"
 qrCode = "4.5.0"
 dagger = "2.59.2"
 netty = "4.2.12.Final"
+# Silence SLF4J logging warnings
+slf4j = "2.0.17"
 
 # AndroidX
 core = "1.18.0" # core-ktx is ready in 1.19.X https://jakewharton.com/an-update-on-android-ktx/
@@ -97,6 +99,7 @@ ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty-jvm", version
 
 netty-codec-http = { group = "io.netty", name = "netty-codec-http", version.ref = "netty" }
 netty-codec-socks = { group = "io.netty", name = "netty-codec-socks", version.ref = "netty" }
+slf4j-nop = { group = "org.slf4j", name = "slf4j-nop", version.ref = "slf4j" }
 
 leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakCanary" }
 leakcanary-plumber = { group = "com.squareup.leakcanary", name = "plumber-android", version.ref = "leakCanary" }
