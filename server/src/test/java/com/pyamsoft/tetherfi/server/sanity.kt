@@ -16,9 +16,9 @@
 
 package com.pyamsoft.tetherfi.server
 
-import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.coroutines.test.runTest
+import org.junit.Test
 
 class JVMSanity {
 

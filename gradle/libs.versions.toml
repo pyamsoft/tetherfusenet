@@ -48,6 +48,9 @@ doctor = "0.12.1"
 jdkDesugar = "2.1.5"
 caupain = "1.9.1"
 
+# Testing
+junit = "4.13.2"
+
 
 [plugins]
 android = { id = "com.android.library", version.ref = "agp" }
@@ -106,3 +109,5 @@ pydroid-util = { group = "com.github.pyamsoft.pydroid", name = "util", version.r
 qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin-android", version.ref = "qrCode" }
 
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+junit = { group = "junit", name ="junit", version.ref = "junit" }

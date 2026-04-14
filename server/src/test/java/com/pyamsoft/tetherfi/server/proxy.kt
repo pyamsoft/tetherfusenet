@@ -106,9 +106,9 @@ internal suspend fun setupProxy(
           return flowOf(emptyList())
         }
 
-        override suspend fun seen(client: TetherClient) {}
+        override fun seen(client: TetherClient) {}
 
-        override suspend fun reportTransfer(client: TetherClient, report: ByteTransferReport) {}
+        override fun reportTransfer(client: TetherClient, report: ByteTransferReport) {}
       }
 
   val resolver =
@@ -250,6 +250,7 @@ internal suspend fun setupProxy(
                       lock = NoopLock,
                       onOpened = {},
                       onClosing = {},
+                      onClosed = {},
                       onError = { e ->
                         if (expectServerFail) {
                           errorCode = "server"
