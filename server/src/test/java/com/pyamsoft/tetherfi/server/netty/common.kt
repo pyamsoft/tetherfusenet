@@ -16,18 +16,28 @@
 
 package com.pyamsoft.tetherfi.server.netty
 
-import com.pyamsoft.tetherfi.server.runBlockingWithDelays
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
-import org.junit.Test
+import timber.log.Timber
 
-class ServerTest {
+suspend fun withLogging(
+    isLoggingEnabled: Boolean = true,
+    block: suspend () -> Unit,
+) {
+  var tree: Timber.Tree? = null
+  if (isLoggingEnabled) {
+    val t =
+        object : Timber.Tree() {
+          override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+            t?.printStackTrace()
+            println(message)
+          }
+        }
+    tree = t
+    Timber.plant(t)
+  }
 
-  @Test
-  fun `test Netty server starts`(): Unit = runBlockingWithDelays {
-    TestSetup.withNetty {
-      // Delay for a bit to "keep it running"
-      delay(1.seconds)
-    }
+  try {
+    block()
+  } finally {
+    tree?.also { Timber.uproot(it) }
   }
 }

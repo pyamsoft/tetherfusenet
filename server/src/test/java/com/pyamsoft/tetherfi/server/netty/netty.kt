@@ -17,7 +17,6 @@
 package com.pyamsoft.tetherfi.server.netty
 
 import androidx.annotation.CheckResult
-import com.pyamsoft.tetherfi.server.HOSTNAME
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
 import com.pyamsoft.tetherfi.server.clients.BlockedClients
@@ -26,6 +25,18 @@ import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.SuspendingNettyDelegatingProxy
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.TcpChannelCreator
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.UdpChannelCreator
+import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
+import io.netty.channel.ChannelHandler
+import io.netty.channel.ChannelInboundHandler
+import io.netty.channel.MultiThreadIoEventLoopGroup
+import io.netty.channel.embedded.EmbeddedChannel
+import io.netty.channel.nio.NioIoHandler
+import java.net.InetSocketAddress
+import java.net.SocketAddress
 import java.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
@@ -37,7 +48,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @ConsistentCopyVisibility
 data class IntHolder
@@ -66,148 +76,266 @@ internal constructor(
     var errorCount: IntHolder,
 )
 
-suspend fun withLogging(
-    isLoggingEnabled: Boolean = true,
-    block: suspend () -> Unit,
-) {
-  var tree: Timber.Tree? = null
-  if (isLoggingEnabled) {
-    val t =
-        object : Timber.Tree() {
-          override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-            t?.printStackTrace()
-            println(message)
-          }
-        }
-    tree = t
-    Timber.plant(t)
+private class TestEmbeddedChannel(
+    vararg handlers: ChannelHandler,
+) : EmbeddedChannel(*handlers) {
+
+  private val server = InetSocketAddress("127.0.0.1", 8228)
+  private val remote = InetSocketAddress("127.0.0.2", 12345)
+
+  override fun localAddress0(): SocketAddress {
+    return server
   }
 
-  try {
-    block()
-  } finally {
-    tree?.also { Timber.uproot(it) }
+  override fun remoteAddress0(): SocketAddress {
+    return remote
   }
 }
 
-suspend fun withNetty(
-    hostName: String = HOSTNAME,
-    port: Int = 8228,
-    isLoggingEnabled: Boolean = true,
-    block: suspend NettyTestContext.(SuspendingNettyDelegatingProxy) -> Unit,
-) {
-  val blocked =
-      object : BlockedClients {
-        override fun listenForBlocked(): Flow<Collection<TetherClient>> {
-          return flowOf(emptyList())
-        }
+private data class TestChannelCreator(
+    private val impl: ChannelCreator,
+    private val onChannelCreated: (Channel) -> Unit,
+) : ChannelCreator {
 
-        override fun isBlocked(client: TetherClient): Boolean {
-          return false
-        }
+  override fun bind(onChannelInitialized: (Channel) -> Unit): ChannelFuture =
+      impl.bind { channel ->
+        onChannelCreated(channel)
+        onChannelInitialized(channel)
       }
 
-  val allowed =
-      object : AllowedClients {
-        override fun listenForClients(): Flow<List<TetherClient>> {
-          return flowOf(emptyList())
+  override fun connect(hostName: String, port: Int, onChannelInitialized: (Channel) -> Unit) =
+      impl.connect(
+          hostName = hostName,
+          port = port,
+          onChannelInitialized = { channel ->
+            onChannelCreated(channel)
+            onChannelInitialized(channel)
+          },
+      )
+}
+
+internal object TestSetup {
+
+  @CheckResult
+  private fun ChannelCreator.wrap(onChannelCreated: (Channel) -> Unit): ChannelCreator {
+    return TestChannelCreator(
+        impl = this,
+        onChannelCreated = onChannelCreated,
+    )
+  }
+
+  data class FactoryParams(
+      val isHttpEnabled: Boolean,
+      val isSocksEnabled: Boolean,
+      val allowed: AllowedClients,
+      val resolver: ClientResolver,
+      val serverSocketTimeout: ServerSocketTimeout,
+      val provideTcpChannelCreator: () -> ChannelCreator,
+      val provideUdpChannelCreator: () -> ChannelCreator,
+  )
+
+  data class HandlerContext(
+      val channel: EmbeddedChannel,
+      val allowed: AllowedClients,
+      val resolver: ClientResolver,
+  )
+
+  internal fun withHandler(
+      isHttpEnabled: Boolean,
+      isSocksEnabled: Boolean,
+      onTcpChannelCreated: (Channel) -> Unit = {},
+      onUdpChannelCreated: (Channel) -> Unit = {},
+      factory: (FactoryParams) -> ChannelInboundHandler,
+  ): HandlerContext {
+    val allowed =
+        object : AllowedClients {
+          override fun listenForClients(): Flow<List<TetherClient>> {
+            return flowOf(emptyList())
+          }
+
+          override fun seen(client: TetherClient) {}
+
+          override fun reportTransfer(client: TetherClient, report: ByteTransferReport) {}
         }
 
-        override fun seen(client: TetherClient) {}
+    val resolver =
+        object : ClientResolver {
 
-        override fun reportTransfer(client: TetherClient, report: ByteTransferReport) {}
-      }
+          private val clients = mutableMapOf<String, TetherClient>()
 
-  val resolver =
-      object : ClientResolver {
-
-        private val clients = mutableMapOf<String, TetherClient>()
-
-        override fun ensure(hostNameOrIp: String): TetherClient {
-          return clients.getOrPut(hostNameOrIp) {
-            TetherClient.create(
-                hostNameOrIp,
-                clock = Clock.systemDefaultZone(),
-            )
+          override fun ensure(hostNameOrIp: String): TetherClient {
+            return clients.getOrPut(hostNameOrIp) {
+              TetherClient.create(
+                  hostNameOrIp,
+                  clock = Clock.systemDefaultZone(),
+              )
+            }
           }
         }
-      }
 
-  val socketTagger = SocketTagger {}
+    val socketTagger = SocketTagger {}
 
-  val openCount = IntHolder()
-  val closingCount = IntHolder()
-  val closedCount = IntHolder()
-  val errorCount = IntHolder()
+    val workerGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
 
-  val proxy =
-      SuspendingNettyDelegatingProxy(
-          host = hostName,
-          port = port,
-          blockedClients = blocked,
-          allowedClients = allowed,
-          clientResolver = resolver,
-          isDebug = true,
-          socketTagger = socketTagger,
-          androidPreferredNetwork = null,
-          isHttpEnabled = true,
-          isSocksEnabled = true,
-          serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
-          onOpened = { openCount.inc() },
-          onClosing = { closingCount.inc() },
-          onClosed = { closedCount.inc() },
-          onError = { errorCount.inc() },
-      )
+    val tcpSocketCreator =
+        TcpChannelCreator(
+            eventLoop = workerGroup,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = null,
+        )
 
-  withLogging(
-      isLoggingEnabled = isLoggingEnabled,
-  ) {
-    // Need a real scope for the Netty server to actually start
-    val nettyScope = CoroutineScope(context = Dispatchers.Default)
-    try {
-      // Before job starts, callbacks have not run
-      assert(openCount.get() == 0)
-      assert(closingCount.get() == 0)
-      assert(closedCount.get() == 0)
-      assert(errorCount.get() == 0)
+    val udpSocketCreator =
+        UdpChannelCreator(
+            eventLoop = workerGroup,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = null,
+        )
 
-      val nettyJob = nettyScope.launch { proxy.start(scope = nettyScope) }
-
-      // Assert netty is alive
-      assert(nettyJob.isActive)
-
-      try {
-        val nettyContext =
-            NettyTestContext(
-                job = nettyJob,
-                scope = nettyScope,
-                openCount = openCount,
-                closingCount = closingCount,
-                closedCount = closedCount,
-                errorCount = errorCount,
+    val channel =
+        TestEmbeddedChannel(
+            factory(
+                FactoryParams(
+                    isHttpEnabled = isHttpEnabled,
+                    isSocksEnabled = isSocksEnabled,
+                    allowed = allowed,
+                    resolver = resolver,
+                    serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
+                    provideTcpChannelCreator = {
+                      tcpSocketCreator.wrap { onTcpChannelCreated(it) }
+                    },
+                    provideUdpChannelCreator = {
+                      udpSocketCreator.wrap { onUdpChannelCreated(it) }
+                    },
+                )
             )
-        nettyContext.block(proxy)
+        )
+
+    return HandlerContext(
+        channel = channel,
+        allowed = allowed,
+        resolver = resolver,
+    )
+  }
+
+  suspend fun withNetty(
+      hostName: String = "127.0.0.1",
+      port: Int = 8228,
+      isLoggingEnabled: Boolean = true,
+      block: suspend NettyTestContext.(SuspendingNettyDelegatingProxy) -> Unit,
+  ) {
+    val blocked =
+        object : BlockedClients {
+          override fun listenForBlocked(): Flow<Collection<TetherClient>> {
+            return flowOf(emptyList())
+          }
+
+          override fun isBlocked(client: TetherClient): Boolean {
+            return false
+          }
+        }
+
+    val allowed =
+        object : AllowedClients {
+          override fun listenForClients(): Flow<List<TetherClient>> {
+            return flowOf(emptyList())
+          }
+
+          override fun seen(client: TetherClient) {}
+
+          override fun reportTransfer(client: TetherClient, report: ByteTransferReport) {}
+        }
+
+    val resolver =
+        object : ClientResolver {
+
+          private val clients = mutableMapOf<String, TetherClient>()
+
+          override fun ensure(hostNameOrIp: String): TetherClient {
+            return clients.getOrPut(hostNameOrIp) {
+              TetherClient.create(
+                  hostNameOrIp,
+                  clock = Clock.systemDefaultZone(),
+              )
+            }
+          }
+        }
+
+    val socketTagger = SocketTagger {}
+
+    val openCount = IntHolder()
+    val closingCount = IntHolder()
+    val closedCount = IntHolder()
+    val errorCount = IntHolder()
+
+    val proxy =
+        SuspendingNettyDelegatingProxy(
+            host = hostName,
+            port = port,
+            blockedClients = blocked,
+            allowedClients = allowed,
+            clientResolver = resolver,
+            isDebug = true,
+            socketTagger = socketTagger,
+            androidPreferredNetwork = null,
+            isHttpEnabled = true,
+            isSocksEnabled = true,
+            serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
+            onOpened = { openCount.inc() },
+            onClosing = { closingCount.inc() },
+            onClosed = { closedCount.inc() },
+            onError = { errorCount.inc() },
+        )
+
+    withLogging(
+        isLoggingEnabled = isLoggingEnabled,
+    ) {
+      // Need a real scope for the Netty server to actually start
+      val nettyScope = CoroutineScope(context = Dispatchers.Default)
+      try {
+        // Before job starts, callbacks have not run
+        assert(openCount.get() == 0)
+        assert(closingCount.get() == 0)
+        assert(closedCount.get() == 0)
+        assert(errorCount.get() == 0)
+
+        val nettyJob = nettyScope.launch { proxy.start(scope = nettyScope) }
+
+        // Assert netty is alive
+        assert(nettyJob.isActive)
+
+        try {
+          val nettyContext =
+              NettyTestContext(
+                  job = nettyJob,
+                  scope = nettyScope,
+                  openCount = openCount,
+                  closingCount = closingCount,
+                  closedCount = closedCount,
+                  errorCount = errorCount,
+              )
+          nettyContext.block(proxy)
+        } finally {
+          // Now dead
+          nettyJob.cancelAndJoin()
+        }
+
+        assert(!nettyJob.isActive)
+
+        assert(openCount.get() == 1)
+        assert(closingCount.get() == 1)
+
+        // Full close event takes a little bit of time
+        while (closedCount.get() <= 0) {
+          delay(100.milliseconds)
+        }
+
+        // Finally closed!
+        assert(closedCount.get() == 1)
+
+        // Don't check errors
       } finally {
-        // Now dead
-        nettyJob.cancelAndJoin()
+        nettyScope.cancel()
       }
-
-      assert(!nettyJob.isActive)
-
-      assert(openCount.get() == 1)
-      assert(closingCount.get() == 1)
-
-      // Full close event takes a little bit of time
-      while (closedCount.get() <= 0) {
-        delay(100.milliseconds)
-      }
-
-      // Finally closed!
-      assert(closedCount.get() == 1)
-
-      // Don't check errors
-    } finally {
-      nettyScope.cancel()
     }
   }
 }

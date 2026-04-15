@@ -33,7 +33,6 @@ import io.netty.resolver.DefaultAddressResolverGroup
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetSocketAddress
-import java.nio.charset.StandardCharsets
 
 object UDP {
 
@@ -90,7 +89,7 @@ object UDP {
             return "0.0.0.0"
           }
 
-          val sequence = buf.readCharSequence(addressLength, StandardCharsets.US_ASCII).toString()
+          val sequence = buf.readCharSequence(addressLength, Charsets.US_ASCII).toString()
           if (addressLength == 1 && sequence == "0") {
             // PySocks delivers a random port with an address of "0"
             // SOCKS spec says we must fall back to 0 address

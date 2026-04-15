@@ -17,233 +17,165 @@
 package com.pyamsoft.tetherfi.server.netty
 
 import androidx.annotation.CheckResult
-import com.pyamsoft.tetherfi.server.HOSTNAME
-import com.pyamsoft.tetherfi.server.ServerSocketTimeout
-import com.pyamsoft.tetherfi.server.clients.AllowedClients
-import com.pyamsoft.tetherfi.server.clients.ByteTransferReport
-import com.pyamsoft.tetherfi.server.clients.ClientResolver
-import com.pyamsoft.tetherfi.server.clients.TetherClient
-import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProtocolDelegatingHandler
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.TcpChannelCreator
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.UdpChannelCreator
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http.Http1ProxyHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks4ProxyHandler
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks5ProxyHandler
 import com.pyamsoft.tetherfi.server.runBlockingWithDelays
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
-import io.netty.channel.Channel
-import io.netty.channel.ChannelFuture
-import io.netty.channel.ChannelHandler
-import io.netty.channel.MultiThreadIoEventLoopGroup
-import io.netty.channel.embedded.EmbeddedChannel
-import io.netty.channel.nio.NioIoHandler
+import io.netty.channel.ChannelInboundHandler
 import io.netty.handler.codec.socksx.SocksVersion
-import java.net.InetSocketAddress
-import java.net.SocketAddress
-import java.nio.charset.StandardCharsets
-import java.time.Clock
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
 
-private class TestEmbeddedChannel(
-    vararg handlers: ChannelHandler,
-) : EmbeddedChannel(*handlers) {
-
-  private val server = InetSocketAddress(HOSTNAME, 8228)
-  private val remote = InetSocketAddress(HOSTNAME, 12345)
-
-  override fun localAddress0(): SocketAddress {
-    return server
-  }
-
-  override fun remoteAddress0(): SocketAddress {
-    return remote
-  }
-}
-
-private data class TestChannelCreator(
-    private val impl: ChannelCreator,
-    private val onChannelCreated: (Channel) -> Unit,
-) : ChannelCreator {
-
-  override fun bind(onChannelInitialized: (Channel) -> Unit): ChannelFuture =
-      impl.bind { channel ->
-        print("ON BIND: $channel")
-        onChannelCreated(channel)
-        onChannelInitialized(channel)
-      }
-
-  override fun connect(hostName: String, port: Int, onChannelInitialized: (Channel) -> Unit) =
-      impl.connect(
-          hostName = hostName,
-          port = port,
-          onChannelInitialized = { channel ->
-            print("ON CONNECT: $hostName $port $channel")
-            onChannelCreated(channel)
-            onChannelInitialized(channel)
-          },
-      )
-}
-
-object TestSetup {
+class DelegatingHandlerTest {
 
   @CheckResult
-  private fun ChannelCreator.wrap(onChannelCreated: (Channel) -> Unit): ChannelCreator {
-    return TestChannelCreator(
-        impl = this,
-        onChannelCreated = onChannelCreated,
-    )
-  }
-
-  internal fun withHandler(
-      scope: CoroutineScope,
-      isHttpEnabled: Boolean,
-      isSocksEnabled: Boolean,
-      onTcpChannelCreated: (Channel) -> Unit = {},
-      onUdpChannelCreated: (Channel) -> Unit = {},
-  ): EmbeddedChannel {
-    val allowed =
-        object : AllowedClients {
-          override fun listenForClients(): Flow<List<TetherClient>> {
-            return flowOf(emptyList())
-          }
-
-          override fun seen(client: TetherClient) {}
-
-          override fun reportTransfer(client: TetherClient, report: ByteTransferReport) {}
-        }
-
-    val resolver =
-        object : ClientResolver {
-
-          private val clients = mutableMapOf<String, TetherClient>()
-
-          override fun ensure(hostNameOrIp: String): TetherClient {
-            return clients.getOrPut(hostNameOrIp) {
-              TetherClient.create(
-                  hostNameOrIp,
-                  clock = Clock.systemDefaultZone(),
-              )
-            }
-          }
-        }
-
-    val socketTagger = SocketTagger {}
-
-    val workerGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
-
-    val tcpSocketCreator =
-        TcpChannelCreator(
-            eventLoop = workerGroup,
-            socketTagger = socketTagger,
-            androidPreferredNetwork = null,
-        )
-
-    val udpSocketCreator =
-        UdpChannelCreator(
-            eventLoop = workerGroup,
-            socketTagger = socketTagger,
-            androidPreferredNetwork = null,
-        )
-
+  private fun CoroutineScope.delegatingHandlerFactory(
+      factoryParams: TestSetup.FactoryParams
+  ): ChannelInboundHandler {
     val params =
         ProtocolDelegatingHandler.Params(
-            scope = scope,
-            tcp = tcpSocketCreator.wrap { onTcpChannelCreated(it) },
-            udp = if (isSocksEnabled) udpSocketCreator.wrap { onUdpChannelCreated(it) } else null,
+            scope = this,
+            tcp = factoryParams.provideTcpChannelCreator(),
+            udp =
+                if (factoryParams.isSocksEnabled) factoryParams.provideUdpChannelCreator()
+                else null,
         )
 
     val factory =
         ProtocolDelegatingHandler.factory(
-            isHttpEnabled = isHttpEnabled,
             isDebug = true,
-            serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
-            allowedClients = allowed,
-            clientResolver = resolver,
+            isHttpEnabled = factoryParams.isHttpEnabled,
+            serverSocketTimeout = factoryParams.serverSocketTimeout,
+            allowedClients = factoryParams.allowed,
+            clientResolver = factoryParams.resolver,
         )
 
-    val handler = factory.create(params)
-    return TestEmbeddedChannel(handler)
+    return factory.create(params)
   }
-}
-
-class DelegatingHandlerTest {
 
   @Test
   fun `test Netty server handler does not intercept connections when completely disabled`(): Unit =
       runBlockingWithDelays {
+        val scope = this
+
         withLogging {
-          val channel =
+          val context =
               TestSetup.withHandler(
-                  scope = this,
                   isHttpEnabled = false,
                   isSocksEnabled = false,
+                  factory = { delegatingHandlerFactory(it) },
               )
+          val channel = context.channel
 
           val httpCommand = "CONNECT https://google.com HTTP/1.1"
-          val buf = Unpooled.buffer()
-          buf.writeCharSequence(httpCommand, StandardCharsets.UTF_8)
-          channel.writeInbound(buf)
+          val buf = Unpooled.wrappedBuffer(httpCommand.toByteArray())
+
+          channel.apply {
+            writeInbound(buf)
+            flushInbound()
+            runPendingTasks()
+          }
 
           // This has NOT been read by a delegated handler, the buffer is still here
           val read = channel.readInbound<ByteBuf>()
           assertNotNull(read)
 
-          val data = read.toString(StandardCharsets.UTF_8)
+          val data = read.toString(Charsets.UTF_8)
           assert(data == httpCommand)
+
+          assertNull(channel.pipeline().get(Http1ProxyHandler::class.java))
+          assertNull(channel.pipeline().get(Socks4ProxyHandler::class.java))
+          assertNull(channel.pipeline().get(Socks5ProxyHandler::class.java))
         }
       }
 
   @Test
   fun `test Netty server intercepts HTTP(S) connections`(): Unit = runBlockingWithDelays {
     withLogging {
-      val channel =
+      val context =
           TestSetup.withHandler(
-              scope = this,
               isHttpEnabled = true,
               isSocksEnabled = false,
+              factory = { delegatingHandlerFactory(it) },
           )
+      val channel = context.channel
 
       val httpCommand = "CONNECT https://google.com HTTP/1.1"
-      val buf = Unpooled.buffer()
-      buf.writeCharSequence(httpCommand, StandardCharsets.UTF_8)
-      channel.writeInbound(buf)
+      val buf = Unpooled.wrappedBuffer(httpCommand.toByteArray())
+
+      channel.apply {
+        writeInbound(buf)
+        flushInbound()
+        runPendingTasks()
+      }
 
       // This has been read by the handler
       val readHttp = channel.readInbound<ByteBuf>()
       assertNull(readHttp)
+
+      // Specifically, the HTTP handler which has been added to the pipeline
+      assertNotNull(channel.pipeline().get(Http1ProxyHandler::class.java))
     }
   }
 
   @Test
-  fun `test Netty server intercepts SOCKS connections`(): Unit = runBlockingWithDelays {
+  fun `test Netty server intercepts SOCKS4A connections`(): Unit = runBlockingWithDelays {
     withLogging {
-      val channel =
+      val context =
           TestSetup.withHandler(
-              scope = this,
               isHttpEnabled = false,
               isSocksEnabled = true,
+              factory = { delegatingHandlerFactory(it) },
           )
+      val channel = context.channel
 
-      val socks4Buf = Unpooled.buffer()
-      socks4Buf.writeByte(SocksVersion.SOCKS4a.byteValue().toInt())
-      channel.writeInbound(socks4Buf)
+      val buf = Unpooled.wrappedBuffer(byteArrayOf(SocksVersion.SOCKS4a.byteValue()))
+
+      channel.apply {
+        writeInbound(buf)
+        flushInbound()
+        runPendingTasks()
+      }
 
       // This has been read by the handler
       val readSocks4 = channel.readInbound<Byte>()
       assertNull(readSocks4)
 
-      val socks5Buf = Unpooled.buffer()
-      socks5Buf.writeByte(SocksVersion.SOCKS5.byteValue().toInt())
-      channel.writeInbound(socks5Buf)
+      // Specifically, the SOCKS4 handler which has been added to the pipeline
+      assertNotNull(channel.pipeline().get(Socks4ProxyHandler::class.java))
+    }
+  }
+
+  @Test
+  fun `test Netty server intercepts SOCKS5 connections`(): Unit = runBlockingWithDelays {
+    withLogging {
+      val context =
+          TestSetup.withHandler(
+              isHttpEnabled = false,
+              isSocksEnabled = true,
+              factory = { delegatingHandlerFactory(it) },
+          )
+      val channel = context.channel
+
+      val buf = Unpooled.wrappedBuffer(byteArrayOf(SocksVersion.SOCKS5.byteValue()))
+
+      channel.apply {
+        writeInbound(buf)
+        flushInbound()
+        runPendingTasks()
+      }
 
       // This has been read by the handler
       val readSocks5 = channel.readInbound<Byte>()
       assertNull(readSocks5)
+
+      // Specifically, the SOCKS5 handler which has been added to the pipeline
+      assertNotNull(channel.pipeline().get(Socks5ProxyHandler::class.java))
     }
   }
 }

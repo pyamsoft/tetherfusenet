@@ -262,17 +262,13 @@ private constructor(
     }
 
     if (parsed.resolvedHostName.isBlank()) {
-      Timber.w {
-        "(${channelId}) DROP: $tag Invalid upstream destination address: ${parsed.resolvedHostName}"
-      }
+      Timber.w { "(${channelId}) DROP: $tag Invalid upstream destination address: $parsed" }
       sendErrorAndClose(ctx, msg)
       return
     }
 
     if (parsed.resolvedPort !in VALID_PORT_RANGE) {
-      Timber.w {
-        "(${channelId}) DROP: $tag Invalid upstream destination port: ${parsed.resolvedPort}"
-      }
+      Timber.w { "(${channelId}) DROP: $tag Invalid upstream destination port: $parsed" }
       sendErrorAndClose(ctx, msg)
       return
     }
