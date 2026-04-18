@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.pyamsoft.tetherfi.server.netty
+package com.pyamsoft.tetherfi.server.netty.handler
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.tetherfi.server.netty.TestSetup
+import com.pyamsoft.tetherfi.server.netty.withLogging
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks5ProxyHandler
 import com.pyamsoft.tetherfi.server.runBlockingWithDelays
 import io.ktor.util.network.address
@@ -53,26 +55,26 @@ class Socks5HandlerTest {
     withLogging {
       var tcpConnection: Channel? = null
       val context =
-          TestSetup.withHandler(
-              isHttpEnabled = true,
-              isSocksEnabled = false,
-              onTcpChannelCreated = { tcpConnection = it },
-              factory = { socks5HandlerFactory(it) },
-          )
+        TestSetup.withHandler(
+          isHttpEnabled = true,
+          isSocksEnabled = false,
+          onTcpChannelCreated = { tcpConnection = it },
+          factory = { socks5HandlerFactory(it) },
+        )
       val channel = context.channel
 
       Socks5ProxyHandler.applyChannelAttributes(
-          channel = channel,
-          client = context.resolver.ensure(context.channel.remoteAddress().address),
+        channel = channel,
+        client = context.resolver.ensure(context.channel.remoteAddress().address),
       )
 
       val req =
-          DefaultSocks5CommandRequest(
-              Socks5CommandType.CONNECT,
-              Socks5AddressType.IPv4,
-              "127.0.0.1",
-              43210,
-          )
+        DefaultSocks5CommandRequest(
+          Socks5CommandType.CONNECT,
+          Socks5AddressType.IPv4,
+          "127.0.0.1",
+          43210,
+        )
 
       channel.apply {
         writeInbound(req)

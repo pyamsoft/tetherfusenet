@@ -14,62 +14,74 @@
  * limitations under the License.
  */
 
-package com.pyamsoft.tetherfi.server.netty
+package com.pyamsoft.tetherfi.server.netty.handler
 
 import androidx.annotation.CheckResult
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks4ProxyHandler
+import com.pyamsoft.tetherfi.server.netty.TestSetup
+import com.pyamsoft.tetherfi.server.netty.withLogging
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http.Http1ProxyHandler
 import com.pyamsoft.tetherfi.server.runBlockingWithDelays
 import io.ktor.util.network.address
+import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelInboundHandler
-import io.netty.handler.codec.socksx.v4.DefaultSocks4CommandRequest
-import io.netty.handler.codec.socksx.v4.Socks4CommandType
+import io.netty.handler.codec.http.DefaultFullHttpRequest
+import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpVersion
 import kotlin.test.assertNotNull
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Test
 
-class Socks4HandlerTest {
+class Http1HandlerTest {
 
   @CheckResult
-  private fun CoroutineScope.socks4HandlerFactory(
+  private fun CoroutineScope.http1HandlerFactory(
       factory: TestSetup.FactoryParams
   ): ChannelInboundHandler {
     val factory =
-        Socks4ProxyHandler.factory(
+        Http1ProxyHandler.factory(
             scope = this,
             isDebug = true,
             serverSocketTimeout = factory.serverSocketTimeout,
             allowedClients = factory.allowed,
             tcpSocketCreator = factory.provideTcpChannelCreator(),
         )
-
     return factory.create(Unit)
   }
 
   @Test
-  fun `test SOCKS4A Handler receives connections`(): Unit = runBlockingWithDelays {
+  fun `test HTTP1 handler receives connections`(): Unit = runBlockingWithDelays {
     withLogging {
       var tcpConnection: Channel? = null
       val context =
-          TestSetup.withHandler(
-              isHttpEnabled = true,
-              isSocksEnabled = false,
-              onTcpChannelCreated = { tcpConnection = it },
-              factory = { socks4HandlerFactory(it) },
-          )
+        TestSetup.withHandler(
+          isHttpEnabled = true,
+          isSocksEnabled = false,
+          onTcpChannelCreated = { tcpConnection = it },
+          factory = { http1HandlerFactory(it) },
+        )
       val channel = context.channel
 
-      Socks4ProxyHandler.applyChannelAttributes(
-          channel = channel,
-          client = context.resolver.ensure(context.channel.remoteAddress().address),
+      Http1ProxyHandler.applyChannelAttributes(
+        channel = channel,
+        client = context.resolver.ensure(context.channel.remoteAddress().address),
       )
 
+      val content = Unpooled.copiedBuffer("OK", Charsets.UTF_8)
       val req =
-          DefaultSocks4CommandRequest(
-              Socks4CommandType.CONNECT,
-              "127.0.0.1",
-              43210,
-          )
+        DefaultFullHttpRequest(
+          HttpVersion.HTTP_1_1,
+          HttpMethod.CONNECT,
+          "google.com:443",
+          content,
+        )
+          .apply {
+            headers().apply {
+              set(HttpHeaderNames.HOST, "google.com")
+              set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+            }
+          }
 
       channel.apply {
         writeInbound(req)

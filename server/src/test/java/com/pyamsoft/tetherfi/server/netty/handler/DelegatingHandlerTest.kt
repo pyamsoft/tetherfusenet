@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.pyamsoft.tetherfi.server.netty
+package com.pyamsoft.tetherfi.server.netty.handler
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.tetherfi.server.netty.TestSetup
+import com.pyamsoft.tetherfi.server.netty.withLogging
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProtocolDelegatingHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http.Http1ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.Socks4ProxyHandler
@@ -61,15 +63,13 @@ class DelegatingHandlerTest {
   @Test
   fun `test Netty server handler does not intercept connections when completely disabled`(): Unit =
       runBlockingWithDelays {
-        val scope = this
-
         withLogging {
           val context =
-              TestSetup.withHandler(
-                  isHttpEnabled = false,
-                  isSocksEnabled = false,
-                  factory = { delegatingHandlerFactory(it) },
-              )
+            TestSetup.withHandler(
+              isHttpEnabled = false,
+              isSocksEnabled = false,
+              factory = { delegatingHandlerFactory(it) },
+            )
           val channel = context.channel
 
           val httpCommand = "CONNECT https://google.com HTTP/1.1"
@@ -98,11 +98,11 @@ class DelegatingHandlerTest {
   fun `test Netty server intercepts HTTP(S) connections`(): Unit = runBlockingWithDelays {
     withLogging {
       val context =
-          TestSetup.withHandler(
-              isHttpEnabled = true,
-              isSocksEnabled = false,
-              factory = { delegatingHandlerFactory(it) },
-          )
+        TestSetup.withHandler(
+          isHttpEnabled = true,
+          isSocksEnabled = false,
+          factory = { delegatingHandlerFactory(it) },
+        )
       val channel = context.channel
 
       val httpCommand = "CONNECT https://google.com HTTP/1.1"
@@ -127,11 +127,11 @@ class DelegatingHandlerTest {
   fun `test Netty server intercepts SOCKS4A connections`(): Unit = runBlockingWithDelays {
     withLogging {
       val context =
-          TestSetup.withHandler(
-              isHttpEnabled = false,
-              isSocksEnabled = true,
-              factory = { delegatingHandlerFactory(it) },
-          )
+        TestSetup.withHandler(
+          isHttpEnabled = false,
+          isSocksEnabled = true,
+          factory = { delegatingHandlerFactory(it) },
+        )
       val channel = context.channel
 
       val buf = Unpooled.wrappedBuffer(byteArrayOf(SocksVersion.SOCKS4a.byteValue()))
@@ -155,11 +155,11 @@ class DelegatingHandlerTest {
   fun `test Netty server intercepts SOCKS5 connections`(): Unit = runBlockingWithDelays {
     withLogging {
       val context =
-          TestSetup.withHandler(
-              isHttpEnabled = false,
-              isSocksEnabled = true,
-              factory = { delegatingHandlerFactory(it) },
-          )
+        TestSetup.withHandler(
+          isHttpEnabled = false,
+          isSocksEnabled = true,
+          factory = { delegatingHandlerFactory(it) },
+        )
       val channel = context.channel
 
       val buf = Unpooled.wrappedBuffer(byteArrayOf(SocksVersion.SOCKS5.byteValue()))
