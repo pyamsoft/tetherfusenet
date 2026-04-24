@@ -46,6 +46,8 @@ import com.pyamsoft.tetherfi.ui.R as R2
 import com.pyamsoft.tetherfi.ui.ServerViewState
 import com.pyamsoft.tetherfi.ui.icons.IconPainters
 
+private const val MAX_SSID_ALLOWED_LENGTH = 32
+
 @Composable
 private fun EditPort(
     modifier: Modifier = Modifier,
@@ -260,7 +262,20 @@ internal fun EditSsid(
           canUseCustomConfig,
           ssid,
       ) {
-        if (canUseCustomConfig) ssid.isNotBlank() else true
+        if (canUseCustomConfig) {
+          if (ssid.isBlank()) {
+            return@remember false
+          }
+
+          // SSID must be less than 32 bytes long
+          // This is enforced by some IEEE standard
+          // http://standards.ieee.org/getieee802/download/802.11-2012.pdf
+          val fullSsid = ServerDefaults.asWifiSsid(ssid)
+          val ssidBytes = fullSsid.toByteArray(charset = Charsets.UTF_8)
+          return@remember (ssidBytes.size < MAX_SSID_ALLOWED_LENGTH)
+        }
+
+        return@remember true
       }
 
   val leadingIcon: (@Composable () -> Unit)? =
