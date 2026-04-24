@@ -39,7 +39,7 @@ compose = "1.10.6"
 composeMaterial3 = "1.4.0"
 
 # Google
-ksp = "2.3.6"
+ksp = "2.3.7"
 
 # Images
 coil = "3.4.0"
