@@ -21,6 +21,7 @@ import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
+import com.pyamsoft.tetherfi.server.clients.BlockedClients
 import com.pyamsoft.tetherfi.server.clients.ByteTransferReport
 import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.clients.TetherClient
@@ -53,6 +54,7 @@ private constructor(
     scope: CoroutineScope,
     serverSocketTimeout: ServerSocketTimeout,
     private val allowedClients: AllowedClients,
+    private val blockedClients: BlockedClients,
     private val clientResolver: ClientResolver,
 ) :
     ProxyHandler(
@@ -109,6 +111,13 @@ private constructor(
           setChannelId(tag)
 
           val client = resolveTetherClient(ctx, sender)
+
+          // If the client is blocked we do not process any input
+          if (blockedClients.isBlocked(client)) {
+            Timber.w { "($channelId) DROP: client was blocked: $client" }
+            sendErrorAndClose(ctx, msg)
+            return@unwrap
+          }
 
           // Grab the amount BEFORE the data buffer is released
           val amountMoved = data.readableBytes()
@@ -280,6 +289,13 @@ private constructor(
 
         val client = resolveTetherClient(ctx, backToClient)
 
+        // If the client is blocked we do not process any input
+        if (blockedClients.isBlocked(client)) {
+          Timber.w { "($channelId) DROP: client was blocked: $client" }
+          sendErrorAndClose(ctx, msg)
+          return
+        }
+
         // Grab the amount BEFORE the data buffer is released
         val amountMoved = response.readableBytes()
 
@@ -319,6 +335,7 @@ private constructor(
         isDebug: Boolean,
         scope: CoroutineScope,
         allowedClients: AllowedClients,
+        blockedClients: BlockedClients,
         clientResolver: ClientResolver,
         serverSocketTimeout: ServerSocketTimeout,
     ): HandlerFactory<Unit> {
@@ -327,6 +344,7 @@ private constructor(
             isDebug = isDebug,
             scope = scope,
             allowedClients = allowedClients,
+            blockedClients = blockedClients,
             clientResolver = clientResolver,
             serverSocketTimeout = serverSocketTimeout,
         )

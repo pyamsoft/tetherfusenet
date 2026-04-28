@@ -20,6 +20,7 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
+import com.pyamsoft.tetherfi.server.clients.BlockedClients
 import com.pyamsoft.tetherfi.server.clients.ByteTransferReport
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import io.ktor.util.network.address
@@ -42,6 +43,7 @@ private constructor(
     scope: CoroutineScope,
     serverSocketTimeout: ServerSocketTimeout,
     private val allowedClients: AllowedClients,
+    private val blockedClients: BlockedClients,
 ) :
     ProxyHandler(
         scope = scope,
@@ -162,6 +164,7 @@ private constructor(
 
     // Can't do as this is a bytes based implementation
     Timber.w { "(${channelId}) Can't send generic error on RelayHandler" }
+    ctx.flushAndClose()
   }
 
   override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
@@ -189,13 +192,21 @@ private constructor(
       bytesMoved += amountMoved
     }
 
-    scope.launch(context = Dispatchers.IO) {
-      val client = getTetherClient(ctx)
-
-      if (client != null) {
-        allowedClients.seen(client)
-      }
+    val client = getTetherClient(ctx)
+    if (client == null) {
+      Timber.w { "($channelId) DROP: TetherClient is NULL" }
+      sendErrorAndClose(ctx, msg)
+      return
     }
+
+    // If the client is blocked we do not process any input
+    if (blockedClients.isBlocked(client)) {
+      Timber.w { "($channelId) DROP: client was blocked: $client" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
 
     writeToChannel.writeAndFlush(msg)
   }
@@ -244,6 +255,7 @@ private constructor(
         isDebug: Boolean,
         scope: CoroutineScope,
         allowedClients: AllowedClients,
+        blockedClients: BlockedClients,
         serverSocketTimeout: ServerSocketTimeout,
     ): HandlerFactory<Unit> {
       return {
@@ -251,6 +263,7 @@ private constructor(
             isDebug = isDebug,
             scope = scope,
             allowedClients = allowedClients,
+            blockedClients = blockedClients,
             serverSocketTimeout = serverSocketTimeout,
         )
       }

@@ -21,6 +21,7 @@ import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
+import com.pyamsoft.tetherfi.server.clients.BlockedClients
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.HandlerFactory
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProxyHandler
@@ -56,6 +57,7 @@ private constructor(
     scope: CoroutineScope,
     serverSocketTimeout: ServerSocketTimeout,
     allowedClients: AllowedClients,
+    private val blockedClients: BlockedClients,
     private val tcpSocketCreator: ChannelCreator,
 ) :
     ProxyHandler(
@@ -69,6 +71,7 @@ private constructor(
           isDebug = isDebug,
           scope = scope,
           allowedClients = allowedClients,
+          blockedClients = blockedClients,
           serverSocketTimeout = serverSocketTimeout,
       )
 
@@ -169,6 +172,13 @@ private constructor(
     val client = getTetherClient(ctx)
     if (client == null) {
       Timber.w { "($channelId) DROP: $tag TetherClient is NULL" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    // If the client is blocked we do not process any input
+    if (blockedClients.isBlocked(client)) {
+      Timber.w { "($channelId) DROP: $tag client was blocked: $client" }
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -505,6 +515,7 @@ private constructor(
         isDebug: Boolean,
         scope: CoroutineScope,
         allowedClients: AllowedClients,
+        blockedClients: BlockedClients,
         tcpSocketCreator: ChannelCreator,
         serverSocketTimeout: ServerSocketTimeout,
     ): HandlerFactory<Unit> {
@@ -513,6 +524,7 @@ private constructor(
             isDebug = isDebug,
             scope = scope,
             allowedClients = allowedClients,
+            blockedClients = blockedClients,
             tcpSocketCreator = tcpSocketCreator,
             serverSocketTimeout = serverSocketTimeout,
         )

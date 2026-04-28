@@ -160,15 +160,15 @@ internal object TestSetup {
         }
 
     val blocked =
-      object : BlockedClients {
-        override fun listenForBlocked(): Flow<Collection<TetherClient>> {
-          return flowOf(emptyList())
-        }
+        object : BlockedClients {
+          override fun listenForBlocked(): Flow<Collection<TetherClient>> {
+            return flowOf(emptyList())
+          }
 
-        override fun isBlocked(client: TetherClient): Boolean {
-          return false
+          override fun isBlocked(client: TetherClient): Boolean {
+            return false
+          }
         }
-      }
 
     val resolver =
         object : ClientResolver {

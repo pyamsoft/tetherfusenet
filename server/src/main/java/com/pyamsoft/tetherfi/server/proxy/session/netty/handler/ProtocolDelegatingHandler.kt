@@ -51,12 +51,12 @@ private constructor(
     private val scope: CoroutineScope,
     private val isHttpEnabled: Boolean,
     private val allowedClients: AllowedClients,
-    private val blockedClients: BlockedClients,
     private val clientResolver: ClientResolver,
     private val serverSocketTimeout: ServerSocketTimeout,
     private val tcpSocketCreator: ChannelCreator,
     // IF this is NULL, SOCKS is not enabled
     private val udpSocketCreator: ChannelCreator?,
+    blockedClients: BlockedClients,
 ) : ByteToMessageDecoder() {
 
   private val http1HandlerFactory =
@@ -64,6 +64,7 @@ private constructor(
           isDebug = isDebug,
           scope = scope,
           allowedClients = allowedClients,
+          blockedClients = blockedClients,
           tcpSocketCreator = tcpSocketCreator,
           serverSocketTimeout = serverSocketTimeout,
       )
@@ -73,6 +74,7 @@ private constructor(
           isDebug = isDebug,
           scope = scope,
           allowedClients = allowedClients,
+          blockedClients = blockedClients,
           tcpSocketCreator = tcpSocketCreator,
           serverSocketTimeout = serverSocketTimeout,
       )
@@ -82,6 +84,7 @@ private constructor(
           isDebug = isDebug,
           scope = scope,
           allowedClients = allowedClients,
+          blockedClients = blockedClients,
           clientResolver = clientResolver,
           tcpSocketCreator = tcpSocketCreator,
           serverSocketTimeout = serverSocketTimeout,
@@ -136,12 +139,6 @@ private constructor(
 
     val client = clientResolver.ensure(remoteClientIpAddress)
     scope.launch(context = Dispatchers.IO) { handleClientRequestSideEffects(client) }
-
-    // If the client is blocked we do not process any input
-    if (blockedClients.isBlocked(client)) {
-      Timber.w { "DROP client was blocked: $client" }
-      return
-    }
 
     try {
       when (socksVersion) {
@@ -257,7 +254,7 @@ private constructor(
             serverSocketTimeout = serverSocketTimeout,
             clientResolver = clientResolver,
             allowedClients = allowedClients,
-            blockedClients =  blockedClients,
+            blockedClients = blockedClients,
             scope = params.scope,
             tcpSocketCreator = params.tcp,
 

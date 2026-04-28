@@ -21,6 +21,7 @@ import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
+import com.pyamsoft.tetherfi.server.clients.BlockedClients
 import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.HandlerFactory
@@ -59,12 +60,14 @@ internal constructor(
     allowedClients: AllowedClients,
     tcpSocketCreator: ChannelCreator,
     serverSocketTimeout: ServerSocketTimeout,
+    private val blockedClients: BlockedClients,
     private val udpSocketCreator: ChannelCreator,
 ) :
     SocksProxyHandler<Socks5CommandRequest>(
         isDebug = isDebug,
         scope = scope,
         allowedClients = allowedClients,
+        blockedClients = blockedClients,
         tcpSocketCreator = tcpSocketCreator,
         serverSocketTimeout = serverSocketTimeout,
     ) {
@@ -74,6 +77,7 @@ internal constructor(
           isDebug = isDebug,
           scope = scope,
           allowedClients = allowedClients,
+          blockedClients = blockedClients,
           clientResolver = clientResolver,
           serverSocketTimeout = serverSocketTimeout,
       )
@@ -115,6 +119,20 @@ internal constructor(
       return
     }
 
+    val client = getTetherClient(ctx)
+    if (client == null) {
+      Timber.w { "($channelId) DROP: $tag TetherClient is NULL" }
+      sendFailureAndClose(ctx, msg)
+      return
+    }
+
+    // If the client is blocked we do not process any input
+    if (blockedClients.isBlocked(client)) {
+      Timber.w { "($channelId) DROP: $tag client was blocked: $client" }
+      sendFailureAndClose(ctx, msg)
+      return
+    }
+
     Timber.d { "(${channelId}) $tag Register UDP for TCP control $tcpControlAddress" }
     val udpControl =
         udpSocketCreator.bind { ch ->
@@ -125,10 +143,7 @@ internal constructor(
           }
 
           // Bandwidth limiter
-          val client = getTetherClient(ctx)
-          if (client != null) {
-            pipeline.applyBandwidthLimitFor(client)
-          }
+          pipeline.applyBandwidthLimitFor(client)
 
           // Read from the REMOTE and send back to the PROXY
           pipeline.addLast(udpRelayHandlerFactory.create(Unit))
@@ -322,6 +337,7 @@ internal constructor(
         isDebug: Boolean,
         scope: CoroutineScope,
         allowedClients: AllowedClients,
+        blockedClients: BlockedClients,
         clientResolver: ClientResolver,
         tcpSocketCreator: ChannelCreator,
         serverSocketTimeout: ServerSocketTimeout,
@@ -331,6 +347,7 @@ internal constructor(
             isDebug = isDebug,
             scope = scope,
             allowedClients = allowedClients,
+            blockedClients = blockedClients,
             clientResolver = clientResolver,
             tcpSocketCreator = tcpSocketCreator,
             udpSocketCreator = udpSocketCreator,

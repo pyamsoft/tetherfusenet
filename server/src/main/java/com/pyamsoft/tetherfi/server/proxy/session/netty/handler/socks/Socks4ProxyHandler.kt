@@ -20,6 +20,7 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
+import com.pyamsoft.tetherfi.server.clients.BlockedClients
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.HandlerFactory
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
@@ -44,6 +45,7 @@ internal constructor(
     isDebug: Boolean,
     scope: CoroutineScope,
     allowedClients: AllowedClients,
+    blockedClients: BlockedClients,
     tcpSocketCreator: ChannelCreator,
     serverSocketTimeout: ServerSocketTimeout,
 ) :
@@ -51,6 +53,7 @@ internal constructor(
         isDebug = isDebug,
         scope = scope,
         allowedClients = allowedClients,
+        blockedClients = blockedClients,
         tcpSocketCreator = tcpSocketCreator,
         serverSocketTimeout = serverSocketTimeout,
     ) {
@@ -172,6 +175,7 @@ internal constructor(
         isDebug: Boolean,
         scope: CoroutineScope,
         allowedClients: AllowedClients,
+        blockedClients: BlockedClients,
         tcpSocketCreator: ChannelCreator,
         serverSocketTimeout: ServerSocketTimeout,
     ): HandlerFactory<Unit> {
@@ -180,6 +184,7 @@ internal constructor(
             isDebug = isDebug,
             scope = scope,
             allowedClients = allowedClients,
+            blockedClients = blockedClients,
             tcpSocketCreator = tcpSocketCreator,
             serverSocketTimeout = serverSocketTimeout,
         )
