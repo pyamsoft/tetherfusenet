@@ -42,12 +42,21 @@
 # https://issuetracker.google.com/issues/346808608
 -keep class androidx.compose.ui.platform.AndroidCompositionLocals_androidKt { *; }
 
+###
+# Netty related
 # Netty dynamically includes Log4J
 -dontwarn jdk.jfr.**
 -dontwarn org.apache.log4j.**
 -dontwarn org.apache.logging.log4j.**
 
+# Don't warn about netty
+-dontwarn io.netty.**
+
 # Keep all Netty classes
+#
+# class NioServerSocketChannel does not have a public non-arg constructor
+#
+# We should be able to optimize only keeping exactly what we use?
 -keep class io.netty.** { *; }
 
 # Keep constructors explicitly
@@ -57,6 +66,4 @@
 
 # Netty uses reflection heavily
 -keepattributes *Annotation*
-
-# Avoid warnings (optional)
--dontwarn io.netty.**
+#############
