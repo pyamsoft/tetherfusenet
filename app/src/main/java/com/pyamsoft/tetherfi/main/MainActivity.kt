@@ -71,11 +71,12 @@ class MainActivity : ComponentActivity() {
                     //                    feature("Add unique Activities to turn the hotspot On or
                     // Off.")
                     feature(
-                        "New Netty based engine for HTTP proxy. The new engine is OFF by default. You must opt-in to use it. It will become the default in version 60"
+                        "New Netty based engine for HTTP proxy. The new engine is OFF by default. You must opt-in to use it. It will become the default in the next version"
                     )
                     feature(
-                        "New Netty based engine for SOCKS proxy. The new engine is OFF by default. You must opt-in to use it. It will become the default in version 60"
+                        "New Netty based engine for SOCKS proxy. The new engine is OFF by default. You must opt-in to use it. It will become the default in the next version"
                     )
+                    bugfix("Fix an issue where Wi-Fi Direct SSID could be longer than 32 bytes.")
                   }
                 },
         )

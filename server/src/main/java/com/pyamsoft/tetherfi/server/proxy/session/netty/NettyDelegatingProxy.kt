@@ -70,6 +70,7 @@ internal constructor(
       ProtocolDelegatingHandler.factory(
           isDebug = isDebug,
           allowedClients = allowedClients,
+          blockedClients = blockedClients,
           isHttpEnabled = isHttpEnabled,
           serverSocketTimeout = serverSocketTimeout,
           clientResolver = clientResolver,

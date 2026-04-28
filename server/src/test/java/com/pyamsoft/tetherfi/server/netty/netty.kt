@@ -128,6 +128,7 @@ internal object TestSetup {
       val isHttpEnabled: Boolean,
       val isSocksEnabled: Boolean,
       val allowed: AllowedClients,
+      val blocked: BlockedClients,
       val resolver: ClientResolver,
       val serverSocketTimeout: ServerSocketTimeout,
       val provideTcpChannelCreator: () -> ChannelCreator,
@@ -157,6 +158,17 @@ internal object TestSetup {
 
           override fun reportTransfer(client: TetherClient, report: ByteTransferReport) {}
         }
+
+    val blocked =
+      object : BlockedClients {
+        override fun listenForBlocked(): Flow<Collection<TetherClient>> {
+          return flowOf(emptyList())
+        }
+
+        override fun isBlocked(client: TetherClient): Boolean {
+          return false
+        }
+      }
 
     val resolver =
         object : ClientResolver {
@@ -198,6 +210,7 @@ internal object TestSetup {
                     isHttpEnabled = isHttpEnabled,
                     isSocksEnabled = isSocksEnabled,
                     allowed = allowed,
+                    blocked = blocked,
                     resolver = resolver,
                     serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
                     provideTcpChannelCreator = {

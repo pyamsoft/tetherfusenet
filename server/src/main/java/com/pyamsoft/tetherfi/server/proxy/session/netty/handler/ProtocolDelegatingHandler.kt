@@ -21,6 +21,7 @@ import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
+import com.pyamsoft.tetherfi.server.clients.BlockedClients
 import com.pyamsoft.tetherfi.server.clients.ClientResolver
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
@@ -50,6 +51,7 @@ private constructor(
     private val scope: CoroutineScope,
     private val isHttpEnabled: Boolean,
     private val allowedClients: AllowedClients,
+    private val blockedClients: BlockedClients,
     private val clientResolver: ClientResolver,
     private val serverSocketTimeout: ServerSocketTimeout,
     private val tcpSocketCreator: ChannelCreator,
@@ -134,6 +136,12 @@ private constructor(
 
     val client = clientResolver.ensure(remoteClientIpAddress)
     scope.launch(context = Dispatchers.IO) { handleClientRequestSideEffects(client) }
+
+    // If the client is blocked we do not process any input
+    if (blockedClients.isBlocked(client)) {
+      Timber.w { "DROP client was blocked: $client" }
+      return
+    }
 
     try {
       when (socksVersion) {
@@ -238,6 +246,7 @@ private constructor(
         isHttpEnabled: Boolean,
         serverSocketTimeout: ServerSocketTimeout,
         allowedClients: AllowedClients,
+        blockedClients: BlockedClients,
         clientResolver: ClientResolver,
         isDebug: Boolean,
     ): HandlerFactory<Params> {
@@ -248,6 +257,7 @@ private constructor(
             serverSocketTimeout = serverSocketTimeout,
             clientResolver = clientResolver,
             allowedClients = allowedClients,
+            blockedClients =  blockedClients,
             scope = params.scope,
             tcpSocketCreator = params.tcp,
 
