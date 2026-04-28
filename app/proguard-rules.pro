@@ -46,3 +46,17 @@
 -dontwarn jdk.jfr.**
 -dontwarn org.apache.log4j.**
 -dontwarn org.apache.logging.log4j.**
+
+# Keep all Netty classes
+-keep class io.netty.** { *; }
+
+# Keep constructors explicitly
+-keepclassmembers class io.netty.** {
+    public <init>(...);
+}
+
+# Netty uses reflection heavily
+-keepattributes *Annotation*
+
+# Avoid warnings (optional)
+-dontwarn io.netty.**
