@@ -21,10 +21,12 @@ package com.pyamsoft.tetherfi.core
 @Retention(AnnotationRetention.SOURCE)
 annotation class LintIgnoreCyclomaticComplexMethod
 
+/** An annotation for the linter to say that this line is allowed to "throw a lot" */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
 annotation class LintIgnoreThrowsCount
 
+/** An annotation for the linter to say that this line is allowed to "continue/break a lot" */
 @Target(AnnotationTarget.EXPRESSION)
 @Retention(AnnotationRetention.SOURCE)
 annotation class LintIgnoreLoopWithTooManyJumpStatements
