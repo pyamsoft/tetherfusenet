@@ -10,7 +10,7 @@ cacheFix = "3.0.3"
 
 # Kotlin
 kotlin = "2.3.21"
-coroutines = "1.10.2"
+coroutines = "1.11.0"
 
 # Us
 pydroid = "29.4.0"
