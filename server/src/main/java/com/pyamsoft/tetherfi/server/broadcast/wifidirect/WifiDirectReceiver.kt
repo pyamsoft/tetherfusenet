@@ -210,7 +210,7 @@ internal constructor(
         return ""
       }
 
-      return address.hostName.orEmpty()
+      return address.hostAddress.orEmpty()
     }
 
     private val INTENT_FILTER =

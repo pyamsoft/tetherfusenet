@@ -288,7 +288,7 @@ internal constructor(
       )
     } else {
       BroadcastNetworkStatus.ConnectionInfo.Connected(
-          hostName = host.hostName.orEmpty(),
+          hostName = host.hostAddress.orEmpty(),
       )
     }
   }
