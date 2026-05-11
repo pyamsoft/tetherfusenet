@@ -511,7 +511,7 @@ private constructor(
         path = "/"
       } else {
         host = hostAndMaybePath.substring(0, pathStartIndex)
-        path = hostAndMaybePath.substring(pathStartIndex + 1).ifBlank { "/" }
+        path = hostAndMaybePath.substring(pathStartIndex).ifBlank { "/" }
       }
 
       return HttpHostAndPort(
