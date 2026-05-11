@@ -42,7 +42,9 @@ import io.netty.handler.codec.socksx.v5.DefaultSocks5CommandResponse
 import io.netty.handler.codec.socksx.v5.Socks5AddressType
 import io.netty.handler.codec.socksx.v5.Socks5CommandStatus
 import io.netty.util.AttributeKey
+import io.netty.util.ReferenceCountUtil
 import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,9 +68,8 @@ private constructor(
         serverSocketTimeout = serverSocketTimeout,
     ) {
 
-  // Your single socket read payload isn't THAT LARGE right???
-  @Volatile private var bytesInbound: Int = 0
-  @Volatile private var bytesOutbound: Int = 0
+  private val bytesInbound = AtomicInteger(0)
+  private val bytesOutbound = AtomicInteger(0)
 
   private var byteCountJob: Job? = null
 
@@ -106,7 +107,10 @@ private constructor(
         ctx = ctx,
         msg = msg,
         onError = { sendErrorAndClose(ctx, msg) },
-        onUnwrapped = { data, destination ->
+        onUnwrapped = {
+          // The data buffer is internally retained()
+          // We MUST release it when this function is done
+          retainedData, destination ->
           val tag = "UDP-RELAY-${destination.address}:${destination.port}"
 
           // Replace the channel ID here now that we have evaluated the real upstream
@@ -118,14 +122,13 @@ private constructor(
           // If the client is blocked we do not process any input
           if (blockedClients.isBlocked(client)) {
             Timber.w { "($channelId) DROP: client was blocked: $client" }
+            ReferenceCountUtil.release(retainedData)
             sendErrorAndClose(ctx, msg)
             return@unwrap
           }
 
           // Grab the amount BEFORE the data buffer is released
-          val amountMoved = data.readableBytes()
-
-          // TODO bandwidth limit enforcement
+          val amountMoved = retainedData.readableBytes()
 
           // Side effect for client tracking
           scope.launch(context = Dispatchers.IO) {
@@ -133,11 +136,13 @@ private constructor(
             allowedClients.seen(client)
 
             // This is from Proxy out to Internet
-            bytesOutbound += amountMoved
+            bytesOutbound.addAndGet(amountMoved)
           }
 
-          val packet = DatagramPacket(data, destination)
-          ctx.writeAndFlush(packet).addListener { packet.release() }
+          val packet = DatagramPacket(retainedData, destination)
+          ctx.writeAndFlush(packet).addListener {
+            ReferenceCountUtil.release(retainedData)
+          }
         },
     )
   }
@@ -171,12 +176,8 @@ private constructor(
       }
 
   private fun produceByteReport(client: TetherClient) {
-    val inboundCount = bytesInbound
-    val outboundCount = bytesOutbound
-
-    // Reset back to zero or we keep double counting
-    bytesInbound = 0
-    bytesOutbound = 0
+    val inboundCount = bytesInbound.getAndSet(0)
+    val outboundCount = bytesOutbound.getAndSet(0)
 
     allowedClients.reportTransfer(
         client = client,
@@ -285,11 +286,6 @@ private constructor(
 
         unwrapUdpResponse(ctx, channelId, msg, sender)
       } else {
-        val content = msg.retain().content()
-        val response = UDP.wrap(alloc = ctx.alloc(), sender = sender, content = content)
-
-        val packet = DatagramPacket(response, backToClient)
-
         val client = resolveTetherClient(ctx, backToClient)
 
         // If the client is blocked we do not process any input
@@ -298,6 +294,11 @@ private constructor(
           sendErrorAndClose(ctx, msg)
           return
         }
+
+        val content = msg.content()
+
+        // This copies the bytes out of the retained content
+        val response = UDP.wrap(alloc = ctx.alloc(), sender = sender, content = content)
 
         // Grab the amount BEFORE the data buffer is released
         val amountMoved = response.readableBytes()
@@ -308,10 +309,11 @@ private constructor(
           allowedClients.seen(client)
 
           // This is from Internet back to Proxy
-          bytesInbound = amountMoved
+          bytesInbound.addAndGet(amountMoved)
         }
 
-        ctx.writeAndFlush(packet).addListener { msg.release() }
+        val packet = DatagramPacket(response, backToClient)
+        ctx.writeAndFlush(packet)
       }
     } else {
       Timber.w { "(${channelId}): Invalid message seen: $msg" }

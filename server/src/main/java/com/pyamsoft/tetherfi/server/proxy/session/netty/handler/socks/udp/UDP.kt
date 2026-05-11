@@ -32,6 +32,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
 import io.netty.handler.codec.socksx.v5.Socks5AddressType
 import io.netty.resolver.DefaultAddressResolverGroup
+import io.netty.util.ReferenceCountUtil
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetSocketAddress
@@ -172,7 +173,7 @@ object UDP {
 
     // The rest of the packet is data
     // We must retain this slice or the underlying buffer will be cleaned up too early
-    val data = buf.readRetainedSlice(buf.readableBytes())
+    val retainedData = buf.readRetainedSlice(buf.readableBytes())
 
     // Build the destination, unresolved so we do not block using the system DNS
     val destination = InetSocketAddress.createUnresolved(destinationAddr, destinationPort)
@@ -185,7 +186,7 @@ object UDP {
           Timber.e(future.cause()) {
             "Failed to resolve address for UDP unwrap: ${destinationAddr}:${destinationPort}"
           }
-          data.release()
+          ReferenceCountUtil.release(retainedData)
           onError()
           return@addListener
         }
@@ -195,16 +196,26 @@ object UDP {
           Timber.w {
             "Resolved future returned NULL for udp unwrap: ${destinationAddr}:${destinationPort}"
           }
-          data.release()
+          ReferenceCountUtil.release(retainedData)
           onError()
           return@addListener
         }
 
-        onUnwrapped(data, resolved)
+        try {
+          onUnwrapped(retainedData, resolved)
+        } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
+          ReferenceCountUtil.release(retainedData)
+          throw e
+        }
       }
     } else {
       // Resolution is not supported, yolo continue?
-      onUnwrapped(data, destination)
+      try {
+        onUnwrapped(retainedData, destination)
+      } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
+        ReferenceCountUtil.release(retainedData)
+        throw e
+      }
     }
   }
 
