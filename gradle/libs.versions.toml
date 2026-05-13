@@ -1,8 +1,8 @@
 [versions]
 # SDK
 minSdk = "26"
-targetSdk = "36"
-compileSdk = "36"
+targetSdk = "37"
+compileSdk = "37"
 
 # Android Gradle
 agp = "9.2.1"
@@ -24,7 +24,7 @@ qrCode = "4.5.0"
 dagger = "2.59.2"
 netty = "4.2.13.Final"
 # Silence SLF4J logging warnings
-slf4j = "2.0.17"
+slf4j = "2.0.18"
 
 # AndroidX
 core = "1.18.0" # core-ktx is ready in 1.19.X https://jakewharton.com/an-update-on-android-ktx/
