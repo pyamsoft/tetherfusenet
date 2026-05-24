@@ -39,7 +39,7 @@ import java.net.InetSocketAddress
 
 object UDP {
 
-  private val VALID_PORT_RANGE = 1..<65535
+  private val VALID_PORT_RANGE = 1..65535
 
   @CheckResult
   private fun readAddress(

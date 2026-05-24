@@ -507,7 +507,7 @@ private constructor(
 
       // TODO common code for port validation
       @LintIgnoreMagicNumber
-      if (defaultPort !in 0..65335) {
+      if (defaultPort !in 0..65535) {
         Timber.w { "Invalid default port: $defaultPort" }
         return null
       }
