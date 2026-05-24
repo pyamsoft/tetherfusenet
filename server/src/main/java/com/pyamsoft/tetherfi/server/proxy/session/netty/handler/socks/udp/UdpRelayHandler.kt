@@ -103,58 +103,47 @@ private constructor(
         channelId = channelId,
         ctx = ctx,
         msg = msg,
-        onError = {
-          // This will release the message
-          // msg.refCount = 0
-          sendErrorAndClose(ctx, msg)
-        },
+        onError = { sendErrorAndClose(ctx, msg) },
         onUnwrapped = {
             // The data buffer is internally retained()
             // We MUST release it when this function is done
             retainedData,
             destination ->
-          val tag = "UDP-RELAY-${destination.address}:${destination.port}"
+          try {
+            val tag = "UDP-RELAY-${destination.address}:${destination.port}"
 
-          // Replace the channel ID here now that we have evaluated the real upstream
-          setChannelTag(ctx, tag)
-          setChannelId(tag)
+            // Replace the channel ID here now that we have evaluated the real upstream
+            setChannelTag(ctx, tag)
+            setChannelId(tag)
 
-          val client = resolveTetherClient(ctx, sender)
+            val client = resolveTetherClient(ctx, sender)
 
-          // If the client is blocked we do not process any input
-          if (blockedClients.isBlocked(client)) {
-            Timber.w { "($channelId) DROP: client was blocked: $client" }
+            // If the client is blocked we do not process any input
+            if (blockedClients.isBlocked(client)) {
+              Timber.w { "($channelId) DROP: client was blocked: $client" }
+              sendErrorAndClose(ctx, msg)
+              return@unwrap
+            }
 
-            // Release the retained message in bail-out path
-            // retainedData.refCount = 0
-            ReferenceCountUtil.release(retainedData)
+            // Grab the amount BEFORE the data buffer is released
+            val amountMoved = retainedData.readableBytes()
 
-            // This will release the message
-            // msg.refCount = 0
-            sendErrorAndClose(ctx, msg)
-            return@unwrap
-          }
+            // Side effect for client tracking
+            scope.launch(context = Dispatchers.IO) {
+              // Update latest client activity
+              allowedClients.seen(client)
 
-          // Grab the amount BEFORE the data buffer is released
-          val amountMoved = retainedData.readableBytes()
+              // This is from Proxy out to Internet
+              bytesOutbound.addAndGet(amountMoved)
+            }
 
-          // Side effect for client tracking
-          scope.launch(context = Dispatchers.IO) {
-            // Update latest client activity
-            allowedClients.seen(client)
+            // Msg creation point, packet.refCount = 1
+            val packet = DatagramPacket(retainedData, destination)
 
-            // This is from Proxy out to Internet
-            bytesOutbound.addAndGet(amountMoved)
-          }
-
-          // Msg creation point, packet.refCount = 1
-          val packet = DatagramPacket(retainedData, destination)
-
-          // Write here claims the msg
-          // packet.refCount = 0
-          ctx.writeAndFlush(packet).addListener {
-            // Release the retained message
-            // retainedData.refCount = 0
+            // Write here claims the msg
+            // packet.refCount = 0
+            ctx.writeAndFlush(packet)
+          } finally {
             ReferenceCountUtil.release(retainedData)
           }
         },
@@ -204,116 +193,137 @@ private constructor(
     )
   }
 
-  private fun handleUdpMessage(ctx: ChannelHandlerContext, msg: DatagramPacket, channelId: String) =
-      releaseMsgOnChannelReadError(msg) {
-        val serverChannel = ctx.channel()
-        val serverAddress = serverChannel.localAddress().cast<InetSocketAddress>()
-        if (serverAddress == null) {
-          Timber.w { "(${channelId}) DROP: No server address" }
+  private fun handleUdpToInternetMessage(
+      ctx: ChannelHandlerContext,
+      msg: DatagramPacket,
+      channelId: String,
+      sender: InetSocketAddress,
+      tcpControlClient: InetSocketAddress,
+  ) {
+    setBackToClientAddress(ctx, sender)
 
-          // This will release the message
-          // msg.refCount = 0
-          sendErrorAndClose(ctx, msg)
-          return@releaseMsgOnChannelReadError
-        }
-
-        val sender = msg.sender()
-        if (sender == null) {
-          Timber.w { "(${channelId}) DROP: Null sender in packet" }
-
-          // This will release the message
-          // msg.refCount = 0
-          sendErrorAndClose(ctx, msg)
-          return@releaseMsgOnChannelReadError
-        }
-
-        val tcpControlClient = getTcpControlAddress(ctx)
-        if (tcpControlClient == null) {
-          Timber.w { "(${channelId}) DROP: No TCP control client for destination: $sender" }
-
-          // This will release the message
-          // msg.refCount = 0
-          sendErrorAndClose(ctx, msg)
-          return@releaseMsgOnChannelReadError
-        }
-
-        val backToClient = getBackToClientAddress(ctx)
-        if (backToClient == null || sender == backToClient) {
-          // We had no client so this traffic is our client sending -> destination
-          // Or this is continuing traffic from the same sender
-          setBackToClientAddress(ctx, sender)
-
-          // Validate that the IP ADDRESS of the client and sender are the same
-          if (tcpControlClient.address != sender.address) {
-            Timber.w {
-              "(${channelId}) DROP: Sender did not match expected=${tcpControlClient.address} sender=${sender.address}"
-            }
-
-            // This will release the message
-            // msg.refCount = 0
-            sendErrorAndClose(ctx, msg)
-            return@releaseMsgOnChannelReadError
-          }
-
-          unwrapUdpResponse(ctx, channelId, msg, sender)
-        } else {
-          // This is from the remote server
-          // but this packet should NEVER be from our TCP control socket
-          // so if it is, drop it
-          if (sender.address == tcpControlClient.address) {
-            Timber.w {
-              "(${channelId}) DROP: Spoof packet received? Claim from ${sender.address} in internet-response path"
-            }
-
-            // This will release the message
-            // msg.refCount = 0
-            sendErrorAndClose(ctx, msg)
-            return@releaseMsgOnChannelReadError
-          }
-
-          val client = resolveTetherClient(ctx, backToClient)
-
-          // If the client is blocked we do not process any input
-          if (blockedClients.isBlocked(client)) {
-            Timber.w { "($channelId) DROP: client was blocked: $client" }
-
-            // This will release the message
-            // msg.refCount = 0
-            sendErrorAndClose(ctx, msg)
-            return@releaseMsgOnChannelReadError
-          }
-
-          // This copies the bytes out of the retained content
-          // Msg creation point, response.refCount = 1
-          val response =
-              UDP.wrap(
-                  alloc = ctx.alloc(),
-                  sender = sender,
-                  content = msg.content(),
-              )
-
-          // At this point, the original message content is copied into response
-          // we can free the original message
-          ReferenceCountUtil.release(msg)
-
-          // Grab the amount BEFORE the data buffer is released
-          val amountMoved = response.readableBytes()
-
-          // Side effect for client tracking
-          scope.launch(context = Dispatchers.IO) {
-            // Update latest client activity
-            allowedClients.seen(client)
-
-            // This is from Internet back to Proxy
-            bytesInbound.addAndGet(amountMoved)
-          }
-
-          // Write here claims the msg
-          // response.refCount = 0
-          val packet = DatagramPacket(response, backToClient)
-          ctx.writeAndFlush(packet)
-        }
+    // Validate that the IP ADDRESS of the client and sender are the same
+    if (tcpControlClient.address != sender.address) {
+      Timber.w {
+        "(${channelId}) DROP: Sender did not match expected=${tcpControlClient.address} sender=${sender.address}"
       }
+
+      // This will release the message
+      // msg.refCount = 0
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    unwrapUdpResponse(ctx, channelId, msg, sender)
+  }
+
+  private fun handleUdpFromInternetMessage(
+      ctx: ChannelHandlerContext,
+      msg: DatagramPacket,
+      channelId: String,
+      sender: InetSocketAddress,
+      backToClient: InetSocketAddress,
+      tcpControlClient: InetSocketAddress,
+  ) {
+    // This is from the remote server
+    // but this packet should NEVER be from our TCP control socket
+    // so if it is, drop it
+    if (sender.address == tcpControlClient.address) {
+      Timber.w {
+        "(${channelId}) DROP: Spoof packet received? Claim from ${sender.address} in internet-response path"
+      }
+
+      // This will release the message
+      // msg.refCount = 0
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    val client = resolveTetherClient(ctx, backToClient)
+
+    // If the client is blocked we do not process any input
+    if (blockedClients.isBlocked(client)) {
+      Timber.w { "($channelId) DROP: client was blocked: $client" }
+
+      // This will release the message
+      // msg.refCount = 0
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    // This copies the bytes out of the retained content
+    // Msg creation point, response.refCount = 1
+    val response =
+        UDP.wrap(
+            alloc = ctx.alloc(),
+            sender = sender,
+            content = msg.content(),
+        )
+
+    // At this point, the original message content is copied into response
+    // we can free the original message
+    ReferenceCountUtil.release(msg)
+
+    // Grab the amount BEFORE the data buffer is released
+    val amountMoved = response.readableBytes()
+
+    // Side effect for client tracking
+    scope.launch(context = Dispatchers.IO) {
+      // Update latest client activity
+      allowedClients.seen(client)
+
+      // This is from Internet back to Proxy
+      bytesInbound.addAndGet(amountMoved)
+    }
+
+    // Write here claims the msg
+    // response.refCount = 0
+    val packet = DatagramPacket(response, backToClient)
+    ctx.writeAndFlush(packet)
+  }
+
+  private fun handleUdpMessage(ctx: ChannelHandlerContext, msg: DatagramPacket, channelId: String) {
+    val serverChannel = ctx.channel()
+    val serverAddress = serverChannel.localAddress().cast<InetSocketAddress>()
+    if (serverAddress == null) {
+      Timber.w { "(${channelId}) DROP: No server address" }
+
+      // This will release the message
+      // msg.refCount = 0
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    val sender = msg.sender()
+    if (sender == null) {
+      Timber.w { "(${channelId}) DROP: Null sender in packet" }
+
+      // This will release the message
+      // msg.refCount = 0
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    val tcpControlClient = getTcpControlAddress(ctx)
+    if (tcpControlClient == null) {
+      Timber.w { "(${channelId}) DROP: No TCP control client for destination: $sender" }
+
+      // This will release the message
+      // msg.refCount = 0
+      sendErrorAndClose(ctx, msg)
+      return
+    }
+
+    val backToClient = getBackToClientAddress(ctx)
+    if (backToClient == null || sender == backToClient) {
+      // We had no client so this traffic is our client sending -> destination
+      // Or this is continuing traffic from the same sender
+      handleUdpToInternetMessage(ctx, msg, channelId, sender, tcpControlClient)
+    } else {
+      // From internet back to us
+      handleUdpFromInternetMessage(ctx, msg, channelId, sender, backToClient, tcpControlClient)
+    }
+  }
 
   override fun onCloseChannels(ctx: ChannelHandlerContext) {
     // Cancel the report looping job

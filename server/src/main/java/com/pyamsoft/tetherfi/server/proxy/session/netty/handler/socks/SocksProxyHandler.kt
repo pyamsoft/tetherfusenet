@@ -38,6 +38,7 @@ import io.netty.handler.codec.socksx.v4.Socks4CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
+import io.netty.util.ReferenceCountUtil
 import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -176,37 +177,47 @@ internal constructor(
         client = client,
     )
 
+    // Retain a copy through listener connection
+    val retained = ReferenceCountUtil.retain(msg)
+
+    // Release original message
+    ReferenceCountUtil.release(msg)
+
     connectSocket.addListener { future ->
-      if (!future.isSuccess) {
-        Timber.e(future.cause()) { "$tag proxied outbound failed" }
-        sendFailureAndClose(ctx, msg)
-        return@addListener
+      try {
+        if (!future.isSuccess) {
+          Timber.e(future.cause()) { "$tag proxied outbound failed" }
+          sendFailureAndClose(ctx, retained)
+          return@addListener
+        }
+
+        RelayHandler.applyChannelAttributes(
+            channel = serverChannel,
+            writeBackChannel = outbound,
+            tag = "$tag-OUTBOUND-${dstAddr}:${dstPort}",
+            direction = RelayHandler.Direction.OUTBOUND,
+            client = client,
+        )
+
+        // Tell proxy we've established connection
+        publishConnectSuccess(ctx, tag, channelId, retained, outbound)
+
+        // Drop down to raw TCP
+        val pipeline = ctx.pipeline()
+
+        dropSocksHandlers(pipeline)
+
+        // Remove our own handler
+        pipeline.dropHandler(this::class)
+
+        // Bandwidth limiter
+        pipeline.applyBandwidthLimitFor(client)
+
+        // Add a relay for the internet outbound
+        pipeline.addLast(relayHandlerFactory.create(Unit))
+      } finally {
+        ReferenceCountUtil.release(retained)
       }
-
-      RelayHandler.applyChannelAttributes(
-          channel = serverChannel,
-          writeBackChannel = outbound,
-          tag = "$tag-OUTBOUND-${dstAddr}:${dstPort}",
-          direction = RelayHandler.Direction.OUTBOUND,
-          client = client,
-      )
-
-      // Tell proxy we've established connection
-      publishConnectSuccess(ctx, tag, channelId, msg, outbound)
-
-      // Drop down to raw TCP
-      val pipeline = ctx.pipeline()
-
-      dropSocksHandlers(pipeline)
-
-      // Remove our own handler
-      pipeline.dropHandler(this::class)
-
-      // Bandwidth limiter
-      pipeline.applyBandwidthLimitFor(client)
-
-      // Add a relay for the internet outbound
-      pipeline.addLast(relayHandlerFactory.create(Unit))
     }
   }
 

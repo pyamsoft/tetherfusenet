@@ -30,7 +30,6 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.util.AttributeKey
-import io.netty.util.ReferenceCountUtil
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
@@ -161,83 +160,59 @@ private constructor(
   }
 
   override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
-    val channelId = getChannelId()
-
-    // Can't do as this is a bytes based implementation
-    Timber.w { "(${channelId}) Can't send generic error on RelayHandler" }
-    ctx.flushAndClose()
-
-    // Release the message
-    ReferenceCountUtil.release(msg)
+    closeChannels(ctx)
   }
 
-  override fun channelRead(ctx: ChannelHandlerContext, msg: Any) =
-      releaseMsgOnChannelReadError(msg) {
-        // Inbound point, msg.refCount = 1
-        ensureChannelTag(ctx)
-        val channelId = getChannelId()
+  override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+    // Inbound point, msg.refCount = 1
+    ensureChannelTag(ctx)
+    val channelId = getChannelId()
 
-        val writeToChannel = getWritebackChannel(ctx)
-        if (writeToChannel == null) {
-          Timber.w { "($channelId): channelRead writeToChannel is NULL" }
+    val writeToChannel = getWritebackChannel(ctx)
+    if (writeToChannel == null) {
+      Timber.w { "($channelId): channelRead writeToChannel is NULL" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
 
-          // This will release the message
-          // msg.refCount = 0
-          sendErrorAndClose(ctx, msg)
-          return@releaseMsgOnChannelReadError
-        }
+    if (!writeToChannel.isActive) {
+      Timber.w { "($channelId): channelRead writeToChannel is not active" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
 
-        if (!writeToChannel.isActive) {
-          Timber.w { "($channelId): channelRead writeToChannel is not active" }
+    val bytes = msg.cast<ByteBuf>()
+    if (bytes == null) {
+      Timber.w { "($channelId): channelRead msg was not ByteBuf" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
 
-          // This will release the message
-          // msg.refCount = 0
-          sendErrorAndClose(ctx, msg)
-          return@releaseMsgOnChannelReadError
-        }
+    val client = getTetherClient(ctx)
+    if (client == null) {
+      Timber.w { "($channelId) DROP: TetherClient is NULL" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
 
-        val bytes = msg.cast<ByteBuf>()
-        if (bytes == null) {
-          Timber.w { "($channelId): channelRead msg was not ByteBuf" }
+    // If the client is blocked we do not process any input
+    if (blockedClients.isBlocked(client)) {
+      Timber.w { "($channelId) DROP: client was blocked: $client" }
+      sendErrorAndClose(ctx, msg)
+      return
+    }
 
-          // This will release the message
-          // msg.refCount = 0
-          sendErrorAndClose(ctx, msg)
-          return@releaseMsgOnChannelReadError
-        }
+    scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
 
-        val client = getTetherClient(ctx)
-        if (client == null) {
-          Timber.w { "($channelId) DROP: TetherClient is NULL" }
+    // Grab the amount BEFORE the data buffer is released
+    val amountMoved = bytes.readableBytes()
 
-          // This will release the message
-          // msg.refCount = 0
-          sendErrorAndClose(ctx, msg)
-          return@releaseMsgOnChannelReadError
-        }
+    // Keep count
+    bytesMoved.addAndGet(amountMoved)
 
-        // If the client is blocked we do not process any input
-        if (blockedClients.isBlocked(client)) {
-          Timber.w { "($channelId) DROP: client was blocked: $client" }
-
-          // This will release the message
-          // msg.refCount = 0
-          sendErrorAndClose(ctx, msg)
-          return@releaseMsgOnChannelReadError
-        }
-
-        scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
-
-        // Grab the amount BEFORE the data buffer is released
-        val amountMoved = bytes.readableBytes()
-
-        // Keep count
-        bytesMoved.addAndGet(amountMoved)
-
-        // Write here claims the msg
-        // msg.refCount = 0
-        writeToChannel.writeAndFlush(bytes)
-      }
+    // Write here claims the msg
+    writeToChannel.writeAndFlush(bytes)
+  }
 
   override fun channelWritabilityChanged(ctx: ChannelHandlerContext) {
     try {

@@ -172,48 +172,58 @@ internal constructor(
         tcpControlAddress = tcpControlAddress,
     )
 
+    // Retain a copy through listener connection
+    val retained = ReferenceCountUtil.retain(msg)
+
+    // Release original message
+    ReferenceCountUtil.release(msg)
+
     udpControl.addListener { future ->
-      if (!future.isSuccess) {
-        Timber.e(future.cause()) { "($channelId) DROP $tag proxied outbound failed" }
-        sendFailureAndClose(ctx, msg)
-        return@addListener
+      try {
+        if (!future.isSuccess) {
+          Timber.e(future.cause()) { "($channelId) DROP $tag proxied outbound failed" }
+          sendFailureAndClose(ctx, retained)
+          return@addListener
+        }
+
+        val relayControl = udpRelay.localAddress()
+        if (relayControl == null) {
+          Timber.w { "($channelId) DROP $tag proxied outbound remote==null" }
+          sendFailureAndClose(ctx, retained)
+          return@addListener
+        }
+
+        val relayControlAddress = relayControl.cast<InetSocketAddress>()
+        if (relayControlAddress == null) {
+          Timber.w { "($channelId) DROP $tag proxied outbound remote is not InetSocketAddress" }
+          sendFailureAndClose(ctx, retained)
+          return@addListener
+        }
+
+        // Drop down to raw TCP
+        val pipeline = ctx.pipeline()
+
+        dropSocksHandlers(pipeline)
+
+        // Remove our own handler
+        pipeline.dropHandler(this::class)
+
+        // Tell proxy we've established connection so that NOW we can relay
+        val type = resolveSocks5AddressType(relayControlAddress)
+        Timber.d {
+          "(${channelId}) $tag Inform client of UDP $type ${relayControl.address}:${relayControl.port}"
+        }
+        ctx.writeAndFlush(
+            DefaultSocks5CommandResponse(
+                Socks5CommandStatus.SUCCESS,
+                type,
+                relayControl.address,
+                relayControl.port,
+            )
+        )
+      } finally {
+        ReferenceCountUtil.release(retained)
       }
-
-      val relayControl = udpRelay.localAddress()
-      if (relayControl == null) {
-        Timber.w { "($channelId) DROP $tag proxied outbound remote==null" }
-        sendFailureAndClose(ctx, msg)
-        return@addListener
-      }
-
-      val relayControlAddress = relayControl.cast<InetSocketAddress>()
-      if (relayControlAddress == null) {
-        Timber.w { "($channelId) DROP $tag proxied outbound remote is not InetSocketAddress" }
-        sendFailureAndClose(ctx, msg)
-        return@addListener
-      }
-
-      // Drop down to raw TCP
-      val pipeline = ctx.pipeline()
-
-      dropSocksHandlers(pipeline)
-
-      // Remove our own handler
-      pipeline.dropHandler(this::class)
-
-      // Tell proxy we've established connection so that NOW we can relay
-      val type = resolveSocks5AddressType(relayControlAddress)
-      Timber.d {
-        "(${channelId}) $tag Inform client of UDP $type ${relayControl.address}:${relayControl.port}"
-      }
-      ctx.writeAndFlush(
-          DefaultSocks5CommandResponse(
-              Socks5CommandStatus.SUCCESS,
-              type,
-              relayControl.address,
-              relayControl.port,
-          )
-      )
     }
   }
 
@@ -312,32 +322,31 @@ internal constructor(
   }
 
   override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
-    try {
-      ensureChannelTag(ctx)
+    ensureChannelTag(ctx)
 
-      val channelId = getChannelId()
+    val channelId = getChannelId()
 
-      if (msg is Socks5Message) {
-        when (msg) {
-          is Socks5InitialRequest -> {
-            handleSocks5InitialRequest(ctx)
-          }
+    if (msg is Socks5Message) {
+      when (msg) {
+        is Socks5InitialRequest -> {
+          handleSocks5InitialRequest(ctx)
 
-          is Socks5CommandRequest -> {
-            handleSocks5CommandRequest(ctx, channelId, msg)
-          }
-
-          else -> {
-            Timber.w { "(${channelId}) Unknown SOCKS5 Message: $msg" }
-            sendErrorAndClose(ctx, msg)
-          }
+          // Mark message as done
+          ReferenceCountUtil.release(msg)
         }
-      } else {
-        Timber.w { "($channelId) Unknown Message: $msg" }
-        super.channelRead(ctx, msg)
+
+        is Socks5CommandRequest -> {
+          handleSocks5CommandRequest(ctx, channelId, msg)
+        }
+
+        else -> {
+          Timber.w { "(${channelId}) Unknown SOCKS5 Message: $msg" }
+          sendErrorAndClose(ctx, msg)
+        }
       }
-    } finally {
-      ReferenceCountUtil.release(msg)
+    } else {
+      Timber.w { "($channelId) Unknown Message: $msg" }
+      super.channelRead(ctx, msg)
     }
   }
 

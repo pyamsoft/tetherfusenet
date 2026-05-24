@@ -29,7 +29,6 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.util.AttributeKey
 import io.netty.util.NetUtil
-import io.netty.util.ReferenceCountUtil
 import java.net.InetAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.io.IOException
@@ -239,16 +238,6 @@ internal constructor(
     @CheckResult
     protected fun getTetherClient(ctx: ChannelHandlerContext): TetherClient? {
       return ctx.channel().attr(CLIENT).get()
-    }
-
-    inline fun releaseMsgOnChannelReadError(msg: Any, block: () -> Unit) {
-      try {
-        block()
-      } catch (e: Throwable) {
-        ReferenceCountUtil.release(msg)
-        throw e
-        // Re-throw to be caught by Handler.exceptionCaught
-      }
     }
 
     @JvmStatic

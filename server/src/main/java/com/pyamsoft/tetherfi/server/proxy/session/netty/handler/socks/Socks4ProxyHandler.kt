@@ -37,7 +37,6 @@ import io.netty.handler.codec.socksx.v4.Socks4CommandStatus
 import io.netty.handler.codec.socksx.v4.Socks4CommandType
 import io.netty.handler.codec.socksx.v4.Socks4Message
 import io.netty.handler.codec.socksx.v4.Socks4ServerDecoder
-import io.netty.util.ReferenceCountUtil
 import kotlinx.coroutines.CoroutineScope
 
 internal class Socks4ProxyHandler
@@ -147,23 +146,19 @@ internal constructor(
   }
 
   override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
-    try {
-      ensureChannelTag(ctx)
-      val channelId = getChannelId()
+    ensureChannelTag(ctx)
+    val channelId = getChannelId()
 
-      if (msg is Socks4Message) {
-        if (msg is Socks4CommandRequest) {
-          handleSocks4CommandRequest(ctx, channelId, msg)
-        } else {
-          Timber.w { "(${channelId}) Unknown SOCKS4 Message: $msg" }
-          sendErrorAndClose(ctx, msg)
-        }
+    if (msg is Socks4Message) {
+      if (msg is Socks4CommandRequest) {
+        handleSocks4CommandRequest(ctx, channelId, msg)
       } else {
-        Timber.w { "(${channelId}) Unknown Message: $msg" }
-        super.channelRead(ctx, msg)
+        Timber.w { "(${channelId}) Unknown SOCKS4 Message: $msg" }
+        sendErrorAndClose(ctx, msg)
       }
-    } finally {
-      ReferenceCountUtil.release(msg)
+    } else {
+      Timber.w { "(${channelId}) Unknown Message: $msg" }
+      super.channelRead(ctx, msg)
     }
   }
 

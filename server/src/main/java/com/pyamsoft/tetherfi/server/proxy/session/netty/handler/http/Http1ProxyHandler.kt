@@ -114,9 +114,6 @@ private constructor(
       messageQueue.add(retained)
     } else {
       // Use immediately and release
-      //
-      // Write here claims the msg
-      // msg.refCount = 0
       outbound.writeAndFlush(msg)
     }
   }
@@ -129,12 +126,10 @@ private constructor(
       if (needsFlush) {
         for (q in queued) {
           // Write here claims the original msg
-          // q.refCount = 1
-          channel.write(q).addListener {
-            // Release here claims the ref count from the "retain" operation in queue function
-            // q.refCount = 0
-            ReferenceCountUtil.release(q)
-          }
+          channel.write(q)
+
+          // Release here claims the ref count from the "retain" operation in queue function
+          ReferenceCountUtil.release(q)
         }
       }
     } finally {
@@ -165,9 +160,6 @@ private constructor(
 
     val parsed = parseUriAndPort(msg.uri(), 443)
     if (parsed == null) {
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -176,9 +168,6 @@ private constructor(
       Timber.w {
         "(${channelId}) DROP: $tag Invalid upstream destination address: ${parsed.resolvedHostName}"
       }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -187,9 +176,6 @@ private constructor(
       Timber.w {
         "(${channelId}) DROP: $tag Invalid upstream destination port: ${parsed.resolvedPort}"
       }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -206,9 +192,6 @@ private constructor(
         Timber.w {
           "($channelId) DROP: $tag Host '$hostHeader' != CONNECT target '$targetAuthority'"
         }
-
-        // This will release the message
-        // msg.refCount = 0
         sendErrorAndClose(ctx, msg)
         return
       }
@@ -217,9 +200,6 @@ private constructor(
     // Don't allow sending messages to local destinations
     if (isBlockedLocalAddress(parsed.resolvedHostName)) {
       Timber.w { "($channelId) DROP: $tag Blocked local address: ${parsed.resolvedHostName}" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -228,9 +208,6 @@ private constructor(
     val remoteClient = serverChannel.remoteAddress().cast<InetSocketAddress>()
     if (remoteClient == null) {
       Timber.w { "($channelId) DROP: $tag remoteClient IP is NULL" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -238,9 +215,6 @@ private constructor(
     val client = getTetherClient(ctx)
     if (client == null) {
       Timber.w { "($channelId) DROP: $tag TetherClient is NULL" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -248,9 +222,6 @@ private constructor(
     // If the client is blocked we do not process any input
     if (blockedClients.isBlocked(client)) {
       Timber.w { "($channelId) DROP: $tag client was blocked: $client" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -290,57 +261,62 @@ private constructor(
         client = client,
     )
 
+    // Retain through listener creation
+    val retained = ReferenceCountUtil.retain(msg)
+
+    // At this point we are done with the original message and can release it
+    ReferenceCountUtil.release(msg)
+
     // We start up a future listener here
     future.addListener { future ->
-      if (!future.isSuccess) {
-        Timber.e(future.cause()) { "(${channelId}) $tag Unable to connect to $parsed" }
+      try {
+        if (!future.isSuccess) {
+          Timber.e(future.cause()) { "(${channelId}) $tag Unable to connect to $parsed" }
+          sendErrorAndClose(ctx, retained)
+          return@addListener
+        }
 
-        // This will release the message
-        // msg.refCount = 0
-        sendErrorAndClose(ctx, msg)
-        return@addListener
-      }
+        // Enable auto-read once connection is established
+        serverChannel.config().isAutoRead = true
 
-      // Otherwise, at this point we are done with the original message and can release it
-      ReferenceCountUtil.release(msg)
+        // Drop down to raw TCP
+        val pipeline = ctx.pipeline()
 
-      // Tell proxy we've established connection
-      // Msg creation point, response.refCount = 1
-      val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
+        // Remove our own handler
+        pipeline.dropHandler(this::class)
 
-      // Enable auto-read once connection is established
-      serverChannel.config().isAutoRead = true
+        // Bandwidth limiter
+        pipeline.applyBandwidthLimitFor(client)
 
-      // Drop down to raw TCP
-      val pipeline = ctx.pipeline()
+        // Read from the PROXY and send to the remote
+        pipeline.addLast(relayHandlerFactory.create(Unit))
 
-      // Remove our own handler
-      pipeline.dropHandler(this::class)
+        RelayHandler.applyChannelAttributes(
+            channel = serverChannel,
+            writeBackChannel = outbound,
+            tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+            direction = RelayHandler.Direction.OUTBOUND,
+            client = client,
+        )
 
-      // Bandwidth limiter
-      pipeline.applyBandwidthLimitFor(client)
+        // Then establish connection
+        Timber.d { "(${channelId}) Write $tag to $parsed" }
 
-      // Read from the PROXY and send to the remote
-      pipeline.addLast(relayHandlerFactory.create(Unit))
-
-      RelayHandler.applyChannelAttributes(
-          channel = serverChannel,
-          writeBackChannel = outbound,
-          tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-          direction = RelayHandler.Direction.OUTBOUND,
-          client = client,
-      )
-
-      // Then establish connection
-      Timber.d { "(${channelId}) Write $tag to $parsed" }
-
-      // Tell proxy we've established connection
-      //
-      // Write here claims the msg
-      // response.refCount = 0
-      ctx.writeAndFlush(response).addListener {
-        // Remove the http server codec only after 200 OK is fully written
-        pipeline.dropHandler(HttpServerCodec::class)
+        // Tell proxy we've established connection
+        //
+        // Write here claims the msg
+        ctx.writeAndFlush(
+                DefaultFullHttpResponse(
+                    HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.OK,
+                )
+            )
+            .addListener {
+              // Remove the http server codec only after 200 OK is fully written
+              pipeline.dropHandler(HttpServerCodec::class)
+            }
+      } finally {
+        ReferenceCountUtil.release(retained)
       }
     }
   }
@@ -355,27 +331,18 @@ private constructor(
 
     val parsed = parseUriAndPort(msg.uri(), 80)
     if (parsed == null) {
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
 
     if (parsed.resolvedHostName.isBlank()) {
       Timber.w { "(${channelId}) DROP: $tag Invalid upstream destination address: $parsed" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
 
     if (parsed.resolvedPort !in VALID_PORT_RANGE) {
       Timber.w { "(${channelId}) DROP: $tag Invalid upstream destination port: $parsed" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -383,9 +350,6 @@ private constructor(
     // Don't allow sending messages to local destinations
     if (isBlockedLocalAddress(parsed.resolvedHostName)) {
       Timber.w { "($channelId) DROP: $tag Blocked local address: ${parsed.resolvedHostName}" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -394,9 +358,6 @@ private constructor(
     val remoteClient = serverChannel.remoteAddress().cast<InetSocketAddress>()
     if (remoteClient == null) {
       Timber.w { "($channelId) DROP: $tag remoteClient IP is NULL" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -404,9 +365,6 @@ private constructor(
     val client = getTetherClient(ctx)
     if (client == null) {
       Timber.w { "($channelId) DROP: $tag TetherClient is NULL" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -414,9 +372,6 @@ private constructor(
     // If the client is blocked we do not process any input
     if (blockedClients.isBlocked(client)) {
       Timber.w { "($channelId) DROP: $tag client was blocked: $client" }
-
-      // This will release the message
-      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -459,78 +414,85 @@ private constructor(
         client = client,
     )
 
+    // Adjust the URL to be relative to the new host
+    msg.uri = parsed.proxyCorrectedFilePath
+
+    // Strip hop-by-hop headers before forwarding
+    val headers = msg.headers()
+
+    @Suppress("DEPRECATION") headers.remove(HttpHeaderNames.KEEP_ALIVE)
+    headers.remove(HttpHeaderNames.CONNECTION)
+
+    headers.remove(HttpHeaderNames.TRANSFER_ENCODING)
+    headers.remove(HttpHeaderNames.UPGRADE)
+    headers.remove(HttpHeaderNames.TE)
+    headers.remove(HttpHeaderNames.TRAILER)
+
+    @Suppress("DEPRECATION") headers.remove(HttpHeaderNames.PROXY_CONNECTION)
+    headers.remove(HttpHeaderNames.PROXY_AUTHENTICATE)
+    headers.remove(HttpHeaderNames.PROXY_AUTHORIZATION)
+
+    // Force Host to match the URI target, not whatever the client sent
+    headers.set(HttpHeaderNames.HOST, parsed.resolvedHostName)
+
+    // Retain through listener creation
+    val retained = ReferenceCountUtil.retain(msg)
+
+    // Original message is done at this point
+    ReferenceCountUtil.release(msg)
+
     future.addListener { future ->
-      if (!future.isSuccess) {
-        Timber.e(future.cause()) { "Unable to connect to $parsed" }
+      try {
+        if (!future.isSuccess) {
+          Timber.e(future.cause()) { "Unable to connect to $parsed" }
+          sendErrorAndClose(ctx, msg)
+          return@addListener
+        }
 
-        // This will release the message
+        // Enable auto-read once connection is established
+        serverChannel.config().isAutoRead = true
+
+        // Drop down to raw TCP
+        val pipeline = ctx.pipeline()
+
+        // Remove our own handler
+        pipeline.dropHandler(this::class)
+
+        // Bandwidth limiter
+        pipeline.applyBandwidthLimitFor(client)
+
+        // Read from the PROXY and send to REMOTE
+        pipeline.addLast(relayHandlerFactory.create(Unit))
+
+        RelayHandler.applyChannelAttributes(
+            channel = serverChannel,
+            writeBackChannel = outbound,
+            tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+            direction = RelayHandler.Direction.OUTBOUND,
+            client = client,
+        )
+
+        // Replay the initial request
+        Timber.d { "($channelId) Forward connect to $parsed" }
+
+        // Write here claims the msg
         // msg.refCount = 0
-        sendErrorAndClose(ctx, msg)
-        return@addListener
-      }
+        outbound.writeAndFlush(retained).addListener {
+          // Hold onto this channel for future requests to immediately fire off to it
+          assignOutboundChannel(outbound)
 
-      // Adjust the URL to be relative to the new host
-      msg.uri = parsed.proxyCorrectedFilePath
+          // And then replay any previously seen messages that arrived BEFORE we were set up
+          // any future messages will go directly to the outbound now that the channel is held
+          replayQueuedMessages(outbound)
 
-      // Strip hop-by-hop headers before forwarding
-      val headers = msg.headers()
+          // All messages have been replayed, drop the client codec
+          outbound.pipeline().dropHandler(HttpClientCodec::class)
 
-      @Suppress("DEPRECATION") headers.remove(HttpHeaderNames.KEEP_ALIVE)
-      headers.remove(HttpHeaderNames.CONNECTION)
-
-      headers.remove(HttpHeaderNames.TRANSFER_ENCODING)
-      headers.remove(HttpHeaderNames.UPGRADE)
-      headers.remove(HttpHeaderNames.TE)
-      headers.remove(HttpHeaderNames.TRAILER)
-
-      @Suppress("DEPRECATION") headers.remove(HttpHeaderNames.PROXY_CONNECTION)
-      headers.remove(HttpHeaderNames.PROXY_AUTHENTICATE)
-      headers.remove(HttpHeaderNames.PROXY_AUTHORIZATION)
-
-      // Force Host to match the URI target, not whatever the client sent
-      headers.set(HttpHeaderNames.HOST, parsed.resolvedHostName)
-
-      // Enable auto-read once connection is established
-      serverChannel.config().isAutoRead = true
-
-      // Drop down to raw TCP
-      val pipeline = ctx.pipeline()
-
-      // Remove our own handler
-      pipeline.dropHandler(this::class)
-
-      // Bandwidth limiter
-      pipeline.applyBandwidthLimitFor(client)
-
-      // Read from the PROXY and send to REMOTE
-      pipeline.addLast(relayHandlerFactory.create(Unit))
-
-      RelayHandler.applyChannelAttributes(
-          channel = serverChannel,
-          writeBackChannel = outbound,
-          tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-          direction = RelayHandler.Direction.OUTBOUND,
-          client = client,
-      )
-
-      // Replay the initial request
-      Timber.d { "($channelId) Forward connect to $parsed" }
-
-      // Write here claims the msg
-      // msg.refCount = 0
-      outbound.writeAndFlush(msg).addListener {
-        // Hold onto this channel for future requests to immediately fire off to it
-        assignOutboundChannel(outbound)
-
-        // And then replay any previously seen messages that arrived BEFORE we were set up
-        // any future messages will go directly to the outbound now that the channel is held
-        replayQueuedMessages(outbound)
-
-        // All messages have been replayed, drop the client codec
-        outbound.pipeline().dropHandler(HttpClientCodec::class)
-
-        // Remove the http server codec
-        pipeline.dropHandler(HttpServerCodec::class)
+          // Remove the http server codec
+          pipeline.dropHandler(HttpServerCodec::class)
+        }
+      } finally {
+        ReferenceCountUtil.release(retained)
       }
     }
   }
@@ -583,21 +545,19 @@ private constructor(
 
     when (msg) {
       is HttpRequest -> {
-        releaseMsgOnChannelReadError(msg) {
-          if (msg.method() == HttpMethod.CONNECT) {
-            handleHttpsConnect(ctx, channelId, msg)
-          } else {
-            handleHttpForward(ctx, channelId, msg)
-          }
+        if (msg.method() == HttpMethod.CONNECT) {
+          handleHttpsConnect(ctx, channelId, msg)
+        } else {
+          handleHttpForward(ctx, channelId, msg)
         }
       }
+
       is HttpContent -> {
-        releaseMsgOnChannelReadError(msg) {
-          // Message queued for later, no release needed
-          // or is immediately written and claimed by netty, no release needed
-          queueOrDeliverOutboundMessage(msg)
-        }
+        // Message queued for later, no release needed
+        // or is immediately written and claimed by netty, no release needed
+        queueOrDeliverOutboundMessage(msg)
       }
+
       else -> {
         Timber.w { "($channelId) MSG was not HTTP based: $msg" }
 
