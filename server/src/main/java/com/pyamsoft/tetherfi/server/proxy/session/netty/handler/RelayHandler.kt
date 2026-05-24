@@ -166,56 +166,76 @@ private constructor(
     // Can't do as this is a bytes based implementation
     Timber.w { "(${channelId}) Can't send generic error on RelayHandler" }
     ctx.flushAndClose()
+
+    // Release the message
+    ReferenceCountUtil.release(msg)
   }
 
-  override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+  override fun channelRead(ctx: ChannelHandlerContext, msg: Any) =releaseMsgOnChannelReadError(msg) {
+    // Inbound point, msg.refCount = 1
     ensureChannelTag(ctx)
     val channelId = getChannelId()
 
     val writeToChannel = getWritebackChannel(ctx)
     if (writeToChannel == null) {
       Timber.w { "($channelId): channelRead writeToChannel is NULL" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
-      return
+      return@releaseMsgOnChannelReadError
     }
 
     if (!writeToChannel.isActive) {
       Timber.w { "($channelId): channelRead writeToChannel is not active" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
-      return
+      return@releaseMsgOnChannelReadError
     }
 
     val bytes = msg.cast<ByteBuf>()
     if (bytes == null) {
       Timber.w { "($channelId): channelRead msg was not ByteBuf" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
-      return
+      return@releaseMsgOnChannelReadError
     }
 
     val client = getTetherClient(ctx)
     if (client == null) {
       Timber.w { "($channelId) DROP: TetherClient is NULL" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
-      return
+      return@releaseMsgOnChannelReadError
     }
 
     // If the client is blocked we do not process any input
     if (blockedClients.isBlocked(client)) {
       Timber.w { "($channelId) DROP: client was blocked: $client" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
-      return
+      return@releaseMsgOnChannelReadError
     }
 
     scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
 
     // Grab the amount BEFORE the data buffer is released
-    val retained = ReferenceCountUtil.retain(bytes)
-    val amountMoved = retained.readableBytes()
+    val amountMoved = bytes.readableBytes()
 
     // Keep count
     bytesMoved.addAndGet(amountMoved)
 
-    writeToChannel.writeAndFlush(retained).addListener { ReferenceCountUtil.release(retained) }
+    // Write here claims the msg
+    // msg.refCount = 0
+    writeToChannel.writeAndFlush(bytes)
   }
 
   override fun channelWritabilityChanged(ctx: ChannelHandlerContext) {

@@ -53,35 +53,35 @@ import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
-import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.net.InetSocketAddress
 
 // Cannot be shareable because of the local state messageQueue and outboundChannel
 internal class Http1ProxyHandler
 private constructor(
-    isDebug: Boolean,
-    scope: CoroutineScope,
-    serverSocketTimeout: ServerSocketTimeout,
-    private val allowedClients: AllowedClients,
-    private val blockedClients: BlockedClients,
-    private val tcpSocketCreator: ChannelCreator,
+  isDebug: Boolean,
+  scope: CoroutineScope,
+  serverSocketTimeout: ServerSocketTimeout,
+  private val allowedClients: AllowedClients,
+  private val blockedClients: BlockedClients,
+  private val tcpSocketCreator: ChannelCreator,
 ) :
-    ProxyHandler(
-        isDebug = isDebug,
-        scope = scope,
-        serverSocketTimeout = serverSocketTimeout,
-    ) {
+  ProxyHandler(
+    isDebug = isDebug,
+    scope = scope,
+    serverSocketTimeout = serverSocketTimeout,
+  ) {
 
   private val relayHandlerFactory =
-      RelayHandler.factory(
-          isDebug = isDebug,
-          scope = scope,
-          allowedClients = allowedClients,
-          blockedClients = blockedClients,
-          serverSocketTimeout = serverSocketTimeout,
-      )
+    RelayHandler.factory(
+      isDebug = isDebug,
+      scope = scope,
+      allowedClients = allowedClients,
+      blockedClients = blockedClients,
+      serverSocketTimeout = serverSocketTimeout,
+    )
 
   private val messageQueue = mutableListOf<Any>()
 
@@ -106,14 +106,18 @@ private constructor(
   private fun queueOrDeliverOutboundMessage(msg: Any) {
     val outbound = outboundChannel
 
-    // Retain the message until used
-    val retained = ReferenceCountUtil.retain(msg)
     if (outbound == null) {
+      // Retain the message until used
+      val retained = ReferenceCountUtil.retain(msg)
+
       // Queue for later
       messageQueue.add(retained)
     } else {
       // Use immediately and release
-      outbound.writeAndFlush(retained).addListener { ReferenceCountUtil.release(retained) }
+      //
+      // Write here claims the msg
+      // msg.refCount = 0
+      outbound.writeAndFlush(msg)
     }
   }
 
@@ -124,7 +128,12 @@ private constructor(
       needsFlush = queued.isNotEmpty()
       if (needsFlush) {
         for (q in queued) {
-          channel.write(q).addListener { ReferenceCountUtil.release(q) }
+          // Write here claims the original msg
+          // q.refCount = 1
+          channel.write(q).addListener {
+            // Release here claims the ref count from the "retain" operation in queue function
+            // q.refCount = 0
+            ReferenceCountUtil.release(q) }
         }
       }
     } finally {
@@ -139,22 +148,25 @@ private constructor(
   @CheckResult
   private fun createHttpErrorResponse(): HttpResponse {
     return DefaultFullHttpResponse(
-        HttpVersion.HTTP_1_1,
-        HttpResponseStatus.BAD_GATEWAY,
-        Unpooled.EMPTY_BUFFER,
+      HttpVersion.HTTP_1_1,
+      HttpResponseStatus.BAD_GATEWAY,
+      Unpooled.EMPTY_BUFFER,
     )
   }
 
   @LintIgnoreLongMethod
   private fun handleHttpsConnect(
-      ctx: ChannelHandlerContext,
-      channelId: String,
-      msg: HttpRequest,
+    ctx: ChannelHandlerContext,
+    channelId: String,
+    msg: HttpRequest,
   ) {
     val tag = "HTTPS-CONNECT"
 
     val parsed = parseUriAndPort(msg.uri(), 443)
     if (parsed == null) {
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -163,6 +175,9 @@ private constructor(
       Timber.w {
         "(${channelId}) DROP: $tag Invalid upstream destination address: ${parsed.resolvedHostName}"
       }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -171,6 +186,9 @@ private constructor(
       Timber.w {
         "(${channelId}) DROP: $tag Invalid upstream destination port: ${parsed.resolvedPort}"
       }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -181,10 +199,13 @@ private constructor(
     if (!hostHeader.isNullOrBlank()) {
       val targetAuthority = "${parsed.resolvedHostName}:${parsed.resolvedPort}"
       val hostMatches =
-          hostHeader.equals(targetAuthority, ignoreCase = true) ||
-              hostHeader.equals(parsed.resolvedHostName, ignoreCase = true)
+        hostHeader.equals(targetAuthority, ignoreCase = true) ||
+            hostHeader.equals(parsed.resolvedHostName, ignoreCase = true)
       if (!hostMatches) {
         Timber.w { "($channelId) DROP: $tag Host '$hostHeader' != CONNECT target '$targetAuthority'" }
+
+        // This will release the message
+        // msg.refCount = 0
         sendErrorAndClose(ctx, msg)
         return
       }
@@ -193,6 +214,9 @@ private constructor(
     // Don't allow sending messages to local destinations
     if (isBlockedLocalAddress(parsed.resolvedHostName)) {
       Timber.w { "($channelId) DROP: $tag Blocked local address: ${parsed.resolvedHostName}" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -201,6 +225,9 @@ private constructor(
     val remoteClient = serverChannel.remoteAddress().cast<InetSocketAddress>()
     if (remoteClient == null) {
       Timber.w { "($channelId) DROP: $tag remoteClient IP is NULL" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -208,6 +235,9 @@ private constructor(
     val client = getTetherClient(ctx)
     if (client == null) {
       Timber.w { "($channelId) DROP: $tag TetherClient is NULL" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -215,6 +245,9 @@ private constructor(
     // If the client is blocked we do not process any input
     if (blockedClients.isBlocked(client)) {
       Timber.w { "($channelId) DROP: $tag client was blocked: $client" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -222,23 +255,23 @@ private constructor(
     scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
 
     val future =
-        tcpSocketCreator.connect(
-            hostName = parsed.resolvedHostName,
-            port = parsed.resolvedPort,
-            onChannelInitialized = { ch ->
-              val pipeline = ch.pipeline()
+      tcpSocketCreator.connect(
+        hostName = parsed.resolvedHostName,
+        port = parsed.resolvedPort,
+        onChannelInitialized = { ch ->
+          val pipeline = ch.pipeline()
 
-              if (isDebug) {
-                pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
-              }
+          if (isDebug) {
+            pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
+          }
 
-              // Bandwidth limiter
-              pipeline.applyBandwidthLimitFor(client)
+          // Bandwidth limiter
+          pipeline.applyBandwidthLimitFor(client)
 
-              // Read from the REMOTE and send back to the PROXY
-              pipeline.addLast(relayHandlerFactory.create(Unit))
-            },
-        )
+          // Read from the REMOTE and send back to the PROXY
+          pipeline.addLast(relayHandlerFactory.create(Unit))
+        },
+      )
 
     val outbound = future.channel()
 
@@ -247,21 +280,29 @@ private constructor(
     outbound.closeFuture().addListener { serverChannel.flushAndClose() }
 
     RelayHandler.applyChannelAttributes(
-        channel = outbound,
-        writeBackChannel = serverChannel,
-        tag = "$tag-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-        direction = RelayHandler.Direction.INBOUND,
-        client = client,
+      channel = outbound,
+      writeBackChannel = serverChannel,
+      tag = "$tag-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+      direction = RelayHandler.Direction.INBOUND,
+      client = client,
     )
 
+    // We start up a future listener here
     future.addListener { future ->
       if (!future.isSuccess) {
         Timber.e(future.cause()) { "(${channelId}) $tag Unable to connect to $parsed" }
+
+        // This will release the message
+        // msg.refCount = 0
         sendErrorAndClose(ctx, msg)
         return@addListener
       }
 
+      // Otherwise, at this point we are done with the original message and can release it
+      ReferenceCountUtil.release(msg)
+
       // Tell proxy we've established connection
+      // Msg creation point, response.refCount = 1
       val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
 
       // Enable auto-read once connection is established
@@ -280,17 +321,20 @@ private constructor(
       pipeline.addLast(relayHandlerFactory.create(Unit))
 
       RelayHandler.applyChannelAttributes(
-          channel = serverChannel,
-          writeBackChannel = outbound,
-          tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-          direction = RelayHandler.Direction.OUTBOUND,
-          client = client,
+        channel = serverChannel,
+        writeBackChannel = outbound,
+        tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+        direction = RelayHandler.Direction.OUTBOUND,
+        client = client,
       )
 
       // Then establish connection
       Timber.d { "(${channelId}) Write $tag to $parsed" }
 
       // Tell proxy we've established connection
+      //
+      // Write here claims the msg
+      // response.refCount = 0
       ctx.writeAndFlush(response).addListener {
         // Remove the http server codec only after 200 OK is fully written
         pipeline.dropHandler(HttpServerCodec::class)
@@ -300,26 +344,35 @@ private constructor(
 
   @LintIgnoreLongMethod
   private fun handleHttpForward(
-      ctx: ChannelHandlerContext,
-      channelId: String,
-      msg: HttpRequest,
+    ctx: ChannelHandlerContext,
+    channelId: String,
+    msg: HttpRequest,
   ) {
     val tag = "HTTP-FORWARD"
 
     val parsed = parseUriAndPort(msg.uri(), 80)
     if (parsed == null) {
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
 
     if (parsed.resolvedHostName.isBlank()) {
       Timber.w { "(${channelId}) DROP: $tag Invalid upstream destination address: $parsed" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
 
     if (parsed.resolvedPort !in VALID_PORT_RANGE) {
       Timber.w { "(${channelId}) DROP: $tag Invalid upstream destination port: $parsed" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -327,6 +380,9 @@ private constructor(
     // Don't allow sending messages to local destinations
     if (isBlockedLocalAddress(parsed.resolvedHostName)) {
       Timber.w { "($channelId) DROP: $tag Blocked local address: ${parsed.resolvedHostName}" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -335,6 +391,9 @@ private constructor(
     val remoteClient = serverChannel.remoteAddress().cast<InetSocketAddress>()
     if (remoteClient == null) {
       Timber.w { "($channelId) DROP: $tag remoteClient IP is NULL" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -342,6 +401,9 @@ private constructor(
     val client = getTetherClient(ctx)
     if (client == null) {
       Timber.w { "($channelId) DROP: $tag TetherClient is NULL" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -349,6 +411,9 @@ private constructor(
     // If the client is blocked we do not process any input
     if (blockedClients.isBlocked(client)) {
       Timber.w { "($channelId) DROP: $tag client was blocked: $client" }
+
+      // This will release the message
+      // msg.refCount = 0
       sendErrorAndClose(ctx, msg)
       return
     }
@@ -356,26 +421,26 @@ private constructor(
     scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
 
     val future =
-        tcpSocketCreator.connect(
-            hostName = parsed.resolvedHostName,
-            port = parsed.resolvedPort,
-            onChannelInitialized = { ch ->
-              val pipeline = ch.pipeline()
+      tcpSocketCreator.connect(
+        hostName = parsed.resolvedHostName,
+        port = parsed.resolvedPort,
+        onChannelInitialized = { ch ->
+          val pipeline = ch.pipeline()
 
-              if (isDebug) {
-                pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
-              }
+          if (isDebug) {
+            pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
+          }
 
-              // Must speak HTTP to replay the initial message
-              pipeline.addLast(HttpClientCodec())
+          // Must speak HTTP to replay the initial message
+          pipeline.addLast(HttpClientCodec())
 
-              // Bandwidth limiter
-              pipeline.applyBandwidthLimitFor(client)
+          // Bandwidth limiter
+          pipeline.applyBandwidthLimitFor(client)
 
-              // Read from the REMOTE and send back to the PROXY
-              pipeline.addLast(relayHandlerFactory.create(Unit))
-            },
-        )
+          // Read from the REMOTE and send back to the PROXY
+          pipeline.addLast(relayHandlerFactory.create(Unit))
+        },
+      )
 
     val outbound = future.channel()
 
@@ -384,16 +449,19 @@ private constructor(
     outbound.closeFuture().addListener { serverChannel.flushAndClose() }
 
     RelayHandler.applyChannelAttributes(
-        channel = outbound,
-        writeBackChannel = serverChannel,
-        tag = "$tag-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-        direction = RelayHandler.Direction.INBOUND,
-        client = client,
+      channel = outbound,
+      writeBackChannel = serverChannel,
+      tag = "$tag-INBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+      direction = RelayHandler.Direction.INBOUND,
+      client = client,
     )
 
     future.addListener { future ->
       if (!future.isSuccess) {
         Timber.e(future.cause()) { "Unable to connect to $parsed" }
+
+        // This will release the message
+        // msg.refCount = 0
         sendErrorAndClose(ctx, msg)
         return@addListener
       }
@@ -435,21 +503,19 @@ private constructor(
       pipeline.addLast(relayHandlerFactory.create(Unit))
 
       RelayHandler.applyChannelAttributes(
-          channel = serverChannel,
-          writeBackChannel = outbound,
-          tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
-          direction = RelayHandler.Direction.OUTBOUND,
-          client = client,
+        channel = serverChannel,
+        writeBackChannel = outbound,
+        tag = "$tag-OUTBOUND-${parsed.resolvedHostName}:${parsed.resolvedPort}",
+        direction = RelayHandler.Direction.OUTBOUND,
+        client = client,
       )
 
       // Replay the initial request
       Timber.d { "($channelId) Forward connect to $parsed" }
 
-      val retained = ReferenceCountUtil.retain(msg)
-      outbound.writeAndFlush(retained).addListener {
-        // Release held memory
-        ReferenceCountUtil.release(retained)
-
+      // Write here claims the msg
+      // msg.refCount = 0
+      outbound.writeAndFlush(msg).addListener {
         // Hold onto this channel for future requests to immediately fire off to it
         assignOutboundChannel(outbound)
 
@@ -495,29 +561,46 @@ private constructor(
   }
 
   override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
+    // Msg creation point, response.refCount = 1
     val response = createHttpErrorResponse()
+
+    // Write here claims the msg
+    // response.refCount = 0
     ctx.writeAndFlush(response).addListener { closeChannels(ctx) }
+
+    // We should also release the original msg
+    ReferenceCountUtil.release(msg)
   }
 
   override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
-    try {
-      ensureChannelTag(ctx)
-      val channelId = getChannelId()
+    // Inbound point, msg.refCount = 1
 
-      if (msg is HttpRequest) {
-        if (msg.method() == HttpMethod.CONNECT) {
-          handleHttpsConnect(ctx, channelId, msg)
-        } else {
-          handleHttpForward(ctx, channelId, msg)
+    ensureChannelTag(ctx)
+    val channelId = getChannelId()
+
+    when (msg) {
+      is HttpRequest -> {
+        releaseMsgOnChannelReadError(msg) {
+          if (msg.method() == HttpMethod.CONNECT) {
+            handleHttpsConnect(ctx, channelId, msg)
+          } else {
+            handleHttpForward(ctx, channelId, msg)
+          }
         }
-      } else if (msg is HttpContent) {
-        queueOrDeliverOutboundMessage(msg)
-      } else {
+      }
+      is HttpContent -> {
+        releaseMsgOnChannelReadError(msg) {
+          // Message queued for later, no release needed
+          // or is immediately written and claimed by netty, no release needed
+          queueOrDeliverOutboundMessage(msg)
+        }
+      }
+      else -> {
         Timber.w { "($channelId) MSG was not HTTP based: $msg" }
+
+        // Message is passed on, no release needed
         super.channelRead(ctx, msg)
       }
-    } finally {
-      ReferenceCountUtil.release(msg)
     }
   }
 
@@ -576,20 +659,21 @@ private constructor(
 
         val ipv6Host = uriWithoutSchema.substring(1, bracketEnd)
         val afterBracket = uriWithoutSchema.substring(bracketEnd + 1)
-        val fallbackPort = if (defaultPortBasedOnSchema > 0) defaultPortBasedOnSchema else defaultPort
+        val fallbackPort =
+          if (defaultPortBasedOnSchema > 0) defaultPortBasedOnSchema else defaultPort
         val port =
-            if (afterBracket.startsWith(":")) {
-              afterBracket.substring(1).substringBefore("/").toIntOrNull() ?: fallbackPort
-            } else {
-              fallbackPort
-            }
+          if (afterBracket.startsWith(":")) {
+            afterBracket.substring(1).substringBefore("/").toIntOrNull() ?: fallbackPort
+          } else {
+            fallbackPort
+          }
 
         val slashIndex = afterBracket.indexOf("/")
         val path = if (slashIndex >= 0) afterBracket.substring(slashIndex).ifBlank { "/" } else "/"
         return HttpHostAndPort(
-            resolvedHostName = ipv6Host,
-            resolvedPort = port,
-            proxyCorrectedFilePath = path,
+          resolvedHostName = ipv6Host,
+          resolvedPort = port,
+          proxyCorrectedFilePath = path,
         )
       }
 
@@ -601,7 +685,7 @@ private constructor(
       // Port must look like a port
       val portString = hostAndPort.getOrNull(1)
       val port =
-          if (portString.isNullOrBlank()) fallbackPort else portString.toIntOrNull() ?: fallbackPort
+        if (portString.isNullOrBlank()) fallbackPort else portString.toIntOrNull() ?: fallbackPort
 
       // Find the first slash to start the path
       val pathStartIndex = hostAndMaybePath.indexOf("/")
@@ -618,41 +702,41 @@ private constructor(
       }
 
       return HttpHostAndPort(
-          resolvedHostName = host,
-          resolvedPort = port,
-          proxyCorrectedFilePath = path,
+        resolvedHostName = host,
+        resolvedPort = port,
+        proxyCorrectedFilePath = path,
       )
     }
 
     @JvmStatic
     @CheckResult
     fun factory(
-        isDebug: Boolean,
-        scope: CoroutineScope,
-        allowedClients: AllowedClients,
-        blockedClients: BlockedClients,
-        tcpSocketCreator: ChannelCreator,
-        serverSocketTimeout: ServerSocketTimeout,
+      isDebug: Boolean,
+      scope: CoroutineScope,
+      allowedClients: AllowedClients,
+      blockedClients: BlockedClients,
+      tcpSocketCreator: ChannelCreator,
+      serverSocketTimeout: ServerSocketTimeout,
     ): HandlerFactory<Unit> {
       return {
         Http1ProxyHandler(
-            isDebug = isDebug,
-            scope = scope,
-            allowedClients = allowedClients,
-            blockedClients = blockedClients,
-            tcpSocketCreator = tcpSocketCreator,
-            serverSocketTimeout = serverSocketTimeout,
+          isDebug = isDebug,
+          scope = scope,
+          allowedClients = allowedClients,
+          blockedClients = blockedClients,
+          tcpSocketCreator = tcpSocketCreator,
+          serverSocketTimeout = serverSocketTimeout,
         )
       }
     }
 
     fun applyChannelAttributes(
-        channel: Channel,
-        client: TetherClient,
+      channel: Channel,
+      client: TetherClient,
     ) {
       ProxyHandler.applyChannelAttributes(
-          channel = channel,
-          client = client,
+        channel = channel,
+        client = client,
       )
     }
   }

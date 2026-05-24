@@ -40,30 +40,30 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
 import io.netty.util.AttributeKey
 import io.netty.util.ReferenceCountUtil
-import java.net.InetSocketAddress
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 
 internal class UdpRelayHandler
 private constructor(
-    isDebug: Boolean,
-    scope: CoroutineScope,
-    serverSocketTimeout: ServerSocketTimeout,
-    private val allowedClients: AllowedClients,
-    private val blockedClients: BlockedClients,
-    private val clientResolver: ClientResolver,
+  isDebug: Boolean,
+  scope: CoroutineScope,
+  serverSocketTimeout: ServerSocketTimeout,
+  private val allowedClients: AllowedClients,
+  private val blockedClients: BlockedClients,
+  private val clientResolver: ClientResolver,
 ) :
-    ProxyHandler(
-        isDebug = isDebug,
-        scope = scope,
-        serverSocketTimeout = serverSocketTimeout,
-    ) {
+  ProxyHandler(
+    isDebug = isDebug,
+    scope = scope,
+    serverSocketTimeout = serverSocketTimeout,
+  ) {
 
   private val bytesInbound = AtomicInteger(0)
   private val bytesOutbound = AtomicInteger(0)
@@ -94,52 +94,70 @@ private constructor(
   }
 
   private fun unwrapUdpResponse(
-      ctx: ChannelHandlerContext,
-      channelId: String,
-      msg: DatagramPacket,
-      sender: InetSocketAddress,
+    ctx: ChannelHandlerContext,
+    channelId: String,
+    msg: DatagramPacket,
+    sender: InetSocketAddress,
   ) {
     UDP.unwrap(
-        channelId = channelId,
-        ctx = ctx,
-        msg = msg,
-        onError = { sendErrorAndClose(ctx, msg) },
-        onUnwrapped = {
-            // The data buffer is internally retained()
-            // We MUST release it when this function is done
-            retainedData,
-            destination ->
-          val tag = "UDP-RELAY-${destination.address}:${destination.port}"
+      channelId = channelId,
+      ctx = ctx,
+      msg = msg,
+      onError = {
+        // This will release the message
+        // msg.refCount = 0
+        sendErrorAndClose(ctx, msg)
+      },
+      onUnwrapped = {
+        // The data buffer is internally retained()
+        // We MUST release it when this function is done
+          retainedData,
+          destination ->
+        val tag = "UDP-RELAY-${destination.address}:${destination.port}"
 
-          // Replace the channel ID here now that we have evaluated the real upstream
-          setChannelTag(ctx, tag)
-          setChannelId(tag)
+        // Replace the channel ID here now that we have evaluated the real upstream
+        setChannelTag(ctx, tag)
+        setChannelId(tag)
 
-          val client = resolveTetherClient(ctx, sender)
+        val client = resolveTetherClient(ctx, sender)
 
-          // If the client is blocked we do not process any input
-          if (blockedClients.isBlocked(client)) {
-            Timber.w { "($channelId) DROP: client was blocked: $client" }
-            ReferenceCountUtil.release(retainedData)
-            sendErrorAndClose(ctx, msg)
-            return@unwrap
-          }
+        // If the client is blocked we do not process any input
+        if (blockedClients.isBlocked(client)) {
+          Timber.w { "($channelId) DROP: client was blocked: $client" }
 
-          // Grab the amount BEFORE the data buffer is released
-          val amountMoved = retainedData.readableBytes()
+          // Release the retained message in bail-out path
+          // retainedData.refCount = 0
+          ReferenceCountUtil.release(retainedData)
 
-          // Side effect for client tracking
-          scope.launch(context = Dispatchers.IO) {
-            // Update latest client activity
-            allowedClients.seen(client)
+          // This will release the message
+          // msg.refCount = 0
+          sendErrorAndClose(ctx, msg)
+          return@unwrap
+        }
 
-            // This is from Proxy out to Internet
-            bytesOutbound.addAndGet(amountMoved)
-          }
+        // Grab the amount BEFORE the data buffer is released
+        val amountMoved = retainedData.readableBytes()
 
-          val packet = DatagramPacket(retainedData, destination)
-          ctx.writeAndFlush(packet).addListener { ReferenceCountUtil.release(retainedData) }
-        },
+        // Side effect for client tracking
+        scope.launch(context = Dispatchers.IO) {
+          // Update latest client activity
+          allowedClients.seen(client)
+
+          // This is from Proxy out to Internet
+          bytesOutbound.addAndGet(amountMoved)
+        }
+
+        // Msg creation point, packet.refCount = 1
+        val packet = DatagramPacket(retainedData, destination)
+
+        // Write here claims the msg
+        // packet.refCount = 0
+        ctx.writeAndFlush(packet).addListener {
+          // Release the retained message
+          // retainedData.refCount = 0
+          ReferenceCountUtil.release(retainedData)
+        }
+      },
     )
   }
 
@@ -157,34 +175,142 @@ private constructor(
 
   @CheckResult
   private fun resolveTetherClient(
-      ctx: ChannelHandlerContext,
-      clientAddress: InetSocketAddress,
+    ctx: ChannelHandlerContext,
+    clientAddress: InetSocketAddress,
   ): TetherClient =
-      getTetherClient(ctx).let { maybeClient ->
-        if (maybeClient == null) {
-          val newClient = clientResolver.ensure(clientAddress)
-          // And set the TetherClient ATTR so we can yank it back later
-          applyChannelAttributes(channel = ctx.channel(), client = newClient)
-          return@let newClient
-        }
-
-        return@let maybeClient
+    getTetherClient(ctx).let { maybeClient ->
+      if (maybeClient == null) {
+        val newClient = clientResolver.ensure(clientAddress)
+        // And set the TetherClient ATTR so we can yank it back later
+        applyChannelAttributes(channel = ctx.channel(), client = newClient)
+        return@let newClient
       }
+
+      return@let maybeClient
+    }
 
   private fun produceByteReport(client: TetherClient) {
     val inboundCount = bytesInbound.getAndSet(0)
     val outboundCount = bytesOutbound.getAndSet(0)
 
     allowedClients.reportTransfer(
-        client = client,
-        report =
-            ByteTransferReport(
-                // TODO can we avoid the cast to long
-                internetToProxy = inboundCount.zeroOrAmountAsLong(),
-                proxyToInternet = outboundCount.zeroOrAmountAsLong(),
-            ),
+      client = client,
+      report =
+        ByteTransferReport(
+          // TODO can we avoid the cast to long
+          internetToProxy = inboundCount.zeroOrAmountAsLong(),
+          proxyToInternet = outboundCount.zeroOrAmountAsLong(),
+        ),
     )
   }
+
+  private fun handleUdpMessage(ctx: ChannelHandlerContext, msg: DatagramPacket, channelId: String) =
+    releaseMsgOnChannelReadError(msg) {
+      val serverChannel = ctx.channel()
+      val serverAddress = serverChannel.localAddress().cast<InetSocketAddress>()
+      if (serverAddress == null) {
+        Timber.w { "(${channelId}) DROP: No server address" }
+
+        // This will release the message
+        // msg.refCount = 0
+        sendErrorAndClose(ctx, msg)
+        return@releaseMsgOnChannelReadError
+      }
+
+      val sender = msg.sender()
+      if (sender == null) {
+        Timber.w { "(${channelId}) DROP: Null sender in packet" }
+
+        // This will release the message
+        // msg.refCount = 0
+        sendErrorAndClose(ctx, msg)
+        return@releaseMsgOnChannelReadError
+      }
+
+      val tcpControlClient = getTcpControlAddress(ctx)
+      if (tcpControlClient == null) {
+        Timber.w { "(${channelId}) DROP: No TCP control client for destination: $sender" }
+
+        // This will release the message
+        // msg.refCount = 0
+        sendErrorAndClose(ctx, msg)
+        return@releaseMsgOnChannelReadError
+      }
+
+      val backToClient = getBackToClientAddress(ctx)
+      if (backToClient == null || sender == backToClient) {
+        // We had no client so this traffic is our client sending -> destination
+        // Or this is continuing traffic from the same sender
+        setBackToClientAddress(ctx, sender)
+
+        // Validate that the IP ADDRESS of the client and sender are the same
+        if (tcpControlClient.address != sender.address) {
+          Timber.w {
+            "(${channelId}) DROP: Sender did not match expected=${tcpControlClient.address} sender=${sender.address}"
+          }
+
+          // This will release the message
+          // msg.refCount = 0
+          sendErrorAndClose(ctx, msg)
+          return@releaseMsgOnChannelReadError
+        }
+
+        unwrapUdpResponse(ctx, channelId, msg, sender)
+      } else {
+        // This is from the remote server
+        // but this packet should NEVER be from our TCP control socket
+        // so if it is, drop it
+        if (sender.address == tcpControlClient.address) {
+          Timber.w {
+            "(${channelId}) DROP: Spoof packet received? Claim from ${sender.address} in internet-response path"
+          }
+
+          // This will release the message
+          // msg.refCount = 0
+          sendErrorAndClose(ctx, msg)
+          return@releaseMsgOnChannelReadError
+        }
+
+        val client = resolveTetherClient(ctx, backToClient)
+
+        // If the client is blocked we do not process any input
+        if (blockedClients.isBlocked(client)) {
+          Timber.w { "($channelId) DROP: client was blocked: $client" }
+
+          // This will release the message
+          // msg.refCount = 0
+          sendErrorAndClose(ctx, msg)
+          return@releaseMsgOnChannelReadError
+        }
+
+        // This copies the bytes out of the retained content
+        // Msg creation point, response.refCount = 1
+        val response = UDP.wrap(
+          alloc = ctx.alloc(), sender = sender, content = msg.content(),
+        )
+
+        // At this point, the original message content is copied into response
+        // we can free the original message
+        ReferenceCountUtil.release(msg)
+
+        // Grab the amount BEFORE the data buffer is released
+        val amountMoved = response.readableBytes()
+
+        // Side effect for client tracking
+        scope.launch(context = Dispatchers.IO) {
+          // Update latest client activity
+          allowedClients.seen(client)
+
+          // This is from Internet back to Proxy
+          bytesInbound.addAndGet(amountMoved)
+        }
+
+        // Write here claims the msg
+        // response.refCount = 0
+        val packet = DatagramPacket(response, backToClient)
+        ctx.writeAndFlush(packet)
+      }
+    }
 
   override fun onCloseChannels(ctx: ChannelHandlerContext) {
     // Cancel the report looping job
@@ -210,19 +336,19 @@ private constructor(
 
     byteCountJob?.cancel()
     byteCountJob =
-        scope.launch(context = Dispatchers.IO) {
-          while (isActive) {
-            // Don't report too often
-            delay(10.seconds)
+      scope.launch(context = Dispatchers.IO) {
+        while (isActive) {
+          // Don't report too often
+          delay(10.seconds)
 
-            if (client == null) {
-              // No need to go through the resolver path, just yank the attr if it exists
-              client = getTetherClient(ctx)
-            }
-
-            client?.also { produceByteReport(it) }
+          if (client == null) {
+            // No need to go through the resolver path, just yank the attr if it exists
+            client = getTetherClient(ctx)
           }
+
+          client?.also { produceByteReport(it) }
         }
+      }
   }
 
   override fun sendErrorAndClose(ctx: ChannelHandlerContext, msg: Any) {
@@ -230,90 +356,17 @@ private constructor(
   }
 
   override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+    // Inbound point, msg.refCount = 1
+
     ensureChannelTag(ctx)
     val channelId = getChannelId()
 
     if (msg is DatagramPacket) {
-      val serverChannel = ctx.channel()
-      val serverAddress = serverChannel.localAddress().cast<InetSocketAddress>()
-      if (serverAddress == null) {
-        Timber.w { "(${channelId}) DROP: No server address" }
-        sendErrorAndClose(ctx, msg)
-        return
-      }
-
-      val sender = msg.sender()
-      if (sender == null) {
-        Timber.w { "(${channelId}) DROP: Null sender in packet" }
-        sendErrorAndClose(ctx, msg)
-        return
-      }
-
-      val tcpControlClient = getTcpControlAddress(ctx)
-      if (tcpControlClient == null) {
-        Timber.w { "(${channelId}) DROP: No TCP control client for destination: $sender" }
-        sendErrorAndClose(ctx, msg)
-        return
-      }
-
-      val backToClient = getBackToClientAddress(ctx)
-      if (backToClient == null || sender == backToClient) {
-        // We had no client so this traffic is our client sending -> destination
-        // Or this is continuing traffic from the same sender
-        setBackToClientAddress(ctx, sender)
-
-        // Validate that the IP ADDRESS of the client and sender are the same
-        if (tcpControlClient.address != sender.address) {
-          Timber.w {
-            "(${channelId}) DROP: Sender did not match expected=${tcpControlClient.address} sender=${sender.address}"
-          }
-          sendErrorAndClose(ctx, msg)
-          return
-        }
-
-        unwrapUdpResponse(ctx, channelId, msg, sender)
-      } else {
-        // This is from the remote server
-        // but this packet should NEVER be from our TCP control socket
-        // so if it is, drop it
-        if (sender.address == tcpControlClient.address) {
-          Timber.w {
-            "(${channelId}) DROP: Spoof packet received? Claim from ${sender.address} in internet-response path"
-          }
-          return
-        }
-
-        val client = resolveTetherClient(ctx, backToClient)
-
-        // If the client is blocked we do not process any input
-        if (blockedClients.isBlocked(client)) {
-          Timber.w { "($channelId) DROP: client was blocked: $client" }
-          sendErrorAndClose(ctx, msg)
-          return
-        }
-
-        val content = msg.content()
-
-        // This copies the bytes out of the retained content
-        val response = UDP.wrap(alloc = ctx.alloc(), sender = sender, content = content)
-
-        // Grab the amount BEFORE the data buffer is released
-        val amountMoved = response.readableBytes()
-
-        // Side effect for client tracking
-        scope.launch(context = Dispatchers.IO) {
-          // Update latest client activity
-          allowedClients.seen(client)
-
-          // This is from Internet back to Proxy
-          bytesInbound.addAndGet(amountMoved)
-        }
-
-        val packet = DatagramPacket(response, backToClient)
-        ctx.writeAndFlush(packet)
-      }
+      handleUdpMessage(ctx, msg, channelId)
     } else {
       Timber.w { "(${channelId}): Invalid message seen: $msg" }
+
+      // Message is passed on, no release needed
       super.channelRead(ctx, msg)
     }
   }
@@ -321,41 +374,41 @@ private constructor(
   companion object {
     @JvmStatic
     private val TAG: AttributeKey<String> =
-        AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-ID")
+      AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-ID")
 
     @JvmStatic
     private val BACK_TO_CLIENT_ADDRESS: AttributeKey<InetSocketAddress> =
-        AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-BACK_TO_CLIENT_ADDRESS")
+      AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-BACK_TO_CLIENT_ADDRESS")
 
     @JvmStatic
     private val TCP_CONTROL_ADDRESS: AttributeKey<InetSocketAddress> =
-        AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-TCP_CONTROL_ADDRESS")
+      AttributeKey.newInstance("${UdpRelayHandler::class.simpleName}-TCP_CONTROL_ADDRESS")
 
     @JvmStatic
     @CheckResult
     fun factory(
-        isDebug: Boolean,
-        scope: CoroutineScope,
-        allowedClients: AllowedClients,
-        blockedClients: BlockedClients,
-        clientResolver: ClientResolver,
-        serverSocketTimeout: ServerSocketTimeout,
+      isDebug: Boolean,
+      scope: CoroutineScope,
+      allowedClients: AllowedClients,
+      blockedClients: BlockedClients,
+      clientResolver: ClientResolver,
+      serverSocketTimeout: ServerSocketTimeout,
     ): HandlerFactory<Unit> {
       return {
         UdpRelayHandler(
-            isDebug = isDebug,
-            scope = scope,
-            allowedClients = allowedClients,
-            blockedClients = blockedClients,
-            clientResolver = clientResolver,
-            serverSocketTimeout = serverSocketTimeout,
+          isDebug = isDebug,
+          scope = scope,
+          allowedClients = allowedClients,
+          blockedClients = blockedClients,
+          clientResolver = clientResolver,
+          serverSocketTimeout = serverSocketTimeout,
         )
       }
     }
 
     fun applyChannelAttributes(
-        channel: Channel,
-        tcpControlAddress: InetSocketAddress,
+      channel: Channel,
+      tcpControlAddress: InetSocketAddress,
     ) {
       channel.apply { attr(TCP_CONTROL_ADDRESS).set(tcpControlAddress) }
     }
