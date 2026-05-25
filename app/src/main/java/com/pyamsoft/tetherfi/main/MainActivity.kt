@@ -52,6 +52,7 @@ import com.pyamsoft.tetherfi.ui.InstallPYDroidExtras
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -69,6 +70,7 @@ class MainActivity : ComponentActivity() {
   private var pydroid: PYDroidActivityDelegate? = null
 
   private val settingsCommandBus = DefaultEventBus<Unit>()
+  private var settingsCommandLaunchJob: Job? = null
 
   private fun initializePYDroid() {
     pydroid =
@@ -130,7 +132,10 @@ class MainActivity : ComponentActivity() {
 
   private fun handleOpenedWithIntent(intent: Intent) {
     if (intent.action === Intent.ACTION_APPLICATION_PREFERENCES) {
-      lifecycleScope.launch(context = Dispatchers.Default) { settingsCommandBus.emit(Unit) }
+      // Only attempt one launch emit at a time
+      settingsCommandLaunchJob?.cancel()
+      settingsCommandLaunchJob =
+          lifecycleScope.launch(context = Dispatchers.Default) { settingsCommandBus.emit(Unit) }
     }
   }
 
@@ -219,5 +224,8 @@ class MainActivity : ComponentActivity() {
     screenOnHandler = null
     mainViewModel = null
     notificationErrorLauncher = null
+
+    settingsCommandLaunchJob?.cancel()
+    settingsCommandLaunchJob = null
   }
 }
