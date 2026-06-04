@@ -27,7 +27,7 @@ netty = "4.2.15.Final"
 slf4j = "2.0.18"
 
 # AndroidX
-core = "1.18.0"      # core-ktx is ready in 1.19.X https://jakewharton.com/an-update-on-android-ktx/
+core = "1.19.0"      # core-ktx is ready in 1.19.X https://jakewharton.com/an-update-on-android-ktx/
 activity = "1.13.0"
 lifecycle = "2.10.0"
 dataStore = "1.2.1"
