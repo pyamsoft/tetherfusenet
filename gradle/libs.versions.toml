@@ -35,7 +35,7 @@ preference = "1.2.1"
 testRunner = "1.7.0"
 
 # Compose
-compose = "1.11.2"
+compose = "1.11.3"
 composeMaterial3 = "1.4.0"
 
 # Google
