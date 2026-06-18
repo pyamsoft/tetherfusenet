@@ -49,7 +49,7 @@ spotless = "8.6.0"
 doctor = "0.12.1"
 jdkDesugar = "2.1.5"
 caupain = "1.9.1"
-detekt = "2.0.0-alpha.4"
+detekt = "2.0.0-alpha.5"
 
 # Testing
 junit = "4.13.2"
