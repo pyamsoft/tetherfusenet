@@ -13,7 +13,7 @@ kotlin = "2.4.0"
 coroutines = "1.11.0"
 
 # Us
-pydroid = "29.5.0"
+pydroid = "29.5.1"
 ktor = "3.4.0-PYAMSOFT"
 
 # Square
@@ -29,13 +29,13 @@ slf4j = "2.0.18"
 # AndroidX
 core = "1.19.0"
 activity = "1.13.0"
-lifecycle = "2.10.0"
+lifecycle = "2.11.0"
 dataStore = "1.2.1"
 preference = "1.2.1"
 testRunner = "1.7.0"
 
 # Compose
-compose = "1.11.2"
+compose = "1.11.3"
 composeMaterial3 = "1.4.0"
 
 # Google
@@ -45,11 +45,11 @@ ksp = "2.3.9"
 coil = "3.5.0"
 
 # Developer Tools
-spotless = "8.6.0"
+spotless = "8.7.0"
 doctor = "0.12.1"
 jdkDesugar = "2.1.5"
 caupain = "1.9.1"
-detekt = "2.0.0-alpha.4"
+detekt = "2.0.0-alpha.5"
 
 # Testing
 junit = "4.13.2"
