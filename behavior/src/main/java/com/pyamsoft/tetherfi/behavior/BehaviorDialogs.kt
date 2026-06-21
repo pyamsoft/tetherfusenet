@@ -21,9 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pyamsoft.tetherfi.behavior.sections.expert.PowerBalanceDialog
 import com.pyamsoft.tetherfi.behavior.sections.expert.SocketTimeoutDialog
-import com.pyamsoft.tetherfi.server.ServerPerformanceLimit
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 
 @Composable
@@ -31,28 +29,12 @@ internal fun BehaviorDialogs(
     dialogModifier: Modifier = Modifier,
     state: BehaviorViewState,
 
-    // Power Balance
-    onHidePowerBalance: () -> Unit,
-    onUpdatePowerBalance: (ServerPerformanceLimit) -> Unit,
-
     // Socket Timeout
     onHideSocketTimeout: () -> Unit,
     onUpdateSocketTimeout: (ServerSocketTimeout) -> Unit,
 ) {
 
-  val isShowingPowerBalance by state.isShowingPowerBalance.collectAsStateWithLifecycle()
   val isShowingSocketTimeout by state.isShowingSocketTimeout.collectAsStateWithLifecycle()
-
-  AnimatedVisibility(
-      visible = isShowingPowerBalance,
-  ) {
-    PowerBalanceDialog(
-        modifier = dialogModifier,
-        state = state,
-        onHidePowerBalance = onHidePowerBalance,
-        onUpdatePowerBalance = onUpdatePowerBalance,
-    )
-  }
 
   AnimatedVisibility(
       visible = isShowingSocketTimeout,

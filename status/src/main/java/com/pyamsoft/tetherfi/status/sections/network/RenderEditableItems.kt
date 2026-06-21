@@ -23,7 +23,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -83,9 +82,8 @@ internal fun LazyListScope.renderEditableItems(
     onPasswordChanged: (String) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
     onHttpEnabledChanged: (Boolean) -> Unit,
-    onHttpPortChanged: (Int) -> Unit,
     onSocksEnabledChanged: (Boolean) -> Unit,
-    onSocksPortChanged: (Int) -> Unit,
+    onPortChanged: (Int) -> Unit,
     onEnableChangeFailed: (ServerPortTypes) -> Unit,
 ) {
   item(
@@ -133,7 +131,6 @@ internal fun LazyListScope.renderEditableItems(
   item(
       contentType = RenderEditableItemsContentTypes.EDIT_PORTS,
   ) {
-    val isNewEngine by serverViewState.isNewEngine.collectAsStateWithLifecycle()
     val isHttpEnabled by serverViewState.isHttpEnabled.collectAsStateWithLifecycle()
     val isSocksEnabled by serverViewState.isSocksEnabled.collectAsStateWithLifecycle()
 
@@ -157,16 +154,6 @@ internal fun LazyListScope.renderEditableItems(
                 ),
         )
 
-        if (isNewEngine) {
-          Text(
-              modifier =
-                  Modifier.padding(horizontal = MaterialTheme.keylines.content)
-                      .padding(bottom = MaterialTheme.keylines.content),
-              text = stringResource(R.string.editmode_hotspot_proxy_newengine_description),
-              style = MaterialTheme.typography.bodySmall,
-          )
-        }
-
         EditProxyPort(
             modifier = modifier.padding(bottom = MaterialTheme.keylines.baseline),
             portType = ServerPortTypes.HTTP,
@@ -176,15 +163,7 @@ internal fun LazyListScope.renderEditableItems(
             isOtherEnabled = isSocksEnabled,
             onEnabledChanged = onHttpEnabledChanged,
             onEnableChangeFailed = onEnableChangeFailed,
-        ) {
-          if (!isNewEngine) {
-            EditHttpPort(
-                modifier = Modifier.weight(1F).padding(end = MaterialTheme.keylines.content),
-                serverViewState = serverViewState,
-                onPortChanged = onHttpPortChanged,
-            )
-          }
-        }
+        )
 
         EditProxyPort(
             modifier = modifier.padding(bottom = MaterialTheme.keylines.baseline),
@@ -195,26 +174,16 @@ internal fun LazyListScope.renderEditableItems(
             isOtherEnabled = isHttpEnabled,
             onEnabledChanged = onSocksEnabledChanged,
             onEnableChangeFailed = onEnableChangeFailed,
-        ) {
-          if (!isNewEngine) {
-            EditSocksPort(
-                modifier = Modifier.weight(1F).padding(end = MaterialTheme.keylines.content),
-                serverViewState = serverViewState,
-                onPortChanged = onSocksPortChanged,
-            )
-          }
-        }
+        )
 
-        if (isNewEngine) {
           EditHttpPort(
               modifier =
                   Modifier.fillMaxWidth()
                       .padding(horizontal = MaterialTheme.keylines.content)
                       .padding(bottom = MaterialTheme.keylines.content),
               serverViewState = serverViewState,
-              onPortChanged = onHttpPortChanged,
+              onPortChanged = onPortChanged,
           )
-        }
       }
     }
   }
@@ -317,7 +286,6 @@ private fun EditProxyPort(
     isOtherEnabled: Boolean,
     onEnabledChanged: (Boolean) -> Unit,
     onEnableChangeFailed: (ServerPortTypes) -> Unit,
-    content: @Composable RowScope.() -> Unit,
 ) {
   Column(
       modifier = modifier.padding(bottom = MaterialTheme.keylines.baseline),
@@ -361,8 +329,6 @@ private fun EditProxyPort(
             }
           },
       )
-
-      content()
     }
   }
 }
@@ -385,9 +351,8 @@ private fun PreviewEditableItems(
               this.password.value = password
             },
         onHttpEnabledChanged = {},
-        onHttpPortChanged = {},
         onSocksEnabledChanged = {},
-        onSocksPortChanged = {},
+      onPortChanged = {},
         onSsidChanged = {},
         onPasswordChanged = {},
         onTogglePasswordVisibility = {},

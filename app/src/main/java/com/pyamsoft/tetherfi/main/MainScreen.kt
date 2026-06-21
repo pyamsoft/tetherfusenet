@@ -47,42 +47,36 @@ import org.jetbrains.annotations.TestOnly
 
 @Composable
 fun MainScreen(
-    modifier: Modifier = Modifier,
-    appName: String,
-    state: MainViewState,
-    pagerState: PagerState,
-    allTabs: List<MainView>,
+  modifier: Modifier = Modifier,
+  appName: String,
+  state: MainViewState,
+  pagerState: PagerState,
+  allTabs: List<MainView>,
 
     // Main
-    onHttpEnabledChanged: (Boolean) -> Unit,
-    onHttpPortChanged: (Int) -> Unit,
-    onSocksEnabledChanged: (Boolean) -> Unit,
-    onSocksPortChanged: (Int) -> Unit,
-
-    // Engine
-    // TODO Default in the future
-    // TODO Drop setting in the future as Netty will be the ONLY engine
-    onToggleNewEngine: () -> Unit,
+  onHttpEnabledChanged: (Boolean) -> Unit,
+  onSocksEnabledChanged: (Boolean) -> Unit,
+  onPortChanged: (Int) -> Unit,
 
     // Settings
-    onTabChanged: (MainView) -> Unit,
+  onTabChanged: (MainView) -> Unit,
 
     // Actions
-    onShowQRCode: () -> Unit,
-    onRefreshConnection: () -> Unit,
-    onJumpToHowTo: () -> Unit,
-    onLaunchIntent: (String) -> Unit,
-    onShowSlowSpeedHelp: () -> Unit,
-    onToggleProxy: () -> Unit,
+  onShowQRCode: () -> Unit,
+  onRefreshConnection: () -> Unit,
+  onJumpToHowTo: () -> Unit,
+  onLaunchIntent: (String) -> Unit,
+  onShowSlowSpeedHelp: () -> Unit,
+  onToggleProxy: () -> Unit,
 
     // Dialogs
-    onOpenNetworkError: () -> Unit,
-    onOpenHotspotError: () -> Unit,
-    onOpenProxyError: () -> Unit,
-    onOpenBroadcastError: () -> Unit,
+  onOpenNetworkError: () -> Unit,
+  onOpenHotspotError: () -> Unit,
+  onOpenProxyError: () -> Unit,
+  onOpenBroadcastError: () -> Unit,
 
     // Tile
-    onUpdateTile: (RunningStatus) -> Unit,
+  onUpdateTile: (RunningStatus) -> Unit,
 ) {
   val (snackbarError, setSnackbarError) = remember { mutableStateOf<ServerPortTypes?>(null) }
   val snackbarHostState = remember { SnackbarHostState() }
@@ -136,11 +130,9 @@ fun MainScreen(
           onOpenHotspotError = onOpenHotspotError,
           onOpenProxyError = onOpenProxyError,
           onOpenBroadcastError = onOpenBroadcastError,
-          onToggleNewEngine = onToggleNewEngine,
           onHttpEnabledChanged = onHttpEnabledChanged,
-          onHttpPortChanged = onHttpPortChanged,
           onSocksEnabledChanged = onSocksEnabledChanged,
-          onSocksPortChanged = onSocksPortChanged,
+          onPortChanged = onPortChanged,
           onEnableChangeFailed = { setSnackbarError(it) },
       )
     }
@@ -163,10 +155,8 @@ private fun PreviewMainScreen(
         override val connection = MutableStateFlow(BroadcastNetworkStatus.ConnectionInfo.Empty)
 
         override val isHttpEnabled = MutableStateFlow(http)
-        override val httpPort = MutableStateFlow(0)
-
         override val isSocksEnabled = MutableStateFlow(socks)
-        override val socksPort = MutableStateFlow(0)
+        override val port = MutableStateFlow(0)
 
         // TODO support RNDIS
         override val broadcastType = MutableStateFlow(BroadcastType.WIFI_DIRECT)
@@ -183,8 +173,6 @@ private fun PreviewMainScreen(
         override val isShowingHotspotError = MutableStateFlow(false)
         override val isShowingBroadcastError = MutableStateFlow(false)
         override val isShowingProxyError = MutableStateFlow(false)
-
-        override val isNewEngine = MutableStateFlow(true)
       }
   val allTabs = MainView.entries.rememberAsStateList()
 
@@ -205,11 +193,9 @@ private fun PreviewMainScreen(
       onOpenProxyError = {},
       onOpenNetworkError = {},
       onOpenHotspotError = {},
-      onToggleNewEngine = {},
-      onHttpPortChanged = {},
-      onSocksPortChanged = {},
       onHttpEnabledChanged = {},
       onSocksEnabledChanged = {},
+    onPortChanged = {},
   )
 }
 

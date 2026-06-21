@@ -116,20 +116,18 @@ internal constructor(
     enforcer.assertOffMainThread()
 
     try {
-      val httpPort = preferences.listenForHttpPortChanges().first()
-      val socksPort = preferences.listenForSocksPortChanges().first()
+      val port = preferences.listenForPortChanges().first()
 
       Timber.d {
-        "${type.name} Begin proxy server loop: $info (HTTP=${httpPort} SOCKS=${socksPort})"
+        "${type.name} Begin proxy server loop: $info ($port)"
       }
       factory
         .create(
           type = type,
           info = info,
+          port = port,
           isHttpEnabled = isHttpEnabled,
           isSocksEnabled = isSocksEnabled,
-          httpPort = httpPort,
-          socksPort = socksPort,
         )
         .loop(
           lock = lock,

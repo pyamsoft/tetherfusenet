@@ -25,7 +25,6 @@ import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.pydroid.notify.NotifyGuard
 import com.pyamsoft.tetherfi.server.ExpertPreferences
-import com.pyamsoft.tetherfi.server.ServerPerformanceLimit
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.StatusPreferences
 import com.pyamsoft.tetherfi.server.TweakPreferences
@@ -55,12 +54,11 @@ internal constructor(
       var tweakShutdownWithNoClients: Boolean,
       var tweakKeepScreenOn: Boolean,
       var tweakWakeLock: Boolean,
-      var expertPowerBalance: Boolean,
       var expertSocketTimeout: Boolean,
   )
 
   private fun markPreferencesLoaded(config: LoadConfig) {
-    val isExpertReady = config.expertPowerBalance && config.expertSocketTimeout
+    val isExpertReady = config.expertSocketTimeout
 
     val isRunningTweaksReady =
         config.tweakShutdownWithNoClients && config.tweakKeepScreenOn && config.tweakWakeLock
@@ -77,19 +75,11 @@ internal constructor(
   ): List<SaveableStateRegistry.Entry> =
       mutableListOf<SaveableStateRegistry.Entry>().apply {
         registry
-            .registerProvider(KEY_SHOW_POWER_BALANCE) { state.isShowingPowerBalance.value }
-            .also { add(it) }
-
-        registry
-            .registerProvider(KEY_SHOW_POWER_BALANCE) { state.isShowingSocketTimeout.value }
+            .registerProvider(KEY_SHOW_TIMEOUTS) { state.isShowingSocketTimeout.value }
             .also { add(it) }
       }
 
   override fun consumeRestoredState(registry: SaveableStateRegistry) {
-    registry.consumeRestored(KEY_SHOW_POWER_BALANCE)?.cast<Boolean>()?.also {
-      state.isShowingPowerBalance.value = it
-    }
-
     registry.consumeRestored(KEY_SHOW_TIMEOUTS)?.cast<Boolean>()?.also {
       state.isShowingSocketTimeout.value = it
     }
@@ -111,7 +101,6 @@ internal constructor(
             tweakKeepScreenOn = false,
             tweakShutdownWithNoClients = false,
             tweakWakeLock = false,
-            expertPowerBalance = false,
             expertSocketTimeout = false,
         )
 
@@ -212,21 +201,6 @@ internal constructor(
     val scope = this
     val s = state
 
-    // Always populate the latest power balance value
-    expertPreferences.listenForPerformanceLimits().also { f ->
-      scope.launch(context = Dispatchers.Default) {
-        f.collect { balance ->
-          s.powerBalance.value = balance
-
-          // Watch constantly but only update the initial load config if we haven't loaded yet
-          if (s.loadingState.value != BehaviorViewState.LoadingState.DONE) {
-            config.expertPowerBalance = true
-            markPreferencesLoaded(config)
-          }
-        }
-      }
-    }
-
     // Always populate the latest socket timeout value
     expertPreferences.listenForSocketTimeout().also { f ->
       scope.launch(context = Dispatchers.Default) {
@@ -279,9 +253,6 @@ internal constructor(
 
   fun handleOpenDialog(dialog: BehaviorViewDialogs) =
       when (dialog) {
-        BehaviorViewDialogs.POWER_BALANCE -> {
-          state.isShowingPowerBalance.value = true
-        }
         BehaviorViewDialogs.SOCKET_TIMEOUT -> {
           state.isShowingSocketTimeout.value = true
         }
@@ -289,9 +260,6 @@ internal constructor(
 
   fun handleCloseDialog(dialog: BehaviorViewDialogs) =
       when (dialog) {
-        BehaviorViewDialogs.POWER_BALANCE -> {
-          state.isShowingPowerBalance.value = false
-        }
         BehaviorViewDialogs.SOCKET_TIMEOUT -> {
           state.isShowingSocketTimeout.value = false
         }
@@ -321,11 +289,6 @@ internal constructor(
         }
       }
 
-  fun handleUpdatePowerBalance(limit: ServerPerformanceLimit) {
-    val newVal = state.powerBalance.updateAndGet { limit }
-    expertPreferences.setServerPerformanceLimit(newVal)
-  }
-
   fun handleUpdateSocketTimeout(timeout: ServerSocketTimeout) {
     val newVal = state.socketTimeout.updateAndGet { timeout }
     expertPreferences.setSocketTimeout(newVal)
@@ -333,7 +296,6 @@ internal constructor(
 
   companion object {
 
-    private const val KEY_SHOW_POWER_BALANCE = "key_show_power_balance"
     private const val KEY_SHOW_TIMEOUTS = "key_show_timeout"
   }
 }

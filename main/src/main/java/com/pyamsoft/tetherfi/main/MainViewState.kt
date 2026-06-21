@@ -66,14 +66,10 @@ class MutableMainViewState @Inject internal constructor() : MainViewState {
           BroadcastNetworkStatus.ConnectionInfo.Empty
       )
 
-  override val isNewEngine = MutableStateFlow(false)
-
   override val isHttpEnabled = MutableStateFlow(false)
-  override val httpPort = MutableStateFlow(0)
 
   override val isSocksEnabled = MutableStateFlow(false)
-  override val socksPort = MutableStateFlow(0)
-
+  override val port = MutableStateFlow(0)
   override val broadcastType = MutableStateFlow<BroadcastType?>(null)
   override val preferredNetwork = MutableStateFlow<PreferredNetwork?>(null)
 

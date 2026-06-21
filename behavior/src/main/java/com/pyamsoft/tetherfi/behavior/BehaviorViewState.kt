@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 enum class BehaviorViewDialogs {
-  POWER_BALANCE,
   SOCKET_TIMEOUT,
 }
 
@@ -54,11 +53,9 @@ interface BehaviorViewState : UiViewState {
   val isHoldWakelock: StateFlow<Boolean>
 
   // Expert
-  val powerBalance: StateFlow<ServerPerformanceLimit>
   val socketTimeout: StateFlow<ServerSocketTimeout>
 
   // Dialogs
-  val isShowingPowerBalance: StateFlow<Boolean>
   val isShowingSocketTimeout: StateFlow<Boolean>
 
   @Stable
@@ -77,12 +74,9 @@ class MutableBehaviorViewState @Inject internal constructor() : BehaviorViewStat
   override val hasNotificationPermission = MutableStateFlow(false)
 
   override val isBatteryOptimizationsIgnored = MutableStateFlow(false)
-  override val powerBalance =
-      MutableStateFlow<ServerPerformanceLimit>(ServerPerformanceLimit.Defaults.BOUND_N_CPU)
   override val socketTimeout =
       MutableStateFlow<ServerSocketTimeout>(ServerSocketTimeout.Defaults.BALANCED)
 
-  override val isShowingPowerBalance = MutableStateFlow(false)
   override val isShowingSocketTimeout = MutableStateFlow(false)
 
   override val isHoldWakelock = MutableStateFlow(false)

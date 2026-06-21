@@ -26,7 +26,6 @@ import com.pyamsoft.tetherfi.server.network.PreferredNetwork
 import com.pyamsoft.tetherfi.server.status.RunningStatus
 import com.pyamsoft.tetherfi.ui.ServerViewState
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
@@ -75,8 +74,7 @@ fun makeTestServerState(
     isHttpEnabled: Boolean = true,
     isSocksEnabled: Boolean = true,
     broadcastType: BroadcastType? = BroadcastType.WIFI_DIRECT,
-    httpPort: Int = TEST_PORT,
-    socksPort: Int = TEST_PORT + 1,
+    port: Int = TEST_PORT,
 ): ServerViewState =
     when (state) {
       TestServerState.EMPTY ->
@@ -84,11 +82,9 @@ fun makeTestServerState(
             override val group = MutableStateFlow(BroadcastNetworkStatus.GroupInfo.Empty)
             override val connection = MutableStateFlow(BroadcastNetworkStatus.ConnectionInfo.Empty)
 
+            override val port = MutableStateFlow(port)
             override val isHttpEnabled = MutableStateFlow(isHttpEnabled)
-            override val httpPort = MutableStateFlow(httpPort)
-
             override val isSocksEnabled = MutableStateFlow(isSocksEnabled)
-            override val socksPort = MutableStateFlow(socksPort)
 
             override val broadcastType = MutableStateFlow(broadcastType)
 
@@ -98,8 +94,6 @@ fun makeTestServerState(
 
             override val wiDiStatus = MutableStateFlow<RunningStatus>(RunningStatus.NotRunning)
             override val proxyStatus = MutableStateFlow<RunningStatus>(RunningStatus.NotRunning)
-
-            override val isNewEngine: StateFlow<Boolean> = MutableStateFlow(true)
           }
       TestServerState.CONNECTED ->
           object : ServerViewState {
@@ -116,11 +110,9 @@ fun makeTestServerState(
                     BroadcastNetworkStatus.ConnectionInfo.Connected(hostName = TEST_HOSTNAME)
                 )
 
+            override val port = MutableStateFlow(TEST_PORT)
             override val isHttpEnabled = MutableStateFlow(isHttpEnabled)
-            override val httpPort = MutableStateFlow(TEST_PORT)
-
             override val isSocksEnabled = MutableStateFlow(isSocksEnabled)
-            override val socksPort = MutableStateFlow(TEST_PORT + 1)
 
             override val broadcastType = MutableStateFlow(broadcastType)
 
@@ -130,8 +122,6 @@ fun makeTestServerState(
 
             override val wiDiStatus = MutableStateFlow<RunningStatus>(RunningStatus.NotRunning)
             override val proxyStatus = MutableStateFlow<RunningStatus>(RunningStatus.NotRunning)
-
-            override val isNewEngine: StateFlow<Boolean> = MutableStateFlow(true)
           }
       TestServerState.ERROR ->
           object : ServerViewState {
@@ -148,11 +138,9 @@ fun makeTestServerState(
                     )
                 )
 
+            override val port = MutableStateFlow(TEST_PORT)
             override val isHttpEnabled = MutableStateFlow(isHttpEnabled)
-            override val httpPort = MutableStateFlow(TEST_PORT)
-
             override val isSocksEnabled = MutableStateFlow(isSocksEnabled)
-            override val socksPort = MutableStateFlow(TEST_PORT + 1)
 
             override val broadcastType = MutableStateFlow(broadcastType)
 
@@ -162,7 +150,5 @@ fun makeTestServerState(
 
             override val wiDiStatus = MutableStateFlow<RunningStatus>(RunningStatus.NotRunning)
             override val proxyStatus = MutableStateFlow<RunningStatus>(RunningStatus.NotRunning)
-
-            override val isNewEngine: StateFlow<Boolean> = MutableStateFlow(true)
           }
     }

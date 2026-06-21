@@ -18,6 +18,7 @@ package com.pyamsoft.tetherfi
 
 import android.content.Context
 import androidx.annotation.CheckResult
+import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
@@ -39,7 +40,6 @@ import com.pyamsoft.tetherfi.server.ExpertPreferences
 import com.pyamsoft.tetherfi.server.ProxyPreferences
 import com.pyamsoft.tetherfi.server.ServerDefaults
 import com.pyamsoft.tetherfi.server.ServerNetworkBand
-import com.pyamsoft.tetherfi.server.ServerPerformanceLimit
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.StatusPreferences
 import com.pyamsoft.tetherfi.server.TweakPreferences
@@ -92,8 +92,7 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
                         setOf(
                             SSID.name,
                             PASSWORD.name,
-                            HTTP_PORT.name,
-                            SOCKS_PORT.name,
+                            PORT.name,
                             NETWORK_BAND.name,
                             IN_APP_HOTSPOT_USED.name,
                             IN_APP_DEVICES_CONNECTED.name,
@@ -102,7 +101,6 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
                             START_IGNORE_VPN.name,
                             START_IGNORE_LOCATION.name,
                             SHUTDOWN_NO_CLIENTS.name,
-                            SERVER_LIMITS.name,
                             KEEP_SCREEN_ON.name,
                             BROADCAST_TYPE.name,
                             PREFERRED_NETWORK.name,
@@ -116,7 +114,10 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           },
       )
 
-  private val preferences by lazy { context.applicationContext.dataStore }
+  private val preferences by lazy {
+    val store = context.applicationContext.dataStore
+    onClearOldPreferences(store)
+  return@lazy store}
 
   // Keep this lazy so that the fallback password is always the same
   private val fallbackPassword by lazy { PasswordGenerator.generate() }
@@ -125,6 +126,16 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
     CoroutineScope(
         context = SupervisorJob() + Dispatchers.IO + CoroutineName(this::class.java.name)
     )
+  }
+
+  private fun onClearOldPreferences(store: DataStore<Preferences>) {
+    scope.launch(context = Dispatchers.IO) {
+      store.edit { mutableStore ->
+        for (key in OldKeys) {
+          mutableStore.remove(key)
+        }
+      }
+    }
   }
 
   private inline fun <T : Any> setPreference(
@@ -196,13 +207,13 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           value = { enabled },
       )
 
-  override fun listenForHttpPortChanges(): Flow<Int> =
-      getPreference(key = HTTP_PORT, value = ServerDefaults.HTTP_PORT)
+  override fun listenForPortChanges(): Flow<Int> =
+      getPreference(key = PORT, value = ServerDefaults.HTTP_PORT)
           .flowOn(context = Dispatchers.IO)
 
-  override fun setHttpPort(port: Int) =
+  override fun setPort(port: Int) =
       setPreference(
-          key = HTTP_PORT,
+          key = PORT,
           fallbackValue = ServerDefaults.HTTP_PORT,
           value = { port },
       )
@@ -216,17 +227,6 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           key = IS_SOCKS_ENABLED,
           fallbackValue = DEFAULT_IS_SOCKS_ENABLED,
           value = { enabled },
-      )
-
-  override fun listenForSocksPortChanges(): Flow<Int> =
-      getPreference(key = SOCKS_PORT, value = ServerDefaults.SOCKS_PORT)
-          .flowOn(context = Dispatchers.IO)
-
-  override fun setSocksPort(port: Int) =
-      setPreference(
-          key = SOCKS_PORT,
-          fallbackValue = ServerDefaults.SOCKS_PORT,
-          value = { port },
       )
 
   override fun listenForNetworkBandChanges(): Flow<ServerNetworkBand> =
@@ -420,20 +420,6 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           },
       )
 
-  override fun listenForPerformanceLimits(): Flow<ServerPerformanceLimit> =
-      getPreference(
-              key = SERVER_LIMITS,
-              value = ServerPerformanceLimit.Defaults.BOUND_3N_CPU.coroutineLimit,
-          )
-          .map { ServerPerformanceLimit.create(it) }
-
-  override fun setServerPerformanceLimit(limit: ServerPerformanceLimit) =
-      setPreference(
-          key = SERVER_LIMITS,
-          fallbackValue = ServerPerformanceLimit.Defaults.BOUND_3N_CPU.coroutineLimit,
-          value = { limit.coroutineLimit },
-      )
-
   override fun listenForSocketTimeout(): Flow<ServerSocketTimeout> =
       getPreference(
               key = SOCKET_TIMEOUT,
@@ -448,19 +434,6 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           value = {
             if (limit.timeoutDuration.isInfinite()) -1 else limit.timeoutDuration.inWholeSeconds
           },
-      )
-
-  override fun listenForNewEngineEnabled(): Flow<Boolean> =
-      getPreference(
-          key = NEW_ENGINE,
-          value = DEFAULT_NEW_ENGINE,
-      )
-
-  override fun setNewEngine(enabled: Boolean) =
-      setPreference(
-          key = NEW_ENGINE,
-          fallbackValue = DEFAULT_NEW_ENGINE,
-          value = { enabled },
       )
 
   private object PasswordGenerator {
@@ -492,11 +465,10 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
     private val NETWORK_BAND = stringPreferencesKey("key_network_band_1")
 
     private val IS_HTTP_ENABLED = booleanPreferencesKey("key_http_enabled_1")
-    private val HTTP_PORT = intPreferencesKey("key_port_1")
+    private val PORT = intPreferencesKey("key_port_1")
     private const val DEFAULT_IS_HTTP_ENABLED = true
 
     private val IS_SOCKS_ENABLED = booleanPreferencesKey("key_socks_enabled_1")
-    private val SOCKS_PORT = intPreferencesKey("key_socks_port_1")
     private const val DEFAULT_IS_SOCKS_ENABLED = false
 
     private val IN_APP_HOTSPOT_USED = intPreferencesKey("key_in_app_hotspot_used_1")
@@ -517,7 +489,6 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
     private val HOLD_WAKELOCK = booleanPreferencesKey("key_hold_wakelock_1")
     private const val DEFAULT_HOLD_WAKELOCK = false
 
-    private val SERVER_LIMITS = intPreferencesKey("key_server_perf_limit_1")
 
     private val KEEP_SCREEN_ON = booleanPreferencesKey("key_keep_screen_on_1")
     private const val DEFAULT_KEEP_SCREEN_ON = false
@@ -528,7 +499,13 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
 
     private val SOCKET_TIMEOUT = longPreferencesKey("key_socket_timeout_1")
 
-    private val NEW_ENGINE = booleanPreferencesKey("key_new_engine_1")
-    private const val DEFAULT_NEW_ENGINE = true
+    private val OldKeys = listOf(
+      // Server Limits
+      intPreferencesKey("key_server_perf_limit_1"),
+      // New Engine
+    booleanPreferencesKey("key_new_engine_1"),
+        // SOCKS specific port
+        intPreferencesKey("key_socks_port_1"),
+    )
   }
 }

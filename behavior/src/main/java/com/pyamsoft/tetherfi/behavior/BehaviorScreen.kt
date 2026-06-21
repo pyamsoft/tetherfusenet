@@ -59,11 +59,6 @@ fun BehaviorScreen(
     state: BehaviorViewState,
     serverViewState: ServerViewState,
 
-    // Engine
-    // TODO Default in the future
-    // TODO Drop setting in the future as Netty will be the ONLY engine
-    onToggleNewEngine: () -> Unit,
-
     // Battery Optimization
     onOpenBatterySettings: () -> Unit,
 
@@ -78,9 +73,6 @@ fun BehaviorScreen(
     onToggleWakeLock: () -> Unit,
 
     // Expert
-    onShowPowerBalance: () -> Unit,
-    onHidePowerBalance: () -> Unit,
-    onUpdatePowerBalance: (ServerPerformanceLimit) -> Unit,
     onShowSocketTimeout: () -> Unit,
     onHideSocketTimeout: () -> Unit,
     onUpdateSocketTimeout: (ServerSocketTimeout) -> Unit,
@@ -170,7 +162,6 @@ fun BehaviorScreen(
             itemModifier = Modifier.width(LANDSCAPE_MAX_WIDTH),
             appName = appName,
             state = state,
-            serverViewState = serverViewState,
             isEditable = isEditable,
             showNotificationSettings = showNotificationSettings,
             onOpenBatterySettings = onOpenBatterySettings,
@@ -178,11 +169,9 @@ fun BehaviorScreen(
             onToggleIgnoreVpn = onToggleIgnoreVpn,
             onToggleIgnoreLocation = onToggleIgnoreLocation,
             onToggleShutdownWithNoClients = onToggleShutdownWithNoClients,
-            onShowPowerBalance = onShowPowerBalance,
             onToggleKeepScreenOn = onToggleKeepScreenOn,
             onShowSocketTimeout = onShowSocketTimeout,
             onToggleWakeLock = onToggleWakeLock,
-            onToggleNewEngine = onToggleNewEngine,
         )
       }
     }
@@ -191,8 +180,6 @@ fun BehaviorScreen(
   BehaviorDialogs(
       dialogModifier = Modifier.fillUpToPortraitSize().widthIn(max = LANDSCAPE_MAX_WIDTH),
       state = state,
-      onHidePowerBalance = onHidePowerBalance,
-      onUpdatePowerBalance = onUpdatePowerBalance,
       onHideSocketTimeout = onHideSocketTimeout,
       onUpdateSocketTimeout = onUpdateSocketTimeout,
   )
@@ -223,15 +210,11 @@ private fun PreviewBehaviorScreen(
       onToggleIgnoreVpn = {},
       onToggleIgnoreLocation = {},
       onToggleShutdownWithNoClients = {},
-      onUpdatePowerBalance = {},
-      onHidePowerBalance = {},
-      onShowPowerBalance = {},
       onToggleKeepScreenOn = {},
       onUpdateSocketTimeout = {},
       onHideSocketTimeout = {},
       onShowSocketTimeout = {},
       onToggleWakeLock = {},
-      onToggleNewEngine = {},
   )
 }
 

@@ -54,7 +54,7 @@ internal constructor(
       info: BroadcastNetworkStatus.ConnectionInfo.Connected,
       isHttpEnabled: Boolean,
       isSocksEnabled: Boolean,
-      httpPort: Int,
+      port: Int,
   ): ProxyManager {
     enforcer.assertOffMainThread()
 
@@ -72,17 +72,16 @@ internal constructor(
         isSocksEnabled = isSocksEnabled,
         serverSocketTimeout = socketTimeout,
         hostConnection = info,
-        port = httpPort,
+        port = port,
     )
   }
 
   override suspend fun create(
-      type: SharedProxy.Type,
-      info: BroadcastNetworkStatus.ConnectionInfo.Connected,
-      isHttpEnabled: Boolean,
-      isSocksEnabled: Boolean,
-      httpPort: Int,
-      socksPort: Int,
+    type: SharedProxy.Type,
+    info: BroadcastNetworkStatus.ConnectionInfo.Connected,
+    port: Int,
+    isHttpEnabled: Boolean,
+    isSocksEnabled: Boolean
   ): ProxyManager =
       withContext(context = Dispatchers.Default) {
         return@withContext when (type) {
@@ -91,7 +90,7 @@ internal constructor(
                   info = info,
                   isHttpEnabled = isHttpEnabled,
                   isSocksEnabled = isSocksEnabled,
-                  httpPort = httpPort,
+                  port = port,
               )
         }
       }

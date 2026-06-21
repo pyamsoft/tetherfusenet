@@ -96,32 +96,11 @@ internal fun EditHttpPort(
     serverViewState: ServerViewState,
     onPortChanged: (Int) -> Unit,
 ) {
-  val isNewEngine by serverViewState.isNewEngine.collectAsStateWithLifecycle()
-  val portLabelId =
-      remember(isNewEngine) {
-        if (isNewEngine) R.string.hotspot_proxy_port else R.string.hotspot_proxy_http_port
-      }
-
-  val port by serverViewState.httpPort.collectAsStateWithLifecycle()
+  val port by serverViewState.port.collectAsStateWithLifecycle()
   EditPort(
       modifier = modifier,
       port = port,
-      portLabelRes = portLabelId,
-      onPortChanged = onPortChanged,
-  )
-}
-
-@Composable
-internal fun EditSocksPort(
-    modifier: Modifier = Modifier,
-    serverViewState: ServerViewState,
-    onPortChanged: (Int) -> Unit,
-) {
-  val port by serverViewState.socksPort.collectAsStateWithLifecycle()
-  EditPort(
-      modifier = modifier,
-      port = port,
-      portLabelRes = R.string.hotspot_proxy_socks_port,
+      portLabelRes = R.string.hotspot_proxy_port,
       onPortChanged = onPortChanged,
   )
 }

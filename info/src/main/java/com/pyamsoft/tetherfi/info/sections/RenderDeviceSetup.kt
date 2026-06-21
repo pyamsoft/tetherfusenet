@@ -309,8 +309,8 @@ internal fun LazyListScope.renderDeviceSetup(
               Row(
                   verticalAlignment = Alignment.CenterVertically,
               ) {
-                val httpPortNumber by serverViewState.httpPort.collectAsStateWithLifecycle()
-                val httpPort = rememberPortNumber(httpPortNumber)
+                val port by serverViewState.port.collectAsStateWithLifecycle()
+                val httpPort = rememberPortNumber(port)
 
                 Text(
                     text = stringResource(R.string.label_hotspot_http_port),
@@ -407,11 +407,7 @@ internal fun LazyListScope.renderDeviceSetup(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                  val socksPortNumber by serverViewState.socksPort.collectAsStateWithLifecycle()
-                  val httpPortNumber by serverViewState.httpPort.collectAsStateWithLifecycle()
-                  val isNewEngine by serverViewState.isNewEngine.collectAsStateWithLifecycle()
-                  val portNumber =
-                      remember(isNewEngine) { if (isNewEngine) httpPortNumber else socksPortNumber }
+                  val portNumber by serverViewState.port.collectAsStateWithLifecycle()
                   val socksPort = rememberPortNumber(portNumber)
 
                   Text(

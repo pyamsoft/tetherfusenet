@@ -24,11 +24,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pyamsoft.pydroid.theme.keylines
-import com.pyamsoft.tetherfi.ui.ServerViewState
 
 private enum class ExpertSettingsContentTypes {
   SETTINGS,
-  POWER_BALANCE,
   SOCKET_TIMEOUT,
 }
 
@@ -36,8 +34,6 @@ internal fun LazyListScope.renderExpertSettings(
     itemModifier: Modifier = Modifier,
     isEditable: Boolean,
     appName: String,
-    serverViewState: ServerViewState,
-    onShowPowerBalance: () -> Unit,
     onShowSocketTimeout: () -> Unit,
 ) {
   item(
@@ -48,28 +44,6 @@ internal fun LazyListScope.renderExpertSettings(
         isEditable = isEditable,
         appName = appName,
     )
-  }
-
-  item(
-      contentType = ExpertSettingsContentTypes.POWER_BALANCE,
-  ) {
-    Card(
-        modifier = itemModifier.padding(bottom = MaterialTheme.keylines.content),
-        border =
-            BorderStroke(
-                width = 2.dp,
-                color = MaterialTheme.colorScheme.primaryContainer,
-            ),
-        shape = MaterialTheme.shapes.large,
-    ) {
-      PowerBalance(
-          modifier = Modifier.padding(MaterialTheme.keylines.content),
-          serverViewState = serverViewState,
-          isEditable = isEditable,
-          appName = appName,
-          onShowPowerBalance = onShowPowerBalance,
-      )
-    }
   }
 
   item(

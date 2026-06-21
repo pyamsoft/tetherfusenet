@@ -49,13 +49,7 @@ internal fun LazyListScope.renderLoadedContent(
     itemModifier: Modifier = Modifier,
     appName: String,
     state: BehaviorViewState,
-    serverViewState: ServerViewState,
     isEditable: Boolean,
-
-    // Engine
-    // TODO Default in the future
-    // TODO Drop setting in the future as Netty will be the ONLY engine
-    onToggleNewEngine: () -> Unit,
 
     // Battery
     onOpenBatterySettings: () -> Unit,
@@ -72,7 +66,6 @@ internal fun LazyListScope.renderLoadedContent(
     onToggleWakeLock: () -> Unit,
 
     // Expert
-    onShowPowerBalance: () -> Unit,
     onShowSocketTimeout: () -> Unit,
 ) {
   renderOperatingSettings(
@@ -80,11 +73,9 @@ internal fun LazyListScope.renderLoadedContent(
       isEditable = isEditable,
       appName = appName,
       state = state,
-      serverViewState = serverViewState,
       showNotificationSettings = showNotificationSettings,
       onDisableBatteryOptimizations = onOpenBatterySettings,
       onNotificationPermissionRequest = onRequestNotificationPermission,
-      onToggleNewEngine = onToggleNewEngine,
   )
 
   item(
@@ -109,10 +100,8 @@ internal fun LazyListScope.renderLoadedContent(
 
   renderExpertSettings(
       itemModifier = itemModifier,
-      serverViewState = serverViewState,
       isEditable = isEditable,
       appName = appName,
-      onShowPowerBalance = onShowPowerBalance,
       onShowSocketTimeout = onShowSocketTimeout,
   )
 
@@ -139,25 +128,17 @@ private fun PreviewLoadedContent(
             MutableBehaviorViewState().apply {
               loadingState.value = BehaviorViewState.LoadingState.DONE
             },
-        serverViewState =
-            makeTestServerState(
-                TestServerState.EMPTY,
-                isHttpEnabled = false,
-                isSocksEnabled = false,
-            ),
         appName = "TEST",
         onRequestNotificationPermission = {},
         onOpenBatterySettings = {},
         onToggleIgnoreVpn = {},
         onToggleShutdownWithNoClients = {},
-        onShowPowerBalance = {},
         onShowSocketTimeout = {},
         isEditable = isEditable,
         showNotificationSettings = showNotifications,
         onToggleKeepScreenOn = {},
         onToggleIgnoreLocation = {},
         onToggleWakeLock = {},
-        onToggleNewEngine = {},
     )
   }
 }

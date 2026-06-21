@@ -318,11 +318,9 @@ private fun PreviewMainDialogs(blockers: Collection<HotspotStartBlocker>) {
             override val group = MutableStateFlow(BroadcastNetworkStatus.GroupInfo.Empty)
             override val connection = MutableStateFlow(BroadcastNetworkStatus.ConnectionInfo.Empty)
 
+            override val port = MutableStateFlow(0)
             override val isHttpEnabled = MutableStateFlow(false)
-            override val httpPort = MutableStateFlow(0)
-
             override val isSocksEnabled = MutableStateFlow(false)
-            override val socksPort = MutableStateFlow(0)
 
             // TODO support RNDIS
             override val broadcastType = MutableStateFlow(BroadcastType.WIFI_DIRECT)
@@ -340,8 +338,6 @@ private fun PreviewMainDialogs(blockers: Collection<HotspotStartBlocker>) {
             override val isShowingHotspotError = MutableStateFlow(false)
             override val isShowingBroadcastError = MutableStateFlow(false)
             override val isShowingProxyError = MutableStateFlow(false)
-
-            override val isNewEngine = MutableStateFlow(true)
           },
       appName = "TEST",
       onDismissBlocker = {},

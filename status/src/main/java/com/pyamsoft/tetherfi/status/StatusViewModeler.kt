@@ -47,16 +47,13 @@ internal constructor(
       var ssid: Boolean,
       var password: Boolean,
       var band: Boolean,
+      var port: Boolean,
       var isHttpEnabled: Boolean,
-      var httpPort: Boolean,
       var isSocksEnabled: Boolean,
-      var socksPort: Boolean,
   )
 
   private fun markPreferencesLoaded(config: LoadConfig) {
-    val isHttpReady = config.httpPort && config.isHttpEnabled
-    val isSocksReady = config.socksPort && config.isSocksEnabled
-    val isProxyReady = isHttpReady && isSocksReady
+    val isProxyReady = config.port && config.isHttpEnabled && config.isSocksEnabled
     val isWifiDirectReady = config.ssid && config.password && config.band
 
     if (isProxyReady && isWifiDirectReady) {
@@ -84,10 +81,9 @@ internal constructor(
             ssid = false,
             password = false,
             band = false,
+          port = false,
             isHttpEnabled = false,
-            httpPort = false,
             isSocksEnabled = false,
-            socksPort = false,
         )
 
     // Start loading
@@ -123,26 +119,14 @@ internal constructor(
       }
     }
 
-    proxyPreferences.listenForHttpPortChanges().also { f ->
+    proxyPreferences.listenForPortChanges().also { f ->
       scope.launch(context = Dispatchers.Default) {
         // We don't need to do anything with this, we just need to be sure
         // that some value has loaded.
         // Actual values are provided by ServerViewState
         f.first()
 
-        config.httpPort = true
-        markPreferencesLoaded(config)
-      }
-    }
-
-    proxyPreferences.listenForSocksPortChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) {
-        // We don't need to do anything with this, we just need to be sure
-        // that some value has loaded.
-        // Actual values are provided by ServerViewState
-        f.first()
-
-        config.socksPort = true
+        config.port = true
         markPreferencesLoaded(config)
       }
     }

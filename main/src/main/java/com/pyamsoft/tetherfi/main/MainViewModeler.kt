@@ -100,16 +100,8 @@ internal constructor(
     }
 
     // Port is its own thing, not part of group info
-    proxyPreferences.listenForHttpPortChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.httpPort.value = it } }
-    }
-
-    proxyPreferences.listenForSocksPortChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.socksPort.value = it } }
-    }
-
-    proxyPreferences.listenForNewEngineEnabled().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.isNewEngine.value = it } }
+    proxyPreferences.listenForPortChanges().also { f ->
+      scope.launch(context = Dispatchers.Default) { f.collect { s.port.value = it } }
     }
 
     // Broadcast type
@@ -435,23 +427,10 @@ internal constructor(
     }
   }
 
-  fun handleToggleNewEngine() {
-    val newEngine = state.isNewEngine.updateAndGet { !it }
-    proxyPreferences.setNewEngine(newEngine)
+  fun handlePortChanged(port: Int) {
+    state.port.value = port
+    proxyPreferences.setPort(port)
   }
-
-  fun handlePortChanged(port: Int, type: ServerPortTypes) =
-      when (type) {
-        ServerPortTypes.HTTP -> {
-          state.httpPort.value = port
-          proxyPreferences.setHttpPort(port)
-        }
-
-        ServerPortTypes.SOCKS -> {
-          state.socksPort.value = port
-          proxyPreferences.setSocksPort(port)
-        }
-      }
 
   fun handleEnabledChanged(enabled: Boolean, type: ServerPortTypes) =
       when (type) {

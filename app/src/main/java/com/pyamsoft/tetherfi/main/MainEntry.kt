@@ -219,11 +219,9 @@ fun MainEntry(
       onOpenBroadcastError = { viewModel.handleOpenDialog(MainViewDialogs.BROADCAST_ERROR) },
       onOpenProxyError = { viewModel.handleOpenDialog(MainViewDialogs.PROXY_ERROR) },
       onOpenHotspotError = { viewModel.handleOpenDialog(MainViewDialogs.HOTSPOT_ERROR) },
-      onToggleNewEngine = { viewModel.handleToggleNewEngine() },
       onHttpEnabledChanged = { viewModel.handleEnabledChanged(it, ServerPortTypes.HTTP) },
       onSocksEnabledChanged = { viewModel.handleEnabledChanged(it, ServerPortTypes.SOCKS) },
-      onHttpPortChanged = { viewModel.handlePortChanged(it, ServerPortTypes.HTTP) },
-      onSocksPortChanged = { viewModel.handlePortChanged(it, ServerPortTypes.SOCKS) },
+      onPortChanged = { viewModel.handlePortChanged(it) },
       onUpdateTile = onUpdateTile,
       onLaunchIntent = onLaunchIntent,
   )

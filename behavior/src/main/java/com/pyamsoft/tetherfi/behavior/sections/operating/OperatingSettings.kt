@@ -29,7 +29,6 @@ import com.pyamsoft.tetherfi.ui.ServerViewState
 
 private enum class OperatingSettingsContentTypes {
   LABEL,
-  NEW_ENGINE,
   BATTERY_OPTIMIZATION,
   NOTIFICATIONS,
 }
@@ -38,13 +37,7 @@ internal fun LazyListScope.renderOperatingSettings(
     itemModifier: Modifier = Modifier,
     isEditable: Boolean,
     appName: String,
-    serverViewState: ServerViewState,
     state: BehaviorViewState,
-
-    // Engine
-    // TODO Default in the future
-    // TODO Drop setting in the future as Netty will be the ONLY engine
-    onToggleNewEngine: () -> Unit,
 
     // Battery optimization
     onDisableBatteryOptimizations: () -> Unit,
@@ -88,17 +81,5 @@ internal fun LazyListScope.renderOperatingSettings(
           onRequest = onNotificationPermissionRequest,
       )
     }
-  }
-
-  item(
-      contentType = OperatingSettingsContentTypes.NEW_ENGINE,
-  ) {
-    NewEngine(
-        modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
-        isEditable = isEditable,
-        appName = appName,
-        serverViewState = serverViewState,
-        onToggleNewEngine = onToggleNewEngine,
-    )
   }
 }

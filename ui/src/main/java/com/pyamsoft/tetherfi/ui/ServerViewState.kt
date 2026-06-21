@@ -31,16 +31,12 @@ interface ServerViewState : UiViewState {
   val connection: StateFlow<BroadcastNetworkStatus.ConnectionInfo>
 
   val isHttpEnabled: StateFlow<Boolean>
-  val httpPort: StateFlow<Int>
-
   val isSocksEnabled: StateFlow<Boolean>
-  val socksPort: StateFlow<Int>
+  val port: StateFlow<Int>
 
   val broadcastType: StateFlow<BroadcastType?>
   val preferredNetwork: StateFlow<PreferredNetwork?>
 
   val wiDiStatus: StateFlow<RunningStatus>
   val proxyStatus: StateFlow<RunningStatus>
-
-  val isNewEngine: StateFlow<Boolean>
 }

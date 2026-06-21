@@ -34,42 +34,36 @@ import com.pyamsoft.tetherfi.ui.ServerViewState
 
 @Composable
 fun MainContent(
-    modifier: Modifier = Modifier,
-    appName: String,
-    pagerState: PagerState,
-    state: ServerViewState,
-    allTabs: List<MainView>,
+  modifier: Modifier = Modifier,
+  appName: String,
+  pagerState: PagerState,
+  state: ServerViewState,
+  allTabs: List<MainView>,
 
     // Main
-    onHttpEnabledChanged: (Boolean) -> Unit,
-    onHttpPortChanged: (Int) -> Unit,
-    onSocksEnabledChanged: (Boolean) -> Unit,
-    onSocksPortChanged: (Int) -> Unit,
-
-    // Engine
-    // TODO Default in the future
-    // TODO Drop setting in the future as Netty will be the ONLY engine
-    onToggleNewEngine: () -> Unit,
+  onHttpEnabledChanged: (Boolean) -> Unit,
+  onPortChanged: (Int) -> Unit,
+  onSocksEnabledChanged: (Boolean) -> Unit,
 
     // Actions
-    onShowQRCode: () -> Unit,
-    onRefreshConnection: () -> Unit,
-    onJumpToHowTo: () -> Unit,
-    onLaunchIntent: (String) -> Unit,
-    onShowSlowSpeedHelp: () -> Unit,
-    onToggleProxy: () -> Unit,
+  onShowQRCode: () -> Unit,
+  onRefreshConnection: () -> Unit,
+  onJumpToHowTo: () -> Unit,
+  onLaunchIntent: (String) -> Unit,
+  onShowSlowSpeedHelp: () -> Unit,
+  onToggleProxy: () -> Unit,
 
     // Dialogs
-    onOpenNetworkError: () -> Unit,
-    onOpenHotspotError: () -> Unit,
-    onOpenProxyError: () -> Unit,
-    onOpenBroadcastError: () -> Unit,
+  onOpenNetworkError: () -> Unit,
+  onOpenHotspotError: () -> Unit,
+  onOpenProxyError: () -> Unit,
+  onOpenBroadcastError: () -> Unit,
 
     // Tile
-    onUpdateTile: (RunningStatus) -> Unit,
+  onUpdateTile: (RunningStatus) -> Unit,
 
     // Error
-    onEnableChangeFailed: (ServerPortTypes) -> Unit,
+  onEnableChangeFailed: (ServerPortTypes) -> Unit,
 ) {
   val statusLazyListState = rememberLazyListState()
   val behaviorLazyListState = rememberLazyListState()
@@ -108,7 +102,6 @@ fun MainContent(
             serverViewState = state,
             onRefreshConnection = onRefreshConnection,
             onLaunchIntent = onLaunchIntent,
-            onToggleNewEngine = onToggleNewEngine,
         )
       }
       MainView.STATUS -> {
@@ -129,9 +122,8 @@ fun MainContent(
             onOpenBroadcastError = onOpenBroadcastError,
             onEnableChangeFailed = onEnableChangeFailed,
             onHttpEnabledChanged = onHttpEnabledChanged,
-            onHttpPortChanged = onHttpPortChanged,
             onSocksEnabledChanged = onSocksEnabledChanged,
-            onSocksPortChanged = onSocksPortChanged,
+          onPortChanged = onPortChanged,
         )
       }
       MainView.CONNECTIONS -> {

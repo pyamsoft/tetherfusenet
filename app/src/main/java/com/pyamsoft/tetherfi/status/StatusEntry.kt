@@ -52,9 +52,8 @@ fun StatusEntry(
 
     // Main
     onHttpEnabledChanged: (Boolean) -> Unit,
-    onHttpPortChanged: (Int) -> Unit,
     onSocksEnabledChanged: (Boolean) -> Unit,
-    onSocksPortChanged: (Int) -> Unit,
+    onPortChanged: (Int) -> Unit,
 
     // Actions
     onShowQRCode: () -> Unit,
@@ -100,9 +99,8 @@ fun StatusEntry(
       onJumpToHowTo = onJumpToHowTo,
       onEnableChangeFailed = onEnableChangeFailed,
       onHttpEnabledChanged = onHttpEnabledChanged,
-      onHttpPortChanged = onHttpPortChanged,
       onSocksEnabledChanged = onSocksEnabledChanged,
-      onSocksPortChanged = onSocksPortChanged,
+      onPortChanged = onPortChanged,
       onToggleProxy = {
         viewModel.handleToggleProxy(
             onToggleProxy = handleToggleProxy,

@@ -62,15 +62,8 @@ internal fun ViewProxy(
   val connection by serverViewState.connection.collectAsStateWithLifecycle()
   val ipAddress = rememberServerHostname(connection)
 
-  val isHttpEnabled by serverViewState.isHttpEnabled.collectAsStateWithLifecycle()
-  val httpPortNumber by serverViewState.httpPort.collectAsStateWithLifecycle()
-  val httpPort = rememberPortNumber(httpPortNumber)
-
-  val isSocksEnabled by serverViewState.isSocksEnabled.collectAsStateWithLifecycle()
-  val socksPortNumber by serverViewState.socksPort.collectAsStateWithLifecycle()
-  val socksPort = rememberPortNumber(socksPortNumber)
-
-  val isNewEngine by serverViewState.isNewEngine.collectAsStateWithLifecycle()
+  val portNumber by serverViewState.port.collectAsStateWithLifecycle()
+  val httpPort = rememberPortNumber(portNumber)
 
   Column(
       modifier = modifier,
@@ -89,7 +82,6 @@ internal fun ViewProxy(
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-      if (isNewEngine) {
         StatusItem(
             modifier = Modifier.padding(end = MaterialTheme.keylines.content),
             title = stringResource(R.string.hotspot_proxy_port),
@@ -100,32 +92,6 @@ internal fun ViewProxy(
                     fontFamily = FontFamily.Monospace,
                 ),
         )
-      } else {
-        if (isHttpEnabled) {
-          StatusItem(
-              modifier = Modifier.padding(end = MaterialTheme.keylines.content),
-              title = stringResource(R.string.hotspot_proxy_http_port),
-              value = httpPort,
-              valueStyle =
-                  MaterialTheme.typography.titleLarge.copy(
-                      fontWeight = FontWeight.W400,
-                      fontFamily = FontFamily.Monospace,
-                  ),
-          )
-        }
-
-        if (isSocksEnabled) {
-          StatusItem(
-              title = stringResource(R.string.hotspot_proxy_socks_port),
-              value = socksPort,
-              valueStyle =
-                  MaterialTheme.typography.titleLarge.copy(
-                      fontWeight = FontWeight.W400,
-                      fontFamily = FontFamily.Monospace,
-                  ),
-          )
-        }
-      }
     }
   }
 }

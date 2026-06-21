@@ -37,10 +37,9 @@ internal interface ProxyManager {
     suspend fun create(
         type: SharedProxy.Type,
         info: BroadcastNetworkStatus.ConnectionInfo.Connected,
+        port: Int,
         isHttpEnabled: Boolean,
         isSocksEnabled: Boolean,
-        httpPort: Int,
-        socksPort: Int,
     ): ProxyManager
   }
 }
