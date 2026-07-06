@@ -20,7 +20,7 @@ leakCanary = "2.14"
 timber = "5.0.1"
 
 qrCode = "4.5.0"
-dagger = "2.60"
+dagger = "2.60.1"
 netty = "4.2.15.Final"
 # Silence SLF4J logging warnings
 slf4j = "2.0.18"
