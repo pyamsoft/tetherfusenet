@@ -20,7 +20,7 @@ leakCanary = "2.14"
 timber = "5.0.1"
 
 qrCode = "4.5.0"
-dagger = "2.60"
+dagger = "2.60.1"
 netty = "4.2.15.Final"
 # Silence SLF4J logging warnings
 slf4j = "2.0.18"
@@ -34,7 +34,7 @@ preference = "1.2.1"
 testRunner = "1.7.0"
 
 # Compose
-compose = "1.11.3"
+compose = "1.11.4"
 composeMaterial3 = "1.4.0"
 
 # Google
@@ -44,7 +44,7 @@ ksp = "2.3.9"
 coil = "3.5.0"
 
 # Developer Tools
-spotless = "8.7.0"
+spotless = "8.8.0"
 doctor = "0.12.1"
 jdkDesugar = "2.1.5"
 caupain = "1.9.1"
