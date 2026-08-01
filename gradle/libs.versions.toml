@@ -45,7 +45,6 @@ coil = "3.5.0"
 
 # Developer Tools
 spotless = "8.9.0"
-doctor = "0.12.1"
 jdkDesugar = "2.1.5"
 caupain = "1.9.1"
 detekt = "2.0.0-alpha.5"
@@ -64,7 +63,6 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
-doctor = { id = "com.osacky.doctor", version.ref = "doctor" }
 caupain = { id = "com.deezer.caupain", version.ref = "caupain" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 

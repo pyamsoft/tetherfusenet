@@ -39,10 +39,6 @@ plugins {
   // https://github.com/google/ksp
   alias(libs.plugins.ksp) apply false
 
-  // Gradle Doctor
-  // https://runningcode.github.io/gradle-doctor/
-  alias(libs.plugins.doctor) apply true
-
   // Caupain
   // https://github.com/deezer/caupain/blob/main/gradle-plugin/README.md
   alias(libs.plugins.caupain) apply true
