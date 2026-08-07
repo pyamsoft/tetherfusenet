@@ -46,7 +46,7 @@ coil = "3.5.0"
 # Developer Tools
 spotless = "8.9.0"
 jdkDesugar = "2.1.5"
-caupain = "1.9.1"
+caupain = "1.10.0"
 detekt = "2.0.0-alpha.5"
 
 # Testing
