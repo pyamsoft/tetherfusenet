@@ -134,6 +134,9 @@ internal constructor(
 
   companion object {
 
+    private const val BYTES_SIZE_IPV4: Int = 4
+    private const val BYTES_SIZE_IPV6: Int = 16
+
     private const val CONNECTION_RESET_MESSAGE = "Connection reset by peer"
 
     private const val IPV4_LOCALHOST_BYTE_IDENTIFIER = 127.toByte()
@@ -175,10 +178,10 @@ internal constructor(
 
       return when (bytes.size) {
         // IPv4 - is this a 127.X.X.X
-        4 -> bytes[0] == IPV4_LOCALHOST_BYTE_IDENTIFIER
+        BYTES_SIZE_IPV4 -> bytes[0] == IPV4_LOCALHOST_BYTE_IDENTIFIER
         // IPv6 - is this ::1 (covered by the if statement but just in case this logic changes in
         // the future?)
-        16 -> bytes.contentEquals(IPV6_LOCALHOST_BYTE_ARRAY)
+        BYTES_SIZE_IPV6 -> bytes.contentEquals(IPV6_LOCALHOST_BYTE_ARRAY)
         // What the fuck lol
         else -> false
       }

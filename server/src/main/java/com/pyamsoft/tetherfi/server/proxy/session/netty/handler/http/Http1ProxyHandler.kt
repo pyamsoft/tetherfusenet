@@ -577,6 +577,75 @@ private constructor(
     private const val HTTPS_PREFIX = "https://"
 
     @CheckResult
+    private fun parseIpv6Literal(
+        uri: String,
+        uriWithoutSchema: String,
+        defaultPortBasedOnSchema: Int,
+        defaultPort: Int,
+    ): HttpHostAndPort? {
+      val bracketEnd = uriWithoutSchema.indexOf("]")
+      if (bracketEnd < 0) {
+        Timber.w { "Invalid IPv6 URI: $uri" }
+        return null
+      }
+
+      val ipv6Host = uriWithoutSchema.substring(1, bracketEnd)
+      val afterBracket = uriWithoutSchema.substring(bracketEnd + 1)
+      val fallbackPort = if (defaultPortBasedOnSchema > 0) defaultPortBasedOnSchema else defaultPort
+      val port =
+          if (afterBracket.startsWith(":")) {
+            afterBracket.substring(1).substringBefore("/").toIntOrNull() ?: fallbackPort
+          } else {
+            fallbackPort
+          }
+
+      val slashIndex = afterBracket.indexOf("/")
+      val path = if (slashIndex >= 0) afterBracket.substring(slashIndex).ifBlank { "/" } else "/"
+      return HttpHostAndPort(
+          resolvedHostName = ipv6Host,
+          resolvedPort = port,
+          proxyCorrectedFilePath = path,
+      )
+    }
+
+    @CheckResult
+    private fun parseHostAndPort(
+        uriWithoutSchema: String,
+        defaultPortBasedOnSchema: Int,
+        defaultPort: Int,
+    ): HttpHostAndPort? {
+      val hostAndPort = uriWithoutSchema.split(":")
+      val hostAndMaybePath = hostAndPort[0]
+
+      val fallbackPort = if (defaultPortBasedOnSchema > 0) defaultPortBasedOnSchema else defaultPort
+
+      // Port must look like a port
+      val portString = hostAndPort.getOrNull(1)
+      val port =
+          if (portString.isNullOrBlank()) fallbackPort else portString.toIntOrNull() ?: fallbackPort
+
+      // Find the first slash to start the path
+      val pathStartIndex = hostAndMaybePath.indexOf("/")
+      val host: String
+      val path: String
+      if (pathStartIndex < 0) {
+        // No path delivered, it's all host
+        // path is root
+        host = hostAndMaybePath
+        path = "/"
+      } else {
+        host = hostAndMaybePath.substring(0, pathStartIndex)
+        path = hostAndMaybePath.substring(pathStartIndex).ifBlank { "/" }
+      }
+
+      return HttpHostAndPort(
+          resolvedHostName = host,
+          resolvedPort = port,
+          proxyCorrectedFilePath = path,
+      )
+    }
+
+    @CheckResult
     private fun parseUriAndPort(uri: String, defaultPort: Int): HttpHostAndPort? {
       if (uri.isBlank()) {
         Timber.w { "No URI without schema from: $uri" }
@@ -614,60 +683,18 @@ private constructor(
 
       // Handle IPv6 literal notation like [::1](:port)(/path)
       if (uriWithoutSchema.startsWith("[")) {
-        val bracketEnd = uriWithoutSchema.indexOf("]")
-        if (bracketEnd < 0) {
-          Timber.w { "Invalid IPv6 URI: $uri" }
-          return null
-        }
-
-        val ipv6Host = uriWithoutSchema.substring(1, bracketEnd)
-        val afterBracket = uriWithoutSchema.substring(bracketEnd + 1)
-        val fallbackPort =
-            if (defaultPortBasedOnSchema > 0) defaultPortBasedOnSchema else defaultPort
-        val port =
-            if (afterBracket.startsWith(":")) {
-              afterBracket.substring(1).substringBefore("/").toIntOrNull() ?: fallbackPort
-            } else {
-              fallbackPort
-            }
-
-        val slashIndex = afterBracket.indexOf("/")
-        val path = if (slashIndex >= 0) afterBracket.substring(slashIndex).ifBlank { "/" } else "/"
-        return HttpHostAndPort(
-            resolvedHostName = ipv6Host,
-            resolvedPort = port,
-            proxyCorrectedFilePath = path,
+        return parseIpv6Literal(
+            uri = uri,
+            uriWithoutSchema = uriWithoutSchema,
+            defaultPortBasedOnSchema = defaultPortBasedOnSchema,
+            defaultPort = defaultPort,
         )
       }
 
-      val hostAndPort = uriWithoutSchema.split(":")
-      val hostAndMaybePath = hostAndPort[0]
-
-      val fallbackPort = if (defaultPortBasedOnSchema > 0) defaultPortBasedOnSchema else defaultPort
-
-      // Port must look like a port
-      val portString = hostAndPort.getOrNull(1)
-      val port =
-          if (portString.isNullOrBlank()) fallbackPort else portString.toIntOrNull() ?: fallbackPort
-
-      // Find the first slash to start the path
-      val pathStartIndex = hostAndMaybePath.indexOf("/")
-      val host: String
-      val path: String
-      if (pathStartIndex < 0) {
-        // No path delivered, it's all host
-        // path is root
-        host = hostAndMaybePath
-        path = "/"
-      } else {
-        host = hostAndMaybePath.substring(0, pathStartIndex)
-        path = hostAndMaybePath.substring(pathStartIndex).ifBlank { "/" }
-      }
-
-      return HttpHostAndPort(
-          resolvedHostName = host,
-          resolvedPort = port,
-          proxyCorrectedFilePath = path,
+      return parseHostAndPort(
+          uriWithoutSchema = uriWithoutSchema,
+          defaultPortBasedOnSchema = defaultPortBasedOnSchema,
+          defaultPort = defaultPort,
       )
     }
 

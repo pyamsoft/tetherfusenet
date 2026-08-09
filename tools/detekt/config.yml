@@ -20,6 +20,9 @@ exceptions:
   SwallowedException:
     ignoreAnnotated:
       - "LintIgnoreSwallowedException"
+  PrintStackTrace:
+    ignoreAnnotated:
+      - "LintIgnorePrintStackTrace"
 
 style:
   MagicNumber:

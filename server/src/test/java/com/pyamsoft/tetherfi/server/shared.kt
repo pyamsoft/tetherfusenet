@@ -35,7 +35,12 @@ inline fun runBlockingWithDelays(
   try {
     withTimeout(timeout) { block() }
   } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-    e.printStackTrace()
+    @LintIgnorePrintStackTrace e.printStackTrace()
     throw e
   }
 }
+
+/** An annotation for the linter to say that this line is allowed to "continue/break a lot" */
+@Target(AnnotationTarget.EXPRESSION)
+@Retention(AnnotationRetention.SOURCE)
+annotation class LintIgnorePrintStackTrace
