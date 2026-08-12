@@ -19,6 +19,7 @@
 package com.pyamsoft.tetherfi.server.clients
 
 import androidx.annotation.CheckResult
+import androidx.annotation.VisibleForTesting
 import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.requireNotNull
@@ -108,7 +109,8 @@ internal constructor(
     inAppRatingPreferences.markDeviceConnected()
   }
 
-  private fun purgeOldClients(cutoffTime: LocalDateTime) {
+  @VisibleForTesting
+  internal fun purgeOldClients(cutoffTime: LocalDateTime) {
     Timber.d { "Attempt to purge old clients before $cutoffTime" }
 
     // "Live" client must have activity within 2 minutes
