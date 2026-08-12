@@ -20,6 +20,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
 import com.pyamsoft.tetherfi.server.TweakPreferences
+import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -28,10 +29,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
-import kotlin.test.assertTrue
 
 private class FakeTweakPreferences(
-  private val ignoreLocation: Boolean,
+    private val ignoreLocation: Boolean,
 ) : TweakPreferences {
   override fun listenForStartIgnoreVpn(): Flow<Boolean> = MutableStateFlow(false)
 
@@ -64,27 +64,25 @@ private class ThrowingLocationContext(base: Context) : ContextWrapper(base) {
 class AndroidLocationCheckerTest {
 
   @Test
-  fun `location check override bypasses actual location manager`() =
-    runTest {
-      val context = ThrowingLocationContext(RuntimeEnvironment.getApplication())
-      val checker =
+  fun `location check override bypasses actual location manager`() = runTest {
+    val context = ThrowingLocationContext(RuntimeEnvironment.getApplication())
+    val checker =
         AndroidLocationChecker(
-          context = context,
-          preferences = FakeTweakPreferences(ignoreLocation = true),
+            context = context,
+            preferences = FakeTweakPreferences(ignoreLocation = true),
         )
 
-      assertTrue(checker.isLocationOn())
-    }
+    assertTrue(checker.isLocationOn())
+  }
 
   @Test
-  fun `location check`() =
-    runTest {
-      val checker =
+  fun `location check`() = runTest {
+    val checker =
         AndroidLocationChecker(
-          context = RuntimeEnvironment.getApplication(),
-          preferences = FakeTweakPreferences(ignoreLocation = false),
+            context = RuntimeEnvironment.getApplication(),
+            preferences = FakeTweakPreferences(ignoreLocation = false),
         )
 
-      assertTrue(checker.isLocationOn())
-    }
+    assertTrue(checker.isLocationOn())
+  }
 }

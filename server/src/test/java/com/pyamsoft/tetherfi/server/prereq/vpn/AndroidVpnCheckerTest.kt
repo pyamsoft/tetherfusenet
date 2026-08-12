@@ -20,6 +20,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
 import com.pyamsoft.tetherfi.server.TweakPreferences
+import kotlin.test.assertFalse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -28,10 +29,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
-import kotlin.test.assertFalse
 
 private class FakeTweakPreferences(
-  private val ignoreVpn: Boolean,
+    private val ignoreVpn: Boolean,
 ) : TweakPreferences {
   override fun listenForStartIgnoreVpn(): Flow<Boolean> = MutableStateFlow(ignoreVpn)
 
@@ -66,34 +66,33 @@ private class ThrowingConnectivityContext(base: Context) : ContextWrapper(base) 
 class AndroidVpnCheckerTest {
 
   @Test
-  fun `vpn override bypasses actual vpn manager`() =
-    runTest {
-      val context = ThrowingConnectivityContext(RuntimeEnvironment.getApplication())
-      val checker =
+  fun `vpn override bypasses actual vpn manager`() = runTest {
+    val context = ThrowingConnectivityContext(RuntimeEnvironment.getApplication())
+    val checker =
         AndroidVpnChecker(context = context, preferences = FakeTweakPreferences(ignoreVpn = true))
 
-      assertFalse(checker.isUsingVpn())
-    }
+    assertFalse(checker.isUsingVpn())
+  }
 
   @Test
   fun `vpn off`() = runTest {
     val checker =
-      AndroidVpnChecker(
-        context = RuntimeEnvironment.getApplication(),
-        preferences = FakeTweakPreferences(ignoreVpn = false),
-      )
+        AndroidVpnChecker(
+            context = RuntimeEnvironment.getApplication(),
+            preferences = FakeTweakPreferences(ignoreVpn = false),
+        )
 
     // By default robolectric is not vpn connected
     assertFalse(checker.isUsingVpn())
   }
 
-//  // TODO(Peter): How to connect to VPN
-//  @Test
-//  fun `vpn on`() = runTest {
-//    val checker =
-//      AndroidVpnChecker(
-//        context = RuntimeEnvironment.getApplication(),
-//        preferences = FakeTweakPreferences(ignoreVpn = false),
-//      )
-//  }
+  //  // TODO(Peter): How to connect to VPN
+  //  @Test
+  //  fun `vpn on`() = runTest {
+  //    val checker =
+  //      AndroidVpnChecker(
+  //        context = RuntimeEnvironment.getApplication(),
+  //        preferences = FakeTweakPreferences(ignoreVpn = false),
+  //      )
+  //  }
 }

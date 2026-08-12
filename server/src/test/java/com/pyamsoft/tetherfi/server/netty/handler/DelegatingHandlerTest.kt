@@ -28,14 +28,13 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelInboundHandler
 import io.netty.handler.codec.socksx.SocksVersion
+import java.nio.channels.ClosedChannelException
+import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Test
-import java.nio.channels.ClosedChannelException
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertTrue
 
 class DelegatingHandlerTest {
 
@@ -81,7 +80,8 @@ class DelegatingHandlerTest {
           val buf = Unpooled.wrappedBuffer(httpCommand.toByteArray())
 
           channel.apply {
-            // This write will CLOSE the socket, since we have nothing enabled, so the connection will drop
+            // This write will CLOSE the socket, since we have nothing enabled, so the connection
+            // will drop
             writeInbound(buf)
 
             // This guy will throw

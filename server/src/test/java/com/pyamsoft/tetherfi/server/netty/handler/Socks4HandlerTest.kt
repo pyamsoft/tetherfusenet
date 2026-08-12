@@ -27,14 +27,10 @@ import io.netty.channel.ChannelInboundHandler
 import io.netty.handler.codec.socksx.v4.DefaultSocks4CommandRequest
 import io.netty.handler.codec.socksx.v4.Socks4CommandType
 import kotlin.test.assertNotNull
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import org.junit.Test
-import java.nio.channels.ClosedChannelException
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
 
 class Socks4HandlerTest {
 
@@ -76,7 +72,7 @@ class Socks4HandlerTest {
       val req =
           DefaultSocks4CommandRequest(
               Socks4CommandType.CONNECT,
-            // Internally does NOT allow localhost connections
+              // Internally does NOT allow localhost connections
               "192.168.0.1",
               43210,
           )

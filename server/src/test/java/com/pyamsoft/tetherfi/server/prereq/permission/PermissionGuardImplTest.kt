@@ -17,7 +17,6 @@
 package com.pyamsoft.tetherfi.server.prereq.permission
 
 import android.os.Build
-import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.createThreadEnforcer
 import kotlin.test.assertEquals
 import org.junit.Test
@@ -25,13 +24,12 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
-import org.robolectric.util.ReflectionHelpers
 
 private fun newGuard(): PermissionGuardImpl =
-  PermissionGuardImpl(
-    context = RuntimeEnvironment.getApplication(),
-    enforcer = createThreadEnforcer(debug = false),
-  )
+    PermissionGuardImpl(
+        context = RuntimeEnvironment.getApplication(),
+        enforcer = createThreadEnforcer(debug = false),
+    )
 
 // PermissionGuardImpl composes `requiredPermissions` from `by lazy` + companion `val`s that are
 // only ever computed once per classloader. Each test below uses a distinct @Config(sdk = ...) so
@@ -47,13 +45,13 @@ class PermissionGuardImplTest {
     val guard = newGuard()
 
     assertEquals(
-      listOf(
-        android.Manifest.permission.ACCESS_WIFI_STATE,
-        android.Manifest.permission.CHANGE_WIFI_STATE,
-        android.Manifest.permission.ACCESS_COARSE_LOCATION,
-        android.Manifest.permission.ACCESS_FINE_LOCATION,
-      ),
-      guard.requiredPermissions,
+        listOf(
+            android.Manifest.permission.ACCESS_WIFI_STATE,
+            android.Manifest.permission.CHANGE_WIFI_STATE,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+        ),
+        guard.requiredPermissions,
     )
   }
 
@@ -63,29 +61,29 @@ class PermissionGuardImplTest {
     val guard = newGuard()
 
     assertEquals(
-      listOf(
-        android.Manifest.permission.ACCESS_WIFI_STATE,
-        android.Manifest.permission.CHANGE_WIFI_STATE,
-        android.Manifest.permission.NEARBY_WIFI_DEVICES,
-      ),
-      guard.requiredPermissions,
+        listOf(
+            android.Manifest.permission.ACCESS_WIFI_STATE,
+            android.Manifest.permission.CHANGE_WIFI_STATE,
+            android.Manifest.permission.NEARBY_WIFI_DEVICES,
+        ),
+        guard.requiredPermissions,
     )
   }
 
   // TODO(Peter): Robolectric needs API 37 support
-//  @Test
-//  @Config(sdk = [Build.VERSION_CODES.CINNAMON_BUN])
-//  fun `CINNAMON_BUN and above additionally requires local network permission`() {
-//    val guard = newGuard()
-//
-//    assertEquals(
-//        listOf(
-//            android.Manifest.permission.ACCESS_WIFI_STATE,
-//            android.Manifest.permission.CHANGE_WIFI_STATE,
-//            android.Manifest.permission.NEARBY_WIFI_DEVICES,
-//            android.Manifest.permission.ACCESS_LOCAL_NETWORK,
-//        ),
-//        guard.requiredPermissions,
-//    )
-//  }
+  //  @Test
+  //  @Config(sdk = [Build.VERSION_CODES.CINNAMON_BUN])
+  //  fun `CINNAMON_BUN and above additionally requires local network permission`() {
+  //    val guard = newGuard()
+  //
+  //    assertEquals(
+  //        listOf(
+  //            android.Manifest.permission.ACCESS_WIFI_STATE,
+  //            android.Manifest.permission.CHANGE_WIFI_STATE,
+  //            android.Manifest.permission.NEARBY_WIFI_DEVICES,
+  //            android.Manifest.permission.ACCESS_LOCAL_NETWORK,
+  //        ),
+  //        guard.requiredPermissions,
+  //    )
+  //  }
 }

@@ -20,7 +20,6 @@ import android.annotation.SuppressLint
 import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.tetherfi.core.InAppRatingPreferences
 import com.pyamsoft.tetherfi.server.TweakPreferences
-import com.pyamsoft.tetherfi.server.event.ServerShutdownEvent
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
@@ -177,10 +176,12 @@ class ClientManagerImplTest {
     val client = manager.ensure("1.2.3.4")
 
     manager.reportTransfer(
-        client, ByteTransferReport(internetToProxy = 100L, proxyToInternet = 50L)
+        client,
+        ByteTransferReport(internetToProxy = 100L, proxyToInternet = 50L),
     )
     manager.reportTransfer(
-        client, ByteTransferReport(internetToProxy = 10L, proxyToInternet = 5L)
+        client,
+        ByteTransferReport(internetToProxy = 10L, proxyToInternet = 5L),
     )
 
     val updated = manager.listenForClients().first().single()
@@ -238,13 +239,11 @@ class ClientManagerImplTest {
     val clock = MutableClock(Instant.EPOCH)
     val manager = newManager(clock = clock)
 
-    @SuppressLint("CheckResult")
-    manager.ensure("1.1.1.1")
+    @SuppressLint("CheckResult") manager.ensure("1.1.1.1")
 
     clock.advance(10.minutes)
 
-    @SuppressLint("CheckResult")
-    manager.ensure("2.2.2.2")
+    @SuppressLint("CheckResult") manager.ensure("2.2.2.2")
 
     val cutoff = clock.nowLocalDateTime().minusMinutes(5)
     manager.purgeOldClients(cutoff)
