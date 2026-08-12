@@ -154,7 +154,7 @@ internal constructor(
 
           // Watch constantly but only update the initial load config if we haven't loaded yet
           if (s.loadingState.value != BehaviorViewState.LoadingState.DONE) {
-            config.tweakWakeLock = true
+            config.tweakShutdownWithNoClients = true
             markPreferencesLoaded(config)
           }
         }
@@ -169,7 +169,7 @@ internal constructor(
 
           // Watch constantly but only update the initial load config if we haven't loaded yet
           if (s.loadingState.value != BehaviorViewState.LoadingState.DONE) {
-            config.tweakShutdownWithNoClients = true
+            config.tweakWakeLock = true
             markPreferencesLoaded(config)
           }
         }
