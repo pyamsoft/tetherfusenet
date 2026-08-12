@@ -16,20 +16,12 @@
 
 package com.pyamsoft.tetherfi
 
-import android.content.Context
 import androidx.annotation.CheckResult
 import androidx.datastore.core.DataStore
-import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
-import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
-import androidx.preference.PreferenceManager
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.ThreadEnforcer
@@ -65,7 +57,10 @@ import kotlinx.coroutines.launch
 @LintIgnoreTooManyFunctions
 internal class PreferencesImpl
 @Inject
-internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
+internal constructor(
+    private val enforcer: ThreadEnforcer,
+    dataStore: DataStore<Preferences>,
+) :
     StatusPreferences,
     ProxyPreferences,
     InAppRatingPreferences,
@@ -73,51 +68,9 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
     ExpertPreferences,
     WifiPreferences {
 
-  private val Context.dataStore by
-      preferencesDataStore(
-          name = "tetherfi_preferences",
-          corruptionHandler =
-              ReplaceFileCorruptionHandler { err ->
-                Timber.e(err) { "File corruption detected, start with empty Preferences" }
-                return@ReplaceFileCorruptionHandler emptyPreferences()
-              },
-          produceMigrations = {
-            listOf(
-                // NOTE(Peter): Since our shared preferences was the DEFAULT process one, loading up
-                //              a migration without specifying all keys will also migrate
-                //              PYDROID SPECIFIC PREFERENCES which is what we do NOT want to do.
-                //              We instead maintain ONLY a list of the known app preference keys
-                SharedPreferencesMigration(
-                    keysToMigrate =
-                        setOf(
-                            SSID.name,
-                            PASSWORD.name,
-                            PORT.name,
-                            NETWORK_BAND.name,
-                            IN_APP_HOTSPOT_USED.name,
-                            IN_APP_DEVICES_CONNECTED.name,
-                            IN_APP_APP_OPENED.name,
-                            IN_APP_RATING_SHOWN_VERSION.name,
-                            START_IGNORE_VPN.name,
-                            START_IGNORE_LOCATION.name,
-                            SHUTDOWN_NO_CLIENTS.name,
-                            KEEP_SCREEN_ON.name,
-                            BROADCAST_TYPE.name,
-                            PREFERRED_NETWORK.name,
-                            SOCKET_TIMEOUT.name,
-                        ),
-                    produceSharedPreferences = {
-                      PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
-                    },
-                )
-            )
-          },
-      )
-
   private val preferences by lazy {
-    val store = context.applicationContext.dataStore
-    onClearOldPreferences(store)
-    return@lazy store
+    onClearOldPreferences(dataStore)
+    return@lazy dataStore
   }
 
   // Keep this lazy so that the fallback password is always the same
@@ -175,157 +128,172 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
 
   @CheckResult
   private fun getInAppRatingShownVersion(preferences: Preferences): Int =
-      preferences[IN_APP_RATING_SHOWN_VERSION] ?: 0
+      preferences[PreferenceKeys.IN_APP_RATING_SHOWN_VERSION] ?: 0
 
   override fun listenForSsidChanges(): Flow<String> =
-      getPreference(key = SSID, value = ServerDefaults.WIFI_SSID).flowOn(context = Dispatchers.IO)
+      getPreference(key = PreferenceKeys.SSID, value = ServerDefaults.WIFI_SSID)
+          .flowOn(context = Dispatchers.IO)
 
   override fun setSsid(ssid: String) =
       setPreference(
-          key = SSID,
+          key = PreferenceKeys.SSID,
           fallbackValue = ServerDefaults.WIFI_SSID,
           value = { ssid },
       )
 
   override fun listenForPasswordChanges(): Flow<String> =
-      getPreference(key = PASSWORD, value = fallbackPassword).flowOn(context = Dispatchers.IO)
+      getPreference(key = PreferenceKeys.PASSWORD, value = fallbackPassword)
+          .flowOn(context = Dispatchers.IO)
 
   override fun setPassword(password: String) =
       setPreference(
-          key = PASSWORD,
+          key = PreferenceKeys.PASSWORD,
           fallbackValue = fallbackPassword,
           value = { password },
       )
 
   override fun listenForHttpEnabledChanges(): Flow<Boolean> =
-      getPreference(key = IS_HTTP_ENABLED, value = DEFAULT_IS_HTTP_ENABLED)
+      getPreference(key = PreferenceKeys.IS_HTTP_ENABLED, value = DEFAULT_IS_HTTP_ENABLED)
           .flowOn(context = Dispatchers.IO)
 
   override fun setHttpEnabled(enabled: Boolean) =
       setPreference(
-          key = IS_HTTP_ENABLED,
+          key = PreferenceKeys.IS_HTTP_ENABLED,
           fallbackValue = DEFAULT_IS_HTTP_ENABLED,
           value = { enabled },
       )
 
   override fun listenForPortChanges(): Flow<Int> =
-      getPreference(key = PORT, value = ServerDefaults.HTTP_PORT).flowOn(context = Dispatchers.IO)
+      getPreference(key = PreferenceKeys.PORT, value = ServerDefaults.HTTP_PORT)
+          .flowOn(context = Dispatchers.IO)
 
   override fun setPort(port: Int) =
       setPreference(
-          key = PORT,
+          key = PreferenceKeys.PORT,
           fallbackValue = ServerDefaults.HTTP_PORT,
           value = { port },
       )
 
   override fun listenForSocksEnabledChanges(): Flow<Boolean> =
-      getPreference(key = IS_SOCKS_ENABLED, value = DEFAULT_IS_SOCKS_ENABLED)
+      getPreference(key = PreferenceKeys.IS_SOCKS_ENABLED, value = DEFAULT_IS_SOCKS_ENABLED)
           .flowOn(context = Dispatchers.IO)
 
   override fun setSocksEnabled(enabled: Boolean) =
       setPreference(
-          key = IS_SOCKS_ENABLED,
+          key = PreferenceKeys.IS_SOCKS_ENABLED,
           fallbackValue = DEFAULT_IS_SOCKS_ENABLED,
           value = { enabled },
       )
 
   override fun listenForNetworkBandChanges(): Flow<ServerNetworkBand> =
-      getPreference(key = NETWORK_BAND, value = ServerDefaults.WIFI_NETWORK_BAND.name)
+      getPreference(
+              key = PreferenceKeys.NETWORK_BAND,
+              value = ServerDefaults.WIFI_NETWORK_BAND.name,
+          )
           .map { ServerNetworkBand.valueOf(it) }
           .flowOn(context = Dispatchers.IO)
 
   override fun setNetworkBand(band: ServerNetworkBand) =
       setPreference(
-          key = NETWORK_BAND,
+          key = PreferenceKeys.NETWORK_BAND,
           fallbackValue = ServerDefaults.WIFI_NETWORK_BAND.name,
           value = { band.name },
       )
 
   override fun listenForStartIgnoreVpn(): Flow<Boolean> =
-      getPreference(key = START_IGNORE_VPN, value = DEFAULT_START_IGNORE_VPN)
+      getPreference(key = PreferenceKeys.START_IGNORE_VPN, value = DEFAULT_START_IGNORE_VPN)
           .flowOn(context = Dispatchers.IO)
 
   override fun setStartIgnoreVpn(ignore: Boolean) =
       setPreference(
-          key = START_IGNORE_VPN,
+          key = PreferenceKeys.START_IGNORE_VPN,
           fallbackValue = DEFAULT_START_IGNORE_VPN,
           value = { ignore },
       )
 
   override fun listenForStartIgnoreLocation(): Flow<Boolean> =
-      getPreference(key = START_IGNORE_LOCATION, value = DEFAULT_START_IGNORE_LOCATION)
+      getPreference(
+              key = PreferenceKeys.START_IGNORE_LOCATION,
+              value = DEFAULT_START_IGNORE_LOCATION,
+          )
           .flowOn(context = Dispatchers.IO)
 
   override fun setStartIgnoreLocation(ignore: Boolean) =
       setPreference(
-          key = START_IGNORE_LOCATION,
+          key = PreferenceKeys.START_IGNORE_LOCATION,
           fallbackValue = DEFAULT_START_IGNORE_LOCATION,
           value = { ignore },
       )
 
   override fun listenForShutdownWithNoClients(): Flow<Boolean> =
-      getPreference(key = SHUTDOWN_NO_CLIENTS, value = DEFAULT_SHUTDOWN_NO_CLIENTS)
+      getPreference(
+              key = PreferenceKeys.SHUTDOWN_NO_CLIENTS,
+              value = DEFAULT_SHUTDOWN_NO_CLIENTS,
+          )
           .flowOn(context = Dispatchers.IO)
 
   override fun setShutdownWithNoClients(shutdown: Boolean) =
       setPreference(
-          key = SHUTDOWN_NO_CLIENTS,
+          key = PreferenceKeys.SHUTDOWN_NO_CLIENTS,
           fallbackValue = DEFAULT_SHUTDOWN_NO_CLIENTS,
           value = { shutdown },
       )
 
   override fun listenForWakeLock(): Flow<Boolean> =
-      getPreference(key = HOLD_WAKELOCK, value = DEFAULT_HOLD_WAKELOCK)
+      getPreference(key = PreferenceKeys.HOLD_WAKELOCK, value = DEFAULT_HOLD_WAKELOCK)
           .flowOn(context = Dispatchers.IO)
 
   override fun setWakeLock(wakelock: Boolean) =
       setPreference(
-          key = HOLD_WAKELOCK,
+          key = PreferenceKeys.HOLD_WAKELOCK,
           fallbackValue = DEFAULT_HOLD_WAKELOCK,
           value = { wakelock },
       )
 
   override fun listenForKeepScreenOn(): Flow<Boolean> =
-      getPreference(key = KEEP_SCREEN_ON, value = DEFAULT_KEEP_SCREEN_ON)
+      getPreference(key = PreferenceKeys.KEEP_SCREEN_ON, value = DEFAULT_KEEP_SCREEN_ON)
           .flowOn(context = Dispatchers.IO)
 
   override fun setKeepScreenOn(keep: Boolean) =
       setPreference(
-          key = KEEP_SCREEN_ON,
+          key = PreferenceKeys.KEEP_SCREEN_ON,
           fallbackValue = DEFAULT_KEEP_SCREEN_ON,
           value = { keep },
       )
 
   override fun listenForBroadcastType(): Flow<BroadcastType> =
-      getPreference(key = BROADCAST_TYPE, value = BroadcastType.WIFI_DIRECT.name)
+      getPreference(
+              key = PreferenceKeys.BROADCAST_TYPE,
+              value = BroadcastType.WIFI_DIRECT.name,
+          )
           .map { BroadcastType.valueOf(it) }
           .flowOn(context = Dispatchers.IO)
 
   override fun setBroadcastType(type: BroadcastType) =
       setPreference(
-          key = BROADCAST_TYPE,
+          key = PreferenceKeys.BROADCAST_TYPE,
           fallbackValue = BroadcastType.WIFI_DIRECT.name,
           value = { type.name },
       )
 
   override fun listenForPreferredNetwork(): Flow<PreferredNetwork> =
-      getPreference(key = PREFERRED_NETWORK, value = PreferredNetwork.NONE.name)
+      getPreference(key = PreferenceKeys.PREFERRED_NETWORK, value = PreferredNetwork.NONE.name)
           .map { PreferredNetwork.valueOf(it) }
           .flowOn(context = Dispatchers.IO)
 
   override fun setPreferredNetwork(network: PreferredNetwork) =
       setPreference(
-          key = PREFERRED_NETWORK,
+          key = PreferenceKeys.PREFERRED_NETWORK,
           fallbackValue = PreferredNetwork.NONE.name,
           value = { network.name },
       )
 
   override fun listenShowInAppRating(): Flow<Boolean> =
       combineTransform(
-              preferences.data.map { it[IN_APP_HOTSPOT_USED] ?: 0 },
-              preferences.data.map { it[IN_APP_DEVICES_CONNECTED] ?: 0 },
-              preferences.data.map { it[IN_APP_APP_OPENED] ?: 0 },
-              preferences.data.map { it[IN_APP_RATING_SHOWN_VERSION] ?: 0 },
+              preferences.data.map { it[PreferenceKeys.IN_APP_HOTSPOT_USED] ?: 0 },
+              preferences.data.map { it[PreferenceKeys.IN_APP_DEVICES_CONNECTED] ?: 0 },
+              preferences.data.map { it[PreferenceKeys.IN_APP_APP_OPENED] ?: 0 },
+              preferences.data.map { it[PreferenceKeys.IN_APP_RATING_SHOWN_VERSION] ?: 0 },
           ) { hotspotUsed, devicesConnected, appOpened, lastVersionShown ->
             enforcer.assertOffMainThread()
 
@@ -352,12 +320,12 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
                 // Commit this edit so that it fires immediately before we process again
                 preferences.edit { settings ->
                   // Reset the previous flags
-                  settings[IN_APP_APP_OPENED] = 0
-                  settings[IN_APP_HOTSPOT_USED] = 0
-                  settings[IN_APP_DEVICES_CONNECTED] = 0
+                  settings[PreferenceKeys.IN_APP_APP_OPENED] = 0
+                  settings[PreferenceKeys.IN_APP_HOTSPOT_USED] = 0
+                  settings[PreferenceKeys.IN_APP_DEVICES_CONNECTED] = 0
 
                   // And mark the latest version
-                  settings[IN_APP_RATING_SHOWN_VERSION] = BuildConfig.VERSION_CODE
+                  settings[PreferenceKeys.IN_APP_RATING_SHOWN_VERSION] = BuildConfig.VERSION_CODE
                 }
               }
             }
@@ -365,10 +333,10 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
           .catch { err ->
             Timber.e(err) { "Error listening for composite showAppRating" }
             preferences.edit { settings ->
-              settings[IN_APP_APP_OPENED] = 0
-              settings[IN_APP_HOTSPOT_USED] = 0
-              settings[IN_APP_DEVICES_CONNECTED] = 0
-              settings[IN_APP_RATING_SHOWN_VERSION] = 0
+              settings[PreferenceKeys.IN_APP_APP_OPENED] = 0
+              settings[PreferenceKeys.IN_APP_HOTSPOT_USED] = 0
+              settings[PreferenceKeys.IN_APP_DEVICES_CONNECTED] = 0
+              settings[PreferenceKeys.IN_APP_RATING_SHOWN_VERSION] = 0
             }
             emit(false)
           }
@@ -377,11 +345,11 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
 
   override fun markHotspotUsed() =
       setPreference(
-          key = IN_APP_HOTSPOT_USED,
+          key = PreferenceKeys.IN_APP_HOTSPOT_USED,
           fallbackValue = 0,
           value = { settings ->
             val version = getInAppRatingShownVersion(settings)
-            val current = settings[IN_APP_HOTSPOT_USED] ?: 0
+            val current = settings[PreferenceKeys.IN_APP_HOTSPOT_USED] ?: 0
             if (version.isInAppRatingAlreadyShown()) {
               return@setPreference current
             }
@@ -392,11 +360,11 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
 
   override fun markAppOpened() =
       setPreference(
-          key = IN_APP_APP_OPENED,
+          key = PreferenceKeys.IN_APP_APP_OPENED,
           fallbackValue = 0,
           value = { settings ->
             val version = getInAppRatingShownVersion(settings)
-            val current = settings[IN_APP_APP_OPENED] ?: 0
+            val current = settings[PreferenceKeys.IN_APP_APP_OPENED] ?: 0
             if (version.isInAppRatingAlreadyShown()) {
               return@setPreference current
             }
@@ -407,11 +375,11 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
 
   override fun markDeviceConnected() =
       setPreference(
-          key = IN_APP_DEVICES_CONNECTED,
+          key = PreferenceKeys.IN_APP_DEVICES_CONNECTED,
           fallbackValue = 0,
           value = { settings ->
             val version = getInAppRatingShownVersion(settings)
-            val current = settings[IN_APP_DEVICES_CONNECTED] ?: 0
+            val current = settings[PreferenceKeys.IN_APP_DEVICES_CONNECTED] ?: 0
             if (version.isInAppRatingAlreadyShown()) {
               return@setPreference current
             }
@@ -422,14 +390,14 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
 
   override fun listenForSocketTimeout(): Flow<ServerSocketTimeout> =
       getPreference(
-              key = SOCKET_TIMEOUT,
+              key = PreferenceKeys.SOCKET_TIMEOUT,
               value = ServerSocketTimeout.Defaults.BALANCED.timeoutDuration.inWholeSeconds,
           )
           .map { ServerSocketTimeout.create(it) }
 
   override fun setSocketTimeout(limit: ServerSocketTimeout) =
       setPreference(
-          key = SOCKET_TIMEOUT,
+          key = PreferenceKeys.SOCKET_TIMEOUT,
           fallbackValue = ServerSocketTimeout.Defaults.BALANCED.timeoutDuration.inWholeSeconds,
           value = {
             if (limit.timeoutDuration.isInfinite()) -1 else limit.timeoutDuration.inWholeSeconds
@@ -460,43 +428,19 @@ internal constructor(private val enforcer: ThreadEnforcer, context: Context) :
 
   companion object {
 
-    private val SSID = stringPreferencesKey("key_ssid_1")
-    private val PASSWORD = stringPreferencesKey("key_password_1")
-    private val NETWORK_BAND = stringPreferencesKey("key_network_band_1")
-
-    private val IS_HTTP_ENABLED = booleanPreferencesKey("key_http_enabled_1")
-    private val PORT = intPreferencesKey("key_port_1")
     private const val DEFAULT_IS_HTTP_ENABLED = true
 
-    private val IS_SOCKS_ENABLED = booleanPreferencesKey("key_socks_enabled_1")
     private const val DEFAULT_IS_SOCKS_ENABLED = false
 
-    private val IN_APP_HOTSPOT_USED = intPreferencesKey("key_in_app_hotspot_used_1")
-    private val IN_APP_DEVICES_CONNECTED = intPreferencesKey("key_in_app_devices_connected_1")
-    private val IN_APP_APP_OPENED = intPreferencesKey("key_in_app_app_opened_1")
-
-    private val IN_APP_RATING_SHOWN_VERSION = intPreferencesKey("key_in_app_rating_shown_version")
-
-    private val START_IGNORE_VPN = booleanPreferencesKey("key_start_ignore_vpn_1")
     private const val DEFAULT_START_IGNORE_VPN = false
 
-    private val START_IGNORE_LOCATION = booleanPreferencesKey("key_start_ignore_location_1")
     private const val DEFAULT_START_IGNORE_LOCATION = false
 
-    private val SHUTDOWN_NO_CLIENTS = booleanPreferencesKey("key_shutdown_no_clients_1")
     private const val DEFAULT_SHUTDOWN_NO_CLIENTS = false
 
-    private val HOLD_WAKELOCK = booleanPreferencesKey("key_hold_wakelock_1")
     private const val DEFAULT_HOLD_WAKELOCK = false
 
-    private val KEEP_SCREEN_ON = booleanPreferencesKey("key_keep_screen_on_1")
     private const val DEFAULT_KEEP_SCREEN_ON = false
-
-    private val BROADCAST_TYPE = stringPreferencesKey("key_broadcast_type_1")
-
-    private val PREFERRED_NETWORK = stringPreferencesKey("key_preferred_network_1")
-
-    private val SOCKET_TIMEOUT = longPreferencesKey("key_socket_timeout_1")
 
     private val OldKeys =
         listOf(

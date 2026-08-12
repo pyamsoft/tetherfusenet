@@ -22,6 +22,13 @@ import android.app.Service
 import android.content.Context
 import android.service.quicksettings.TileService
 import androidx.annotation.CheckResult
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.SharedPreferencesMigration
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.preference.PreferenceManager
 import coil3.ImageLoader
 import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.bus.EventConsumer
@@ -31,6 +38,7 @@ import com.pyamsoft.pydroid.ui.theme.Theming
 import com.pyamsoft.tetherfi.behavior.BehaviorAppModule
 import com.pyamsoft.tetherfi.core.CoreAppModule
 import com.pyamsoft.tetherfi.core.InAppRatingPreferences
+import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.foreground.ForegroundServiceComponent
 import com.pyamsoft.tetherfi.foreground.ProxyForegroundService
 import com.pyamsoft.tetherfi.main.MainActivity
@@ -60,6 +68,49 @@ import javax.inject.Named
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+
+// NOTE(Peter): Since our shared preferences was the DEFAULT process one, loading up
+//              a migration without specifying all keys will also migrate
+//              PYDROID SPECIFIC PREFERENCES which is what we do NOT want to do.
+//              We instead maintain ONLY a list of the known app preference keys
+private val Context.dataStore: DataStore<Preferences> by
+    preferencesDataStore(
+        name = "tetherfi_preferences",
+        corruptionHandler =
+            ReplaceFileCorruptionHandler { err ->
+              Timber.e(err) { "File corruption detected, start with empty Preferences" }
+              return@ReplaceFileCorruptionHandler emptyPreferences()
+            },
+        produceMigrations = { migrationContext ->
+          listOf(
+              SharedPreferencesMigration(
+                  keysToMigrate =
+                      setOf(
+                          PreferenceKeys.SSID.name,
+                          PreferenceKeys.PASSWORD.name,
+                          PreferenceKeys.PORT.name,
+                          PreferenceKeys.NETWORK_BAND.name,
+                          PreferenceKeys.IN_APP_HOTSPOT_USED.name,
+                          PreferenceKeys.IN_APP_DEVICES_CONNECTED.name,
+                          PreferenceKeys.IN_APP_APP_OPENED.name,
+                          PreferenceKeys.IN_APP_RATING_SHOWN_VERSION.name,
+                          PreferenceKeys.START_IGNORE_VPN.name,
+                          PreferenceKeys.START_IGNORE_LOCATION.name,
+                          PreferenceKeys.SHUTDOWN_NO_CLIENTS.name,
+                          PreferenceKeys.KEEP_SCREEN_ON.name,
+                          PreferenceKeys.BROADCAST_TYPE.name,
+                          PreferenceKeys.PREFERRED_NETWORK.name,
+                          PreferenceKeys.SOCKET_TIMEOUT.name,
+                      ),
+                  produceSharedPreferences = {
+                    PreferenceManager.getDefaultSharedPreferences(
+                        migrationContext.applicationContext
+                    )
+                  },
+              )
+          )
+        },
+    )
 
 @Singleton
 @Component(
@@ -188,6 +239,13 @@ internal interface TFAppComponent {
       @Singleton
       internal fun provideNotifyGuard(context: Context): NotifyGuard {
         return NotifyGuard.createDefault(context)
+      }
+
+      @Provides
+      @JvmStatic
+      @Singleton
+      internal fun provideDataStore(context: Context): DataStore<Preferences> {
+        return context.applicationContext.dataStore
       }
 
       @Provides
