@@ -51,6 +51,7 @@ detekt = "2.0.0-alpha.6"
 
 # Testing
 junit = "4.13.2"
+robolectric = "4.16.1"
 
 
 [plugins]
@@ -109,3 +110,4 @@ qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin-android", version.r
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
