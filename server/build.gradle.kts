@@ -46,6 +46,8 @@ android {
 
   buildFeatures { buildConfig = false }
 
+  testOptions { unitTests { isIncludeAndroidResources = true } }
+
   // Fixes this error message
   // More than one file was found with OS independent path "META-INF/core_release.kotlin_module"
   packaging {
@@ -83,6 +85,7 @@ dependencies {
   testImplementation(libs.kotlin.test)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.junit)
+  testImplementation(libs.robolectric)
 
   androidTestImplementation(libs.androidx.testRunner)
   androidTestImplementation(libs.kotlin.test)
