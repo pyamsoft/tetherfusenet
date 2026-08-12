@@ -62,4 +62,8 @@ dependencies {
   implementation(project(":core"))
   implementation(project(":server"))
   implementation(project(":ui"))
+
+  testImplementation(libs.kotlin.test)
+  testImplementation(libs.kotlinx.coroutines.test)
+  testImplementation(libs.junit)
 }
