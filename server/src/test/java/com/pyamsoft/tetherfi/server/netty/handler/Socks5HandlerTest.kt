@@ -29,7 +29,13 @@ import io.netty.handler.codec.socksx.v5.Socks5AddressType
 import io.netty.handler.codec.socksx.v5.Socks5CommandType
 import kotlin.test.assertNotNull
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import org.junit.Test
+import java.nio.channels.ClosedChannelException
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 class Socks5HandlerTest {
 
@@ -73,7 +79,8 @@ class Socks5HandlerTest {
           DefaultSocks5CommandRequest(
               Socks5CommandType.CONNECT,
               Socks5AddressType.IPv4,
-              "127.0.0.1",
+            // Internally does NOT allow localhost connections
+            "192.168.0.1",
               43210,
           )
 
@@ -82,6 +89,9 @@ class Socks5HandlerTest {
         flushInbound()
         runPendingTasks()
       }
+
+      // Wait for tasks to finish
+      delay(100.milliseconds)
 
       // A TCP outbound has been created
       assertNotNull(tcpConnection)

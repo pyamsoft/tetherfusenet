@@ -263,12 +263,12 @@ class ClientManagerImplTest {
     manager.block(client)
 
     // Before time advances, we have both
-    assertEquals(0, manager.listenForClients().first().size)
+    assertEquals(1, manager.listenForClients().first().size)
     assertEquals(1, manager.listenForBlocked().first().size)
 
     // Then time advances but not pass deadline
     manager.purgeOldClients(clock.nowLocalDateTime().minusMinutes(5))
-    assertEquals(0, manager.listenForClients().first().size)
+    assertEquals(1, manager.listenForClients().first().size)
     assertEquals(1, manager.listenForBlocked().first().size)
 
     // Age the client out

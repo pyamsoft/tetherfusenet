@@ -32,6 +32,10 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Test
+import java.nio.channels.ClosedChannelException
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertTrue
 
 class DelegatingHandlerTest {
 
@@ -77,8 +81,12 @@ class DelegatingHandlerTest {
           val buf = Unpooled.wrappedBuffer(httpCommand.toByteArray())
 
           channel.apply {
+            // This write will CLOSE the socket, since we have nothing enabled, so the connection will drop
             writeInbound(buf)
-            flushInbound()
+
+            // This guy will throw
+            val closed = assertFails { flushInbound() }
+            assertTrue(closed is ClosedChannelException)
             runPendingTasks()
           }
 
