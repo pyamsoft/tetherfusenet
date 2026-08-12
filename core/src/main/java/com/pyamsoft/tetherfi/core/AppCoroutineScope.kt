@@ -16,11 +16,7 @@
 
 package com.pyamsoft.tetherfi.core
 
-import javax.inject.Inject
-import javax.inject.Named
-import javax.inject.Singleton
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -28,39 +24,45 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Singleton
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 @Singleton
 class AppCoroutineScope
 @Inject
-internal constructor(
-    @param:Named("app_scope") private val appScope: CoroutineScope,
+@VisibleForTesting
+constructor(
+  @param:Named("app_scope") private val appScope: CoroutineScope,
 ) {
 
   /* @CheckResult */
   fun launch(
-      context: CoroutineContext = EmptyCoroutineContext,
-      start: CoroutineStart = CoroutineStart.DEFAULT,
-      block: suspend CoroutineScope.() -> Unit,
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> Unit,
   ): Job {
     assert(appScope.isActive) { "AppScope must never be cancelled!" }
     return appScope.launch(
-        context = context,
-        start = start,
-        block = block,
+      context = context,
+      start = start,
+      block = block,
     )
   }
 
   /* @CheckResult */
   fun <T> async(
-      context: CoroutineContext = EmptyCoroutineContext,
-      start: CoroutineStart = CoroutineStart.DEFAULT,
-      block: suspend CoroutineScope.() -> T,
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T,
   ): Deferred<T> {
     assert(appScope.isActive) { "AppScope must never be cancelled!" }
     return appScope.async(
-        context = context,
-        start = start,
-        block = block,
+      context = context,
+      start = start,
+      block = block,
     )
   }
 }
