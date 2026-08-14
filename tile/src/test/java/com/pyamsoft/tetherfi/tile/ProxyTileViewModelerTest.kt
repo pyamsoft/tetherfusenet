@@ -119,7 +119,11 @@ private fun newViewModeler(
     )
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+@Config(
+  // Need this here since Robolectric does not yet support API 37 (which is default otherwise)
+  minSdk = Build.VERSION_CODES.O,
+  maxSdk = Build.VERSION_CODES.BAKLAVA,
+)
 class ProxyTileViewModelerTest {
 
   @Test

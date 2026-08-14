@@ -31,12 +31,8 @@ private fun newGuard(): PermissionGuardImpl =
         enforcer = createThreadEnforcer(debug = false),
     )
 
-// PermissionGuardImpl composes `requiredPermissions` from `by lazy` + companion `val`s that are
-// only ever computed once per classloader. Each test below uses a distinct @Config(sdk = ...) so
-// Robolectric hands it a fresh sandbox/classloader, guaranteeing the SDK-branch composition is
-// (re)computed against *this* test's simulated API level rather than a value cached by another
-// test that happened to touch the companion object first.
 @RunWith(RobolectricTestRunner::class)
+// No test wide config since each test goes against a different API level
 class PermissionGuardImplTest {
 
   @Test
