@@ -17,6 +17,7 @@
 package com.pyamsoft.tetherfi.service.tile
 
 import androidx.annotation.CheckResult
+import androidx.annotation.VisibleForTesting
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
@@ -29,7 +30,8 @@ import kotlinx.coroutines.launch
 
 class TileHandler
 @Inject
-internal constructor(
+@VisibleForTesting
+constructor(
     private val enforcer: ThreadEnforcer,
     private val networkStatus: BroadcastNetworkStatus,
     private val proxy: SharedProxy,

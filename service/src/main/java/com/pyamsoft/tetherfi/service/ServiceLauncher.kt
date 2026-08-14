@@ -24,11 +24,13 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastStatus
 import com.pyamsoft.tetherfi.server.proxy.ProxyStatus
 import com.pyamsoft.tetherfi.server.status.RunningStatus
+import org.jetbrains.annotations.VisibleForTesting
 import javax.inject.Inject
 
 class ServiceLauncher
 @Inject
-internal constructor(
+@VisibleForTesting
+constructor(
     private val context: Context,
     private val foregroundServiceClass: Class<out Service>,
     private val wiDiStatus: BroadcastStatus,
