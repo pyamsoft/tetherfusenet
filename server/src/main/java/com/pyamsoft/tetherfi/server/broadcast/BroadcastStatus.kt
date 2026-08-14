@@ -16,11 +16,11 @@
 
 package com.pyamsoft.tetherfi.server.broadcast
 
+import androidx.annotation.VisibleForTesting
 import com.pyamsoft.tetherfi.server.ServerInternalApi
 import com.pyamsoft.tetherfi.server.status.BaseStatusBroadcaster
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
-@ServerInternalApi
-class BroadcastStatus @Inject internal constructor() : BaseStatusBroadcaster()
+@Singleton @ServerInternalApi class BroadcastStatus @Inject
+@VisibleForTesting constructor() : BaseStatusBroadcaster()
