@@ -118,13 +118,6 @@ private fun newViewModeler(
         appScope = appScope,
     )
 
-/**
- * We can't cancel the scope and we can't just "join" on the job, so we reach in to the "next work" and join on that
- */
-private suspend fun awaitImmediateNextJobCompletion(scope: CoroutineScope) {
-  scope.coroutineContext.job.children.first().join()
-}
-
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class ProxyTileViewModelerTest {

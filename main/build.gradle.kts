@@ -43,6 +43,8 @@ android {
     buildConfig = false
     compose = true
   }
+
+  testOptions { unitTests { isIncludeAndroidResources = true } }
 }
 
 kotlin {
@@ -65,4 +67,9 @@ dependencies {
   implementation(project(":server"))
   implementation(project(":service"))
   implementation(project(":ui"))
+
+  testImplementation(libs.kotlin.test)
+  testImplementation(libs.kotlinx.coroutines.test)
+  testImplementation(libs.junit)
+  testImplementation(libs.robolectric)
 }
