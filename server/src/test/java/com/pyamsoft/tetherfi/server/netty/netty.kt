@@ -50,6 +50,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @ConsistentCopyVisibility
 data class IntHolder
@@ -310,15 +313,15 @@ internal object TestSetup {
       val nettyScope = CoroutineScope(context = Dispatchers.Default)
       try {
         // Before job starts, callbacks have not run
-        assert(openCount.get() == 0)
-        assert(closingCount.get() == 0)
-        assert(closedCount.get() == 0)
-        assert(errorCount.get() == 0)
+        assertEquals(openCount.get(), 0)
+        assertEquals(closingCount.get(), 0)
+        assertEquals(closedCount.get(), 0)
+        assertEquals(errorCount.get(), 0)
 
         val nettyJob = nettyScope.launch { proxy.start() }
 
         // Assert netty is alive
-        assert(nettyJob.isActive)
+        assertTrue(nettyJob.isActive)
 
         try {
           val nettyContext =
@@ -336,10 +339,10 @@ internal object TestSetup {
           nettyJob.cancelAndJoin()
         }
 
-        assert(!nettyJob.isActive)
+        assertFalse(nettyJob.isActive)
 
-        assert(openCount.get() == 1)
-        assert(closingCount.get() == 1)
+        assertEquals(openCount.get(), 1)
+        assertEquals(closingCount.get(), 1)
 
         // Full close event takes a little bit of time
         while (closedCount.get() <= 0) {
@@ -347,7 +350,7 @@ internal object TestSetup {
         }
 
         // Finally closed!
-        assert(closedCount.get() == 1)
+        assertEquals(closedCount.get(), 1)
 
         // Don't check errors
       } finally {

@@ -58,6 +58,11 @@ allprojects {
   // Apply Detekt Plugin here
   apply(plugin: libs.plugins.detekt.get().pluginId)
 
+  // Need to bump test heap for Robolectric
+  tasks.withType(Test).configureEach {
+    maxHeapSize = "4g"
+  }
+
   repositories {
     mavenLocal()
     gradlePluginPortal()

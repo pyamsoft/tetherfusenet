@@ -35,6 +35,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Test
+import kotlin.test.assertEquals
 
 class DelegatingHandlerTest {
 
@@ -95,7 +96,7 @@ class DelegatingHandlerTest {
           assertNotNull(read)
 
           val data = read.toString(Charsets.UTF_8)
-          assert(data == httpCommand)
+          assertEquals(data, httpCommand)
 
           assertNull(channel.pipeline().get(Http1ProxyHandler::class.java))
           assertNull(channel.pipeline().get(Socks4ProxyHandler::class.java))
