@@ -41,7 +41,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.job
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -63,8 +62,8 @@ private class FakeSharedProxy(initialStatus: RunningStatus = RunningStatus.NotRu
   override fun onStatusChanged(): Flow<RunningStatus> = statusFlow
 
   override suspend fun start(
-    lock: Locker.Lock,
-    connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
+      lock: Locker.Lock,
+      connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
   ) = Unit
 }
 
@@ -120,9 +119,9 @@ private fun newViewModeler(
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
-  // Need this here since Robolectric does not yet support API 37 (which is default otherwise)
-  minSdk = Build.VERSION_CODES.O,
-  maxSdk = Build.VERSION_CODES.BAKLAVA,
+    // Need this here since Robolectric does not yet support API 37 (which is default otherwise)
+    minSdk = Build.VERSION_CODES.O,
+    maxSdk = Build.VERSION_CODES.BAKLAVA,
 )
 class ProxyTileViewModelerTest {
 
@@ -230,47 +229,43 @@ class ProxyTileViewModelerTest {
   }
 
   private suspend fun blockerTest(blocker: HotspotStartBlocker, message: String) {
-      val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
-      val state = MutableProxyTileViewState()
-      val backingScope = CoroutineScope(Job())
-      val viewModeler =
+    val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
+    val state = MutableProxyTileViewState()
+    val backingScope = CoroutineScope(Job())
+    val viewModeler =
         newViewModeler(
-          state = state,
-          networkStatus = networkStatus,
-          requirements =
-            FakeHotspotRequirements(blockers = setOf(blocker)),
-          appScope = AppCoroutineScope(appScope = backingScope),
+            state = state,
+            networkStatus = networkStatus,
+            requirements = FakeHotspotRequirements(blockers = setOf(blocker)),
+            appScope = AppCoroutineScope(appScope = backingScope),
         )
-      var noActionCalled = false
+    var noActionCalled = false
 
-      viewModeler.handleStartProxy { noActionCalled = true }
-      awaitImmediateNextJobCompletion(backingScope)
+    viewModeler.handleStartProxy { noActionCalled = true }
+    awaitImmediateNextJobCompletion(backingScope)
 
-      assertFalse(noActionCalled)
-      val status = state.status.value
-      assertTrue(status is RunningStatus.HotspotError)
-      assertTrue(
-        status
-          .throwable
-          .message
-          .orEmpty()
-          .contains(
-            message,
-            ignoreCase = true,
-          )
-      )
-      val stopped = shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService
-      assertEquals(TestForegroundService::class.java.name, stopped?.component?.className)
-    }
+    assertFalse(noActionCalled)
+    val status = state.status.value
+    assertTrue(status is RunningStatus.HotspotError)
+    assertTrue(
+        status.throwable.message
+            .orEmpty()
+            .contains(
+                message,
+                ignoreCase = true,
+            )
+    )
+    val stopped = shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService
+    assertEquals(TestForegroundService::class.java.name, stopped?.component?.className)
+  }
 
   @Test
-  fun `Permission blockers`() =
-      runTest {
-        blockerTest(HotspotStartBlocker.PERMISSION, "permission")
+  fun `Permission blockers`() = runTest {
+    blockerTest(HotspotStartBlocker.PERMISSION, "permission")
 
-        // While not required this is a blocker unless the override exists.
-        blockerTest(HotspotStartBlocker.VPN, "vpn")
-      }
+    // While not required this is a blocker unless the override exists.
+    blockerTest(HotspotStartBlocker.VPN, "vpn")
+  }
 
   @Test
   fun `handleDismissed hides the tile`() {

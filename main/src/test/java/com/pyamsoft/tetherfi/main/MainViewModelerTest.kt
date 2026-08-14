@@ -41,6 +41,9 @@ import com.pyamsoft.tetherfi.service.ServiceLauncher
 import com.pyamsoft.tetherfi.service.prereq.HotspotRequirements
 import com.pyamsoft.tetherfi.service.prereq.HotspotStartBlocker
 import com.pyamsoft.tetherfi.ui.ServerPortTypes
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -57,16 +60,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 private class TestForegroundService : Service() {
   override fun onBind(intent: Intent?): IBinder? = null
 }
 
 private class FakeSharedProxy(initialStatus: RunningStatus = RunningStatus.NotRunning) :
-  SharedProxy {
+    SharedProxy {
   val statusFlow = MutableStateFlow(initialStatus)
 
   override fun getCurrentStatus(): RunningStatus = statusFlow.value
@@ -74,13 +74,13 @@ private class FakeSharedProxy(initialStatus: RunningStatus = RunningStatus.NotRu
   override fun onStatusChanged(): Flow<RunningStatus> = statusFlow
 
   override suspend fun start(
-    lock: Locker.Lock,
-    connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
+      lock: Locker.Lock,
+      connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
   ) = Unit
 }
 
 private class FakeBroadcastNetworkStatus(initialStatus: RunningStatus = RunningStatus.NotRunning) :
-  BroadcastNetworkStatus {
+    BroadcastNetworkStatus {
   val statusFlow = MutableStateFlow(initialStatus)
 
   override fun getCurrentStatus(): RunningStatus = statusFlow.value
@@ -88,10 +88,10 @@ private class FakeBroadcastNetworkStatus(initialStatus: RunningStatus = RunningS
   override fun onStatusChanged(): Flow<RunningStatus> = statusFlow
 
   override fun onGroupInfoChanged(): Flow<BroadcastNetworkStatus.GroupInfo> =
-    MutableStateFlow(BroadcastNetworkStatus.GroupInfo.Empty)
+      MutableStateFlow(BroadcastNetworkStatus.GroupInfo.Empty)
 
   override fun onConnectionInfoChanged(): Flow<BroadcastNetworkStatus.ConnectionInfo> =
-    MutableStateFlow(BroadcastNetworkStatus.ConnectionInfo.Empty)
+      MutableStateFlow(BroadcastNetworkStatus.ConnectionInfo.Empty)
 }
 
 private class FakeBroadcastNetworkUpdater : BroadcastNetworkUpdater {
@@ -143,68 +143,68 @@ private class FakeProxyPreferences : ProxyPreferences {
 
 private class FakeExpertPreferences : ExpertPreferences {
   override fun listenForSocketTimeout(): Flow<ServerSocketTimeout> =
-    MutableStateFlow(ServerSocketTimeout.Defaults.BALANCED)
+      MutableStateFlow(ServerSocketTimeout.Defaults.BALANCED)
 
   override fun setSocketTimeout(limit: ServerSocketTimeout) = Unit
 
   override fun listenForBroadcastType(): Flow<BroadcastType> =
-    MutableStateFlow(BroadcastType.entries.first())
+      MutableStateFlow(BroadcastType.entries.first())
 
   override fun setBroadcastType(type: BroadcastType) = Unit
 
   override fun listenForPreferredNetwork(): Flow<PreferredNetwork> =
-    MutableStateFlow(PreferredNetwork.entries.first())
+      MutableStateFlow(PreferredNetwork.entries.first())
 
   override fun setPreferredNetwork(network: PreferredNetwork) = Unit
 }
 
 private class FakeHotspotRequirements(
-  private val blockers: Collection<HotspotStartBlocker> = emptySet(),
+    private val blockers: Collection<HotspotStartBlocker> = emptySet(),
 ) : HotspotRequirements {
   override suspend fun blockers(): Collection<HotspotStartBlocker> = blockers
 }
 
 private fun newServiceLauncher(): ServiceLauncher =
-  ServiceLauncher(
-    context = RuntimeEnvironment.getApplication(),
-    foregroundServiceClass = TestForegroundService::class.java,
-    wiDiStatus = BroadcastStatus(),
-    proxyStatus = ProxyStatus(),
-  )
+    ServiceLauncher(
+        context = RuntimeEnvironment.getApplication(),
+        foregroundServiceClass = TestForegroundService::class.java,
+        wiDiStatus = BroadcastStatus(),
+        proxyStatus = ProxyStatus(),
+    )
 
 private fun newViewModeler(
-  state: MutableMainViewState = MutableMainViewState(),
-  proxy: SharedProxy = FakeSharedProxy(),
-  requirements: HotspotRequirements = FakeHotspotRequirements(),
-  networkStatus: BroadcastNetworkStatus = FakeBroadcastNetworkStatus(),
-  networkUpdater: BroadcastNetworkUpdater = FakeBroadcastNetworkUpdater(),
-  broadcastObserver: BroadcastObserver = FakeBroadcastObserver(),
-  inAppRatingPreferences: InAppRatingPreferences = FakeInAppRatingPreferences(),
-  proxyPreferences: ProxyPreferences = FakeProxyPreferences(),
-  expertPreferences: ExpertPreferences = FakeExpertPreferences(),
-  serviceLauncher: ServiceLauncher = newServiceLauncher(),
-  appScope: AppCoroutineScope = AppCoroutineScope(appScope = CoroutineScope(Job())),
+    state: MutableMainViewState = MutableMainViewState(),
+    proxy: SharedProxy = FakeSharedProxy(),
+    requirements: HotspotRequirements = FakeHotspotRequirements(),
+    networkStatus: BroadcastNetworkStatus = FakeBroadcastNetworkStatus(),
+    networkUpdater: BroadcastNetworkUpdater = FakeBroadcastNetworkUpdater(),
+    broadcastObserver: BroadcastObserver = FakeBroadcastObserver(),
+    inAppRatingPreferences: InAppRatingPreferences = FakeInAppRatingPreferences(),
+    proxyPreferences: ProxyPreferences = FakeProxyPreferences(),
+    expertPreferences: ExpertPreferences = FakeExpertPreferences(),
+    serviceLauncher: ServiceLauncher = newServiceLauncher(),
+    appScope: AppCoroutineScope = AppCoroutineScope(appScope = CoroutineScope(Job())),
 ): MainViewModeler =
-  MainViewModeler(
-    state = state,
-    proxy = proxy,
-    enforcer = createThreadEnforcer(debug = false),
-    requirements = requirements,
-    networkStatus = networkStatus,
-    networkUpdater = networkUpdater,
-    broadcastObserver = broadcastObserver,
-    inAppRatingPreferences = inAppRatingPreferences,
-    proxyPreferences = proxyPreferences,
-    expertPreferences = expertPreferences,
-    serviceLauncher = serviceLauncher,
-    appScope = appScope,
-  )
+    MainViewModeler(
+        state = state,
+        proxy = proxy,
+        enforcer = createThreadEnforcer(debug = false),
+        requirements = requirements,
+        networkStatus = networkStatus,
+        networkUpdater = networkUpdater,
+        broadcastObserver = broadcastObserver,
+        inAppRatingPreferences = inAppRatingPreferences,
+        proxyPreferences = proxyPreferences,
+        expertPreferences = expertPreferences,
+        serviceLauncher = serviceLauncher,
+        appScope = appScope,
+    )
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
-  // Need this here since Robolectric does not yet support API 37 (which is default otherwise)
-  minSdk = Build.VERSION_CODES.O,
-  maxSdk = Build.VERSION_CODES.BAKLAVA,
+    // Need this here since Robolectric does not yet support API 37 (which is default otherwise)
+    minSdk = Build.VERSION_CODES.O,
+    maxSdk = Build.VERSION_CODES.BAKLAVA,
 )
 class MainViewModelerTest {
 
@@ -214,12 +214,12 @@ class MainViewModelerTest {
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
     val backingScope = CoroutineScope(Job())
     val viewModeler =
-      newViewModeler(
-        state = state,
-        networkStatus = networkStatus,
-        requirements = FakeHotspotRequirements(blockers = emptySet()),
-        appScope = AppCoroutineScope(appScope = backingScope),
-      )
+        newViewModeler(
+            state = state,
+            networkStatus = networkStatus,
+            requirements = FakeHotspotRequirements(blockers = emptySet()),
+            appScope = AppCoroutineScope(appScope = backingScope),
+        )
 
     viewModeler.handleToggleProxy()
     awaitImmediateNextJobCompletion(backingScope)
@@ -235,13 +235,13 @@ class MainViewModelerTest {
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
     val backingScope = CoroutineScope(Job())
     val viewModeler =
-      newViewModeler(
-        state = state,
-        networkStatus = networkStatus,
-        requirements =
-          FakeHotspotRequirements(blockers = setOf(HotspotStartBlocker.PERMISSION)),
-        appScope = AppCoroutineScope(appScope = backingScope),
-      )
+        newViewModeler(
+            state = state,
+            networkStatus = networkStatus,
+            requirements =
+                FakeHotspotRequirements(blockers = setOf(HotspotStartBlocker.PERMISSION)),
+            appScope = AppCoroutineScope(appScope = backingScope),
+        )
 
     viewModeler.handleToggleProxy()
     awaitImmediateNextJobCompletion(backingScope)
@@ -257,11 +257,11 @@ class MainViewModelerTest {
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.Running)
     val backingScope = CoroutineScope(Job())
     val viewModeler =
-      newViewModeler(
-        state = state,
-        networkStatus = networkStatus,
-        appScope = AppCoroutineScope(appScope = backingScope),
-      )
+        newViewModeler(
+            state = state,
+            networkStatus = networkStatus,
+            appScope = AppCoroutineScope(appScope = backingScope),
+        )
 
     viewModeler.handleToggleProxy()
     awaitImmediateNextJobCompletion(backingScope)
@@ -274,27 +274,27 @@ class MainViewModelerTest {
   fun `handleToggleProxy resets error state when either status is in error`() = runTest {
     val state = MutableMainViewState()
     val networkStatus =
-      FakeBroadcastNetworkStatus(
-        initialStatus = RunningStatus.HotspotError(RuntimeException()),
-      )
+        FakeBroadcastNetworkStatus(
+            initialStatus = RunningStatus.HotspotError(RuntimeException()),
+        )
     val backingScope = CoroutineScope(Job())
     val wiDiStatus = BroadcastStatus()
     val proxyStatus = ProxyStatus()
     wiDiStatus.set(RunningStatus.HotspotError(RuntimeException()), clearError = true)
     val serviceLauncher =
-      ServiceLauncher(
-        context = RuntimeEnvironment.getApplication(),
-        foregroundServiceClass = TestForegroundService::class.java,
-        wiDiStatus = wiDiStatus,
-        proxyStatus = proxyStatus,
-      )
+        ServiceLauncher(
+            context = RuntimeEnvironment.getApplication(),
+            foregroundServiceClass = TestForegroundService::class.java,
+            wiDiStatus = wiDiStatus,
+            proxyStatus = proxyStatus,
+        )
     val viewModeler =
-      newViewModeler(
-        state = state,
-        networkStatus = networkStatus,
-        serviceLauncher = serviceLauncher,
-        appScope = AppCoroutineScope(appScope = backingScope),
-      )
+        newViewModeler(
+            state = state,
+            networkStatus = networkStatus,
+            serviceLauncher = serviceLauncher,
+            appScope = AppCoroutineScope(appScope = backingScope),
+        )
 
     viewModeler.handleToggleProxy()
     awaitImmediateNextJobCompletion(backingScope)
@@ -311,11 +311,11 @@ class MainViewModelerTest {
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.Starting)
     val backingScope = CoroutineScope(Job())
     val viewModeler =
-      newViewModeler(
-        state = state,
-        networkStatus = networkStatus,
-        appScope = AppCoroutineScope(appScope = backingScope),
-      )
+        newViewModeler(
+            state = state,
+            networkStatus = networkStatus,
+            appScope = AppCoroutineScope(appScope = backingScope),
+        )
 
     viewModeler.handleToggleProxy()
     awaitImmediateNextJobCompletion(backingScope)
@@ -379,11 +379,11 @@ class MainViewModelerTest {
   fun `handleOpenDialog QR_CODE shows dialog only when hotspot data is valid and running`() {
     val state = MutableMainViewState()
     state.group.value =
-      BroadcastNetworkStatus.GroupInfo.Connected(
-        ssid = "ssid",
-        password = "password",
-        clients = emptyList(),
-      )
+        BroadcastNetworkStatus.GroupInfo.Connected(
+            ssid = "ssid",
+            password = "password",
+            clients = emptyList(),
+        )
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.Running)
     val viewModeler = newViewModeler(state = state, networkStatus = networkStatus)
 
@@ -396,11 +396,11 @@ class MainViewModelerTest {
   fun `handleOpenDialog QR_CODE does not show dialog when not running`() {
     val state = MutableMainViewState()
     state.group.value =
-      BroadcastNetworkStatus.GroupInfo.Connected(
-        ssid = "ssid",
-        password = "password",
-        clients = emptyList(),
-      )
+        BroadcastNetworkStatus.GroupInfo.Connected(
+            ssid = "ssid",
+            password = "password",
+            clients = emptyList(),
+        )
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
     val viewModeler = newViewModeler(state = state, networkStatus = networkStatus)
 
@@ -415,14 +415,14 @@ class MainViewModelerTest {
     val viewModeler = newViewModeler(state = state)
 
     val simpleDialogs =
-      mapOf<MainViewDialogs, () -> Boolean>(
-        MainViewDialogs.SLOW_SPEED_HELP to { state.isShowingSlowSpeedHelp.value },
-        MainViewDialogs.SETUP_ERROR to { state.isShowingSetupError.value },
-        MainViewDialogs.NETWORK_ERROR to { state.isShowingNetworkError.value },
-        MainViewDialogs.HOTSPOT_ERROR to { state.isShowingHotspotError.value },
-        MainViewDialogs.BROADCAST_ERROR to { state.isShowingBroadcastError.value },
-        MainViewDialogs.PROXY_ERROR to { state.isShowingProxyError.value },
-      )
+        mapOf<MainViewDialogs, () -> Boolean>(
+            MainViewDialogs.SLOW_SPEED_HELP to { state.isShowingSlowSpeedHelp.value },
+            MainViewDialogs.SETUP_ERROR to { state.isShowingSetupError.value },
+            MainViewDialogs.NETWORK_ERROR to { state.isShowingNetworkError.value },
+            MainViewDialogs.HOTSPOT_ERROR to { state.isShowingHotspotError.value },
+            MainViewDialogs.BROADCAST_ERROR to { state.isShowingBroadcastError.value },
+            MainViewDialogs.PROXY_ERROR to { state.isShowingProxyError.value },
+        )
 
     for ((dialog, isShowing) in simpleDialogs) {
       viewModeler.handleOpenDialog(dialog)
@@ -440,11 +440,11 @@ class MainViewModelerTest {
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.Running)
     val networkUpdater = FakeBroadcastNetworkUpdater()
     val viewModeler =
-      newViewModeler(
-        state = state,
-        networkStatus = networkStatus,
-        networkUpdater = networkUpdater,
-      )
+        newViewModeler(
+            state = state,
+            networkStatus = networkStatus,
+            networkUpdater = networkUpdater,
+        )
 
     val bindScope = CoroutineScope(Job())
     try {
@@ -461,28 +461,28 @@ class MainViewModelerTest {
 
   @Test
   fun `bind refreshes connection info without closing dialogs when the hotspot turns on`() =
-    runTest {
-      val state = MutableMainViewState()
-      val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
-      val networkUpdater = FakeBroadcastNetworkUpdater()
-      val viewModeler =
-        newViewModeler(
-          state = state,
-          networkStatus = networkStatus,
-          networkUpdater = networkUpdater,
-        )
+      runTest {
+        val state = MutableMainViewState()
+        val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
+        val networkUpdater = FakeBroadcastNetworkUpdater()
+        val viewModeler =
+            newViewModeler(
+                state = state,
+                networkStatus = networkStatus,
+                networkUpdater = networkUpdater,
+            )
 
-      val bindScope = CoroutineScope(Job())
-      try {
-        viewModeler.bind(bindScope) {}
+        val bindScope = CoroutineScope(Job())
+        try {
+          viewModeler.bind(bindScope) {}
 
-        networkStatus.statusFlow.value = RunningStatus.Running
+          networkStatus.statusFlow.value = RunningStatus.Running
 
-        networkUpdater.updateCallCount.first { it == 1 }
-      } finally {
-        bindScope.cancel()
+          networkUpdater.updateCallCount.first { it == 1 }
+        } finally {
+          bindScope.cancel()
+        }
       }
-    }
 
   @Test
   fun `bind shows and clears the setup error dialog as wiDi status changes`() = runTest {

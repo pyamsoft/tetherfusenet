@@ -24,8 +24,8 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastStatus
 import com.pyamsoft.tetherfi.server.proxy.ProxyStatus
 import com.pyamsoft.tetherfi.server.status.RunningStatus
-import org.jetbrains.annotations.VisibleForTesting
 import javax.inject.Inject
+import org.jetbrains.annotations.VisibleForTesting
 
 class ServiceLauncher
 @Inject

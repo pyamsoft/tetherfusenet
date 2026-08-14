@@ -18,8 +18,10 @@ package com.pyamsoft.tetherfi.server.proxy
 
 import com.pyamsoft.tetherfi.server.ServerInternalApi
 import com.pyamsoft.tetherfi.server.status.BaseStatusBroadcaster
-import org.jetbrains.annotations.VisibleForTesting
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.jetbrains.annotations.VisibleForTesting
 
-@Singleton @ServerInternalApi class ProxyStatus @Inject @VisibleForTesting constructor() : BaseStatusBroadcaster()
+@Singleton
+@ServerInternalApi
+class ProxyStatus @Inject @VisibleForTesting constructor() : BaseStatusBroadcaster()

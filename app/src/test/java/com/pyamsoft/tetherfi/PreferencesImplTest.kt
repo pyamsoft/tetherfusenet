@@ -22,21 +22,21 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import com.pyamsoft.pydroid.core.createThreadEnforcer
 import com.pyamsoft.tetherfi.server.ServerDefaults
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 private class FakeDataStore(
-  initial: Preferences = emptyPreferences(),
-  private val dataError: Throwable? = null,
+    initial: Preferences = emptyPreferences(),
+    private val dataError: Throwable? = null,
 ) : DataStore<Preferences> {
 
   var current: Preferences = initial
@@ -71,13 +71,11 @@ private class FakeDataStore(
   }
 }
 
-/**
- * Must NOT use delay as we want "real waiting" instead of consuming a coroutine thread
- */
+/** Must NOT use delay as we want "real waiting" instead of consuming a coroutine thread */
 private inline fun awaitCondition(
-  timeout: Duration = 2.seconds,
-  interval: Duration = 10.milliseconds,
-  condition: () -> Boolean,
+    timeout: Duration = 2.seconds,
+    interval: Duration = 10.milliseconds,
+    condition: () -> Boolean,
 ) {
   val deadline = System.currentTimeMillis() + timeout.inWholeMilliseconds
   var c = condition()
@@ -97,27 +95,25 @@ class PreferencesImplTest {
 
   @Test
   fun `getPreference falls back to the default and persists it when the data flow throws`() =
-    runTest {
-      val dataStore = FakeDataStore(dataError = IllegalStateException())
-      val prefs =
-        PreferencesImpl(enforcer = createThreadEnforcer(debug = false), dataStore = dataStore)
+      runTest {
+        val dataStore = FakeDataStore(dataError = IllegalStateException())
+        val prefs =
+            PreferencesImpl(enforcer = createThreadEnforcer(debug = false), dataStore = dataStore)
 
-      val value = prefs.listenForSsidChanges().first()
+        val value = prefs.listenForSsidChanges().first()
 
-      assertEquals(ServerDefaults.WIFI_SSID, value)
-      assertEquals(ServerDefaults.WIFI_SSID, dataStore.current[PreferenceKeys.SSID])
-    }
+        assertEquals(ServerDefaults.WIFI_SSID, value)
+        assertEquals(ServerDefaults.WIFI_SSID, dataStore.current[PreferenceKeys.SSID])
+      }
 
   @Test
   fun `setPreference falls back to the fallback value when the primary write throws`() {
     val dataStore = FakeDataStore()
     val prefs =
-      PreferencesImpl(enforcer = createThreadEnforcer(debug = false), dataStore = dataStore)
+        PreferencesImpl(enforcer = createThreadEnforcer(debug = false), dataStore = dataStore)
 
     // Trigger the lazy "old pref migration" so that it doesn't capture the test error
-    @Suppress("UnusedFlow")
-    @SuppressLint("CheckResult")
-    prefs.listenForSsidChanges()
+    @Suppress("UnusedFlow") @SuppressLint("CheckResult") prefs.listenForSsidChanges()
 
     awaitCondition { dataStore.updateCalls >= 1 }
 

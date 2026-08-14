@@ -22,5 +22,6 @@ import com.pyamsoft.tetherfi.server.status.BaseStatusBroadcaster
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton @ServerInternalApi class BroadcastStatus @Inject
-@VisibleForTesting constructor() : BaseStatusBroadcaster()
+@Singleton
+@ServerInternalApi
+class BroadcastStatus @Inject @VisibleForTesting constructor() : BaseStatusBroadcaster()

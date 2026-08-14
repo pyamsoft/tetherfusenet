@@ -192,7 +192,6 @@ class ConnectionViewModelTest {
     assertEquals(client, viewModel.managingBandwidthLimit.value)
     viewModel.handleCloseManage(ConnectionViewManagement.BANDWIDTH_LIMIT)
     assertNull(viewModel.managingBandwidthLimit.value)
-
   }
 
   @Test

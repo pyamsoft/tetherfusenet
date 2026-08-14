@@ -29,13 +29,13 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelInboundHandler
 import io.netty.handler.codec.socksx.SocksVersion
 import java.nio.channels.ClosedChannelException
+import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Test
-import kotlin.test.assertEquals
 
 class DelegatingHandlerTest {
 

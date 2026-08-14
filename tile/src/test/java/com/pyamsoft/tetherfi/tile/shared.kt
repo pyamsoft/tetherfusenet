@@ -20,7 +20,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 
 /**
- * We can't cancel the scope and we can't just "join" on the job, so we reach in to the "next work" and join on that
+ * We can't cancel the scope and we can't just "join" on the job, so we reach in to the "next work"
+ * and join on that
  */
 internal suspend fun awaitImmediateNextJobCompletion(scope: CoroutineScope) {
   scope.coroutineContext.job.children.first().join()
