@@ -22,14 +22,14 @@ import androidx.core.content.getSystemService
 import androidx.core.location.LocationManagerCompat
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.requireNotNull
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.TweakPreferences
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class AndroidLocationChecker
@@ -37,6 +37,7 @@ internal class AndroidLocationChecker
 internal constructor(
     private val context: Context,
     private val preferences: TweakPreferences,
+    private val dispatchers: AppDispatchers,
 ) : LocationChecker {
 
   private val manager by lazy {
@@ -44,7 +45,7 @@ internal constructor(
   }
 
   override suspend fun isLocationOn(): Boolean =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         if (preferences.listenForStartIgnoreLocation().first()) {
           Timber.w { "Ignore Location start blocker" }
           return@withContext true

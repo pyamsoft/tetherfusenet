@@ -18,6 +18,7 @@ package com.pyamsoft.tetherfi.behavior
 
 import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.notify.NotifyGuard
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.ExpertPreferences
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.StatusPreferences
@@ -26,9 +27,6 @@ import com.pyamsoft.tetherfi.server.battery.BatteryOptimizer
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.server.network.PreferredNetwork
 import com.pyamsoft.tetherfi.service.foreground.NotificationRefreshEvent
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -38,6 +36,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 private class FakeTweakPreferences : TweakPreferences {
   val ignoreVpnCalls = mutableListOf<Boolean>()
@@ -106,6 +107,7 @@ private class FakeBatteryOptimizer(private val ignored: Boolean) : BatteryOptimi
 }
 
 private fun newViewModeler(
+  dispatchers: AppDispatchers,
     state: MutableBehaviorViewState = MutableBehaviorViewState(),
     notificationRefreshBus: EventBus<NotificationRefreshEvent> = EventBus.create(),
     tweakPreferences: TweakPreferences = FakeTweakPreferences(),
@@ -122,6 +124,7 @@ private fun newViewModeler(
         behaviorPreferences = behaviorPreferences,
         notifyGuard = notifyGuard,
         batteryOptimizer = batteryOptimizer,
+      dispatchers = dispatchers,
     )
 
 class BehaviorViewModelerTest {
@@ -129,7 +132,11 @@ class BehaviorViewModelerTest {
   @Test
   fun `bind loads preferences and marks loading state done`() = runTest {
     val state = MutableBehaviorViewState()
-    val viewModeler = newViewModeler(state = state)
+    val viewModeler = newViewModeler(
+      state = state,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     val bindScope = CoroutineScope(Job())
     try {
@@ -146,7 +153,11 @@ class BehaviorViewModelerTest {
   fun `bind is a no-op while already loading`() = runTest {
     val tweakPreferences = FakeTweakPreferences()
     val state = MutableBehaviorViewState()
-    val viewModeler = newViewModeler(state = state, tweakPreferences = tweakPreferences)
+    val viewModeler = newViewModeler(
+      state = state, tweakPreferences = tweakPreferences,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     val bindScope = CoroutineScope(Job())
     try {
@@ -167,7 +178,11 @@ class BehaviorViewModelerTest {
   fun `handleToggleTweak IGNORE_VPN flips state and writes pref`() {
     val state = MutableBehaviorViewState()
     val tweakPreferences = FakeTweakPreferences()
-    val viewModeler = newViewModeler(state = state, tweakPreferences = tweakPreferences)
+    val viewModeler = newViewModeler(
+      state = state, tweakPreferences = tweakPreferences,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleToggleTweak(BehaviorViewTweaks.IGNORE_VPN)
 
@@ -179,7 +194,11 @@ class BehaviorViewModelerTest {
   fun `handleToggleTweak IGNORE_LOCATION flips state and writes pref`() {
     val state = MutableBehaviorViewState()
     val tweakPreferences = FakeTweakPreferences()
-    val viewModeler = newViewModeler(state = state, tweakPreferences = tweakPreferences)
+    val viewModeler = newViewModeler(
+      state = state, tweakPreferences = tweakPreferences,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleToggleTweak(BehaviorViewTweaks.IGNORE_LOCATION)
 
@@ -190,7 +209,11 @@ class BehaviorViewModelerTest {
   @Test
   fun `handleToggleTweak KEEP_SCREEN_ON flips state`() {
     val state = MutableBehaviorViewState()
-    val viewModeler = newViewModeler(state = state)
+    val viewModeler = newViewModeler(
+      state = state,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleToggleTweak(BehaviorViewTweaks.KEEP_SCREEN_ON)
     assertTrue(state.isKeepScreenOn.value)
@@ -203,7 +226,11 @@ class BehaviorViewModelerTest {
   fun `handleToggleTweak SHUTDOWN_NO_CLIENTS flips state and pref`() {
     val state = MutableBehaviorViewState()
     val tweakPreferences = FakeTweakPreferences()
-    val viewModeler = newViewModeler(state = state, tweakPreferences = tweakPreferences)
+    val viewModeler = newViewModeler(
+      state = state, tweakPreferences = tweakPreferences,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleToggleTweak(BehaviorViewTweaks.SHUTDOWN_NO_CLIENTS)
 
@@ -215,7 +242,11 @@ class BehaviorViewModelerTest {
   fun `handleToggleTweak USE_WAKELOCK flips state and writes pref`() {
     val state = MutableBehaviorViewState()
     val tweakPreferences = FakeTweakPreferences()
-    val viewModeler = newViewModeler(state = state, tweakPreferences = tweakPreferences)
+    val viewModeler = newViewModeler(
+      state = state, tweakPreferences = tweakPreferences,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleToggleTweak(BehaviorViewTweaks.USE_WAKELOCK)
 
@@ -227,7 +258,11 @@ class BehaviorViewModelerTest {
   fun `handleUpdateSocketTimeout updates state and writes pref`() {
     val state = MutableBehaviorViewState()
     val expertPreferences = FakeExpertPreferences()
-    val viewModeler = newViewModeler(state = state, expertPreferences = expertPreferences)
+    val viewModeler = newViewModeler(
+      state = state, expertPreferences = expertPreferences,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleUpdateSocketTimeout(ServerSocketTimeout.Defaults.NICE)
 
@@ -241,7 +276,11 @@ class BehaviorViewModelerTest {
   @Test
   fun `handleOpenDialog and handleCloseDialog toggle SOCKET_TIMEOUT`() {
     val state = MutableBehaviorViewState()
-    val viewModeler = newViewModeler(state = state)
+    val viewModeler = newViewModeler(
+      state = state,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleOpenDialog(BehaviorViewDialogs.SOCKET_TIMEOUT)
     assertTrue(state.isShowingSocketTimeout.value)
@@ -261,6 +300,8 @@ class BehaviorViewModelerTest {
                 notificationRefreshBus = notificationRefreshBus,
                 notifyGuard = FakeNotifyGuard(true),
                 batteryOptimizer = FakeBatteryOptimizer(true),
+              // TODO(Peter): Do we need test dispatchers?
+              dispatchers = AppDispatchers.create(),
             )
 
         // Queue this up here

@@ -17,13 +17,14 @@
 package com.pyamsoft.tetherfi.service.tile
 
 import com.pyamsoft.pydroid.core.ThreadEnforcer
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.status.RunningStatus
-import kotlin.test.assertSame
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Test
+import kotlin.test.assertSame
 
 private object NoopThreadEnforcer : ThreadEnforcer {
   override fun assertOffMainThread() = Unit
@@ -56,10 +57,12 @@ private class FakeSharedProxy(private val status: RunningStatus) : SharedProxy {
 }
 
 private fun newHandler(
+  dispatchers: AppDispatchers,
     broadcastStatus: RunningStatus,
     proxyStatus: RunningStatus,
 ): TileHandler =
     TileHandler(
+      dispatchers = dispatchers,
         enforcer = NoopThreadEnforcer,
         networkStatus = FakeBroadcastNetworkStatus(broadcastStatus),
         proxy = FakeSharedProxy(proxyStatus),
@@ -72,7 +75,11 @@ class TileHandlerTest {
     val broadcastError = RunningStatus.HotspotError(RuntimeException("broadcast"))
     val proxyError = RunningStatus.ProxyError(RuntimeException("proxy"))
 
-    val handler = newHandler(broadcastStatus = broadcastError, proxyStatus = proxyError)
+    val handler = newHandler(
+      broadcastStatus = broadcastError, proxyStatus = proxyError,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     assertSame(broadcastError, handler.getOverallStatus())
   }
@@ -81,7 +88,11 @@ class TileHandlerTest {
   fun `proxy error is reported when broadcast has no error`() {
     val proxyError = RunningStatus.ProxyError(RuntimeException("proxy"))
 
-    val handler = newHandler(broadcastStatus = RunningStatus.Running, proxyStatus = proxyError)
+    val handler = newHandler(
+      broadcastStatus = RunningStatus.Running, proxyStatus = proxyError,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     assertSame(proxyError, handler.getOverallStatus())
   }
@@ -89,7 +100,11 @@ class TileHandlerTest {
   @Test
   fun `falls back to broadcast status when neither has an error`() {
     val handler =
-        newHandler(broadcastStatus = RunningStatus.Starting, proxyStatus = RunningStatus.Running)
+      newHandler(
+        broadcastStatus = RunningStatus.Starting, proxyStatus = RunningStatus.Running,
+        // TODO(Peter): Do we need test dispatchers?
+        dispatchers = AppDispatchers.create(),
+      )
 
     assertSame(RunningStatus.Starting, handler.getOverallStatus())
   }

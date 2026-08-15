@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<!--
+<?xml version="1.0" encoding="utf-8" ?><!--
   ~ Copyright 2026 pyamsoft
   ~ Copyright 2026 林博仁(Buo-ren Lin)
   ~
@@ -16,27 +15,15 @@
   ~ limitations under the License.
   -->
 <resources>
-  <string name="turn_on_wi_fi">開啟 Wi-Fi。</string>
-  <string
-    name="wifi_must_be_on"
-  >您不需要連接至一個網路，但是 Wi-Fi 必須開啟以使 %1$s 正常運作。</string>
-  <string name="connect_internet">連接至網際網路</string>
-  <string
-    name="connect_internet_options"
-  >您可以連接至 Wi-Fi 或是行動網路</string>
-  <string
-    name="optionally_configure_hotspot"
-  >您可以設定網路名稱、密碼、代理服務的通訊埠號與無線廣播的頻段。</string>
-  <string
-    name="optionally_configure_power"
-  >您另可以可選地選擇無視 Android 作業系統的電池最佳化設定，這樣會讓 %1$s 得以在所有時間以最大效能運行。這可能會使用更多的電池電量但是會顯著地改進您的網路體驗。</string>
-  <string name="start_the_hotspot">啟動 %1$s 的網路熱點。</string>
-  <string
-    name="check_hotspot_green"
-  >檢查廣播、代理、與網路熱點狀態皆顯示為正常且正在運行。</string>
+    <string name="turn_on_wi_fi">開啟 Wi-Fi。</string>
+    <string name="wifi_must_be_on">您不需要連接至一個網路，但是 Wi-Fi 必須開啟以使 %1$s 正常運作。</string>
+    <string name="connect_internet">連接至網際網路</string>
+    <string name="connect_internet_options">您可以連接至 Wi-Fi 或是行動網路</string>
+    <string name="optionally_configure_hotspot">您可以設定網路名稱、密碼、代理服務的通訊埠號與無線廣播的頻段。</string>
+    <string name="optionally_configure_power">您另可以可選地選擇無視 Android 作業系統的電池最佳化設定，這樣會讓 %1$s 得以在所有時間以最大效能運行。這可能會使用更多的電池電量但是會顯著地改進您的網路體驗。</string>
+    <string name="start_the_hotspot">啟動 %1$s 的網路熱點。</string>
+    <string name="check_hotspot_green">檢查廣播、代理、與網路熱點狀態皆顯示為正常且正在運行。</string>
 
-  <string name="connect_usb_ethernet">連接 USB 傳輸線至您的裝置</string>
-  <string
-    name="usb_tethering_must_be_on"
-  >您需要啟動您裝置的 USB 網路分享功能。您不需要有支援網路分享的資費方案，但是您必須要在 USB 網路分享模式（又稱 RNDIS）下 %1$s 才能正常運作。</string>
+    <string name="connect_usb_ethernet">連接 USB 傳輸線至您的裝置</string>
+    <string name="usb_tethering_must_be_on">您需要啟動您裝置的 USB 網路分享功能。您不需要有支援網路分享的資費方案，但是您必須要在 USB 網路分享模式（又稱 RNDIS）下 %1$s 才能正常運作。</string>
 </resources>

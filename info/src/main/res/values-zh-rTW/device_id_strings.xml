@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<!--
+<?xml version="1.0" encoding="utf-8" ?><!--
   ~ Copyright 2026 pyamsoft
   ~ Copyright 2026 林博仁(Buo-ren Lin)
   ~
@@ -16,6 +15,6 @@
   ~ limitations under the License.
   -->
 <resources>
-  <string name="this_device">本裝置</string>
-  <string name="other_device">其他裝置</string>
+    <string name="this_device">本裝置</string>
+    <string name="other_device">其他裝置</string>
 </resources>

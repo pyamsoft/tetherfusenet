@@ -21,6 +21,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import com.pyamsoft.pydroid.core.createThreadEnforcer
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.AppCoroutineScope
 import com.pyamsoft.tetherfi.core.InAppRatingPreferences
 import com.pyamsoft.tetherfi.server.ExpertPreferences
@@ -41,9 +42,6 @@ import com.pyamsoft.tetherfi.service.ServiceLauncher
 import com.pyamsoft.tetherfi.service.prereq.HotspotRequirements
 import com.pyamsoft.tetherfi.service.prereq.HotspotStartBlocker
 import com.pyamsoft.tetherfi.ui.ServerPortTypes
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -60,6 +58,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 private class TestForegroundService : Service() {
   override fun onBind(intent: Intent?): IBinder? = null
@@ -173,6 +174,7 @@ private fun newServiceLauncher(): ServiceLauncher =
     )
 
 private fun newViewModeler(
+  dispatchers: AppDispatchers,
     state: MutableMainViewState = MutableMainViewState(),
     proxy: SharedProxy = FakeSharedProxy(),
     requirements: HotspotRequirements = FakeHotspotRequirements(),
@@ -198,6 +200,7 @@ private fun newViewModeler(
         expertPreferences = expertPreferences,
         serviceLauncher = serviceLauncher,
         appScope = appScope,
+      dispatchers = dispatchers,
     )
 
 @RunWith(RobolectricTestRunner::class)
@@ -219,6 +222,8 @@ class MainViewModelerTest {
             networkStatus = networkStatus,
             requirements = FakeHotspotRequirements(blockers = emptySet()),
             appScope = AppCoroutineScope(appScope = backingScope),
+          // TODO(Peter): Do we need test dispatchers?
+          dispatchers = AppDispatchers.create(),
         )
 
     viewModeler.handleToggleProxy()
@@ -241,6 +246,8 @@ class MainViewModelerTest {
             requirements =
                 FakeHotspotRequirements(blockers = setOf(HotspotStartBlocker.PERMISSION)),
             appScope = AppCoroutineScope(appScope = backingScope),
+          // TODO(Peter): Do we need test dispatchers?
+          dispatchers = AppDispatchers.create(),
         )
 
     viewModeler.handleToggleProxy()
@@ -261,6 +268,8 @@ class MainViewModelerTest {
             state = state,
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
+          // TODO(Peter): Do we need test dispatchers?
+          dispatchers = AppDispatchers.create(),
         )
 
     viewModeler.handleToggleProxy()
@@ -294,6 +303,8 @@ class MainViewModelerTest {
             networkStatus = networkStatus,
             serviceLauncher = serviceLauncher,
             appScope = AppCoroutineScope(appScope = backingScope),
+          // TODO(Peter): Do we need test dispatchers?
+          dispatchers = AppDispatchers.create(),
         )
 
     viewModeler.handleToggleProxy()
@@ -315,6 +326,8 @@ class MainViewModelerTest {
             state = state,
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
+          // TODO(Peter): Do we need test dispatchers?
+          dispatchers = AppDispatchers.create(),
         )
 
     viewModeler.handleToggleProxy()
@@ -329,7 +342,11 @@ class MainViewModelerTest {
   fun `handleDismissBlocker removes only the dismissed blocker from state`() {
     val state = MutableMainViewState()
     state.startBlockers.value = setOf(HotspotStartBlocker.PERMISSION, HotspotStartBlocker.VPN)
-    val viewModeler = newViewModeler(state = state)
+    val viewModeler = newViewModeler(
+      state = state,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleDismissBlocker(HotspotStartBlocker.VPN)
 
@@ -341,7 +358,11 @@ class MainViewModelerTest {
   fun `handlePortChanged updates state and writes preferences`() {
     val state = MutableMainViewState()
     val proxyPreferences = FakeProxyPreferences()
-    val viewModeler = newViewModeler(state = state, proxyPreferences = proxyPreferences)
+    val viewModeler = newViewModeler(
+      state = state, proxyPreferences = proxyPreferences,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handlePortChanged(9999)
 
@@ -353,7 +374,11 @@ class MainViewModelerTest {
   fun `handleEnabledChanged HTTP flips only the http flag and writes prefs`() {
     val state = MutableMainViewState()
     val proxyPreferences = FakeProxyPreferences()
-    val viewModeler = newViewModeler(state = state, proxyPreferences = proxyPreferences)
+    val viewModeler = newViewModeler(
+      state = state, proxyPreferences = proxyPreferences,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleEnabledChanged(enabled = true, type = ServerPortTypes.HTTP)
 
@@ -366,7 +391,11 @@ class MainViewModelerTest {
   fun `handleEnabledChanged SOCKS flips only the socks flag and writes prefs`() {
     val state = MutableMainViewState()
     val proxyPreferences = FakeProxyPreferences()
-    val viewModeler = newViewModeler(state = state, proxyPreferences = proxyPreferences)
+    val viewModeler = newViewModeler(
+      state = state, proxyPreferences = proxyPreferences,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleEnabledChanged(enabled = true, type = ServerPortTypes.SOCKS)
 
@@ -385,7 +414,11 @@ class MainViewModelerTest {
             clients = emptyList(),
         )
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.Running)
-    val viewModeler = newViewModeler(state = state, networkStatus = networkStatus)
+    val viewModeler = newViewModeler(
+      state = state, networkStatus = networkStatus,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleOpenDialog(MainViewDialogs.QR_CODE)
 
@@ -402,7 +435,11 @@ class MainViewModelerTest {
             clients = emptyList(),
         )
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
-    val viewModeler = newViewModeler(state = state, networkStatus = networkStatus)
+    val viewModeler = newViewModeler(
+      state = state, networkStatus = networkStatus,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     viewModeler.handleOpenDialog(MainViewDialogs.QR_CODE)
 
@@ -412,7 +449,11 @@ class MainViewModelerTest {
   @Test
   fun `handleOpenDialog and handleCloseDialog toggle the simple dialog flags`() {
     val state = MutableMainViewState()
-    val viewModeler = newViewModeler(state = state)
+    val viewModeler = newViewModeler(
+      state = state,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     val simpleDialogs =
         mapOf<MainViewDialogs, () -> Boolean>(
@@ -444,6 +485,8 @@ class MainViewModelerTest {
             state = state,
             networkStatus = networkStatus,
             networkUpdater = networkUpdater,
+          // TODO(Peter): Do we need test dispatchers?
+          dispatchers = AppDispatchers.create(),
         )
 
     val bindScope = CoroutineScope(Job())
@@ -470,6 +513,8 @@ class MainViewModelerTest {
                 state = state,
                 networkStatus = networkStatus,
                 networkUpdater = networkUpdater,
+              // TODO(Peter): Do we need test dispatchers?
+              dispatchers = AppDispatchers.create(),
             )
 
         val bindScope = CoroutineScope(Job())
@@ -489,7 +534,11 @@ class MainViewModelerTest {
     val state = MutableMainViewState()
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
     val proxy = FakeSharedProxy(initialStatus = RunningStatus.NotRunning)
-    val viewModeler = newViewModeler(state = state, networkStatus = networkStatus, proxy = proxy)
+    val viewModeler = newViewModeler(
+      state = state, networkStatus = networkStatus, proxy = proxy,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     val bindScope = CoroutineScope(Job())
     try {

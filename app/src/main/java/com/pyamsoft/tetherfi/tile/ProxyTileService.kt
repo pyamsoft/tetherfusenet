@@ -28,20 +28,23 @@ import com.pyamsoft.pydroid.core.LintIgnoreSwallowedException
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.requireNotNull
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.ObjectGraph
 import com.pyamsoft.tetherfi.R
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.status.RunningStatus
 import com.pyamsoft.tetherfi.service.tile.TileHandler
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import javax.inject.Inject
 
 internal class ProxyTileService internal constructor() : TileService() {
 
+  @Inject
+  @JvmField
+  internal var dispatchers: AppDispatchers? = null
   @Inject @JvmField internal var tileHandler: TileHandler? = null
 
   @Inject @JvmField internal var tileActivityLauncher: ProxyTileActivityLauncher? = null
@@ -52,8 +55,9 @@ internal class ProxyTileService internal constructor() : TileService() {
 
   @CheckResult
   private fun makeScope(): CoroutineScope {
+    val dis = dispatchers.requireNotNull()
     return CoroutineScope(
-        context = SupervisorJob() + Dispatchers.Default + CoroutineName(this::class.java.name),
+      context = SupervisorJob() + dis.default + CoroutineName(this::class.java.name),
     )
   }
 
@@ -255,6 +259,8 @@ internal class ProxyTileService internal constructor() : TileService() {
     tileHandler = null
     tileActivityLauncher = null
     tileStatus = null
+
+    dispatchers = null
   }
 
   companion object {

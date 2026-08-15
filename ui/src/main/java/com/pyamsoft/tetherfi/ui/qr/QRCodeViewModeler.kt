@@ -21,13 +21,13 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.arch.AbstractViewModeler
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.pydroid.core.requireNotNull
-import javax.inject.Inject
-import javax.inject.Named
+import com.pyamsoft.pydroid.util.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import qrcode.QRCode
+import javax.inject.Inject
+import javax.inject.Named
 
 class QRCodeViewModeler
 @Inject
@@ -35,6 +35,7 @@ internal constructor(
     override val state: MutableQRCodeViewState,
     @Named("ssid") ssid: String,
     @Named("password") password: String,
+    private val dispatchers: AppDispatchers,
 ) : QRCodeViewState by state, AbstractViewModeler<QRCodeViewState>(state) {
 
   private val qrData by lazy {
@@ -46,12 +47,12 @@ internal constructor(
 
   @CheckResult
   private suspend fun renderQRCode(): Bitmap =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         QRCode.ofSquares().build(qrData).render().nativeImage().cast<Bitmap>().requireNotNull()
       }
 
   fun load(scope: CoroutineScope) {
-    scope.launch(context = Dispatchers.Default) { state.qrCode.value = renderQRCode() }
+    scope.launch(context = dispatchers.default) { state.qrCode.value = renderQRCode() }
   }
 
   companion object {

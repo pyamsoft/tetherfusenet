@@ -34,6 +34,7 @@ import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.requireNotNull
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
 import com.pyamsoft.tetherfi.core.AppDevEnvironment
 import com.pyamsoft.tetherfi.core.Timber
@@ -43,20 +44,19 @@ import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastServerImplementation
 import com.pyamsoft.tetherfi.server.broadcast.DelegatingBroadcastServer
 import com.pyamsoft.tetherfi.server.lock.Locker
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.InetAddress
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 @Singleton
 internal class WifiDirectServer
@@ -67,6 +67,7 @@ internal constructor(
     private val appContext: Context,
     private val appEnvironment: AppDevEnvironment,
     private val enforcer: ThreadEnforcer,
+    private val dispatchers: AppDispatchers,
 ) : BroadcastServerImplementation<Channel> {
 
   private val wifiP2PManager by lazy {
@@ -403,7 +404,7 @@ internal constructor(
       lock: Locker.Lock,
       connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
   ) {
-    scope.launch(context = Dispatchers.Default) { register.register() }
+    scope.launch(context = dispatchers.default) { register.register() }
   }
 
   class WifiDirectChannelCreationException :

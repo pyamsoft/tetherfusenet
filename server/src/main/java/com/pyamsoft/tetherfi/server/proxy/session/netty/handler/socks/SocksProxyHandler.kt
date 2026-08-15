@@ -19,6 +19,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreLongMethod
 import com.pyamsoft.pydroid.core.cast
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
@@ -39,10 +40,9 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
-import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.net.InetSocketAddress
 
 internal abstract class SocksProxyHandler<T : SocksMessage>
 internal constructor(
@@ -52,10 +52,12 @@ internal constructor(
     private val allowedClients: AllowedClients,
     private val blockedClients: BlockedClients,
     private val tcpSocketCreator: ChannelCreator,
+    dispatchers: AppDispatchers,
 ) :
     ProxyHandler(
         scope = scope,
         serverSocketTimeout = serverSocketTimeout,
+      dispatchers = dispatchers,
         isDebug = isDebug,
     ) {
 
@@ -66,6 +68,7 @@ internal constructor(
           allowedClients = allowedClients,
           blockedClients = blockedClients,
           serverSocketTimeout = serverSocketTimeout,
+        dispatchers = dispatchers,
       )
 
   protected fun handleSocksConnectRequest(ctx: ChannelHandlerContext, channelId: String, msg: T) {
@@ -142,7 +145,7 @@ internal constructor(
       return
     }
 
-    scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
+    scope.launch(context = dispatchers.io) { allowedClients.seen(client) }
 
     val connectSocket =
         tcpSocketCreator.connect(

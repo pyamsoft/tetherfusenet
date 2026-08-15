@@ -28,16 +28,13 @@ import androidx.annotation.CheckResult
 import androidx.core.content.ContextCompat
 import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.core.ThreadEnforcer
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastEvent
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastObserver
 import com.pyamsoft.tetherfi.server.event.ServerShutdownEvent
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
@@ -48,19 +45,23 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 @Singleton
 internal class WifiDirectReceiver
 @Inject
 internal constructor(
-    private val enforcer: ThreadEnforcer,
-    private val context: Context,
-    private val shutdownBus: EventBus<ServerShutdownEvent>,
+  private val enforcer: ThreadEnforcer,
+  private val context: Context,
+  private val shutdownBus: EventBus<ServerShutdownEvent>,
+  private val dispatchers: AppDispatchers,
 ) : BroadcastReceiver(), WifiDirectRegister, BroadcastObserver {
 
   private val receiverScope by lazy {
     CoroutineScope(
-        context = SupervisorJob() + Dispatchers.Default + CoroutineName(this::class.java.name),
+      context = SupervisorJob() + dispatchers.default + CoroutineName(this::class.java.name),
     )
   }
 
@@ -129,12 +130,12 @@ internal constructor(
   override suspend fun register() {
     val self = this
 
-    withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
       if (registered.compareAndSet(expect = false, update = true)) {
         try {
           // Hold this here until the coroutine is cancelled
           coroutineScope {
-            withContext(context = Dispatchers.Main) {
+            withContext(context = dispatchers.main) {
               Timber.d { "Register Wifi Receiver" }
               ContextCompat.registerReceiver(
                   context,
@@ -151,7 +152,7 @@ internal constructor(
         } finally {
           withContext(context = NonCancellable) {
             if (registered.compareAndSet(expect = true, update = false)) {
-              withContext(context = Dispatchers.Main) { unregister() }
+              withContext(context = dispatchers.main) { unregister() }
             }
           }
         }
@@ -164,7 +165,7 @@ internal constructor(
     val pending = goAsync()
 
     // Use Default here instead of ProxyDispatcher
-    receiverScope.launch(context = Dispatchers.Default) {
+    receiverScope.launch(context = dispatchers.default) {
       try {
         // In case this operation takes LONGER than 9.5 seconds,
         // (limit could be 30 according to API specifics, but we force 10 to be safe)
@@ -184,7 +185,7 @@ internal constructor(
           }
         }
       } finally {
-        withContext(context = Dispatchers.Main) {
+        withContext(context = dispatchers.main) {
           // Mark BR as finished
           pending.finish()
         }

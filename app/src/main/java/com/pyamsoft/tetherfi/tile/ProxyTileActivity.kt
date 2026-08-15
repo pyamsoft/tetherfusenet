@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pyamsoft.pydroid.arch.SaveStateDisposableEffect
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.requireNotNull
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.ObjectGraph
 import com.pyamsoft.tetherfi.R
 import com.pyamsoft.tetherfi.TFTheme
@@ -39,6 +40,9 @@ import javax.inject.Inject
 
 class ProxyTileActivity : ComponentActivity() {
 
+  @Inject
+  @JvmField
+  internal var dispatchers: AppDispatchers? = null
   @Inject @JvmField internal var viewModel: ThemeViewModeler? = null
 
   @CheckResult
@@ -63,6 +67,7 @@ class ProxyTileActivity : ComponentActivity() {
     ObjectGraph.ApplicationScope.retrieve(this).plusTile().create().inject(this)
 
     val vm = viewModel.requireNotNull()
+    val dis = dispatchers.requireNotNull()
     val appName = getString(R.string.app_name)
 
     val tileAction = getTileAction()
@@ -74,6 +79,7 @@ class ProxyTileActivity : ComponentActivity() {
       SaveStateDisposableEffect(vm)
 
       TFTheme(
+        dispatchers = dis,
           theme = theme,
           isMaterialYou = isMaterialYou,
       ) {
@@ -96,5 +102,6 @@ class ProxyTileActivity : ComponentActivity() {
   override fun onDestroy() {
     super.onDestroy()
     viewModel = null
+    dispatchers = null
   }
 }

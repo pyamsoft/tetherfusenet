@@ -16,6 +16,7 @@
 
 package com.pyamsoft.tetherfi.server
 
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.AppCoroutineScope
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastStatus
@@ -23,7 +24,6 @@ import com.pyamsoft.tetherfi.server.proxy.ProxyStatus
 import com.pyamsoft.tetherfi.server.status.RunningStatus
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
 
 @Singleton
 class ServerStopBroadcaster
@@ -32,16 +32,17 @@ internal constructor(
     private val appScope: AppCoroutineScope,
     private val proxy: ProxyStatus,
     private val wifiDirect: BroadcastStatus,
+    private val dispatchers: AppDispatchers,
 ) {
 
-  private suspend fun beforeStop() {
+  private fun beforeStop() {
     Timber.d { "Mark hotspot stopping" }
     proxy.set(RunningStatus.Stopping)
     wifiDirect.set(RunningStatus.Stopping)
   }
 
   fun prepareStop(onStopped: () -> Unit) {
-    appScope.launch(context = Dispatchers.Default) {
+    appScope.launch(context = dispatchers.default) {
       try {
         beforeStop()
       } finally {

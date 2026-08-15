@@ -18,17 +18,21 @@ package com.pyamsoft.tetherfi.server.prereq.permission
 
 import android.os.Build
 import com.pyamsoft.pydroid.core.createThreadEnforcer
-import kotlin.test.assertEquals
+import com.pyamsoft.pydroid.util.AppDispatchers
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import kotlin.test.assertEquals
 
-private fun newGuard(): PermissionGuardImpl =
+private fun newGuard(
+  dispatchers: AppDispatchers,
+): PermissionGuardImpl =
     PermissionGuardImpl(
         context = RuntimeEnvironment.getApplication(),
         enforcer = createThreadEnforcer(debug = false),
+      dispatchers = dispatchers,
     )
 
 @RunWith(RobolectricTestRunner::class)
@@ -38,7 +42,10 @@ class PermissionGuardImplTest {
   @Test
   @Config(sdk = [Build.VERSION_CODES.S_V2])
   fun `below S(2) requires legacy location permissions and no local network permission`() {
-    val guard = newGuard()
+    val guard = newGuard(
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    )
 
     assertEquals(
         listOf(
@@ -54,7 +61,11 @@ class PermissionGuardImplTest {
   @Test
   @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
   fun `T requires nearby wifi devices and no local network permission`() {
-    val guard = newGuard()
+    val guard = newGuard(
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+
+      )
 
     assertEquals(
         listOf(

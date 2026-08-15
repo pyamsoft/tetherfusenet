@@ -18,6 +18,7 @@ package com.pyamsoft.tetherfi.server.proxy.manager.factory
 
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.ThreadEnforcer
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ExpertPreferences
 import com.pyamsoft.tetherfi.server.ServerInternalApi
@@ -30,11 +31,10 @@ import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.manager.ProxyManager
 import com.pyamsoft.tetherfi.server.proxy.manager.netty.NettyDelegatingProxyManager
-import javax.inject.Inject
-import javax.inject.Named
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Named
 
 internal class DefaultProxyManagerFactory
 @Inject
@@ -47,6 +47,7 @@ internal constructor(
     private val blockedClients: BlockedClients,
     private val clientResolver: ClientResolver,
     private val allowedClients: AllowedClients,
+    private val dispatchers: AppDispatchers,
 ) : ProxyManager.Factory {
 
   @CheckResult
@@ -68,6 +69,7 @@ internal constructor(
         clientResolver = clientResolver,
         socketBinder = socketBinder,
         socketTagger = socketTagger,
+      dispatchers = dispatchers,
         isHttpEnabled = isHttpEnabled,
         isSocksEnabled = isSocksEnabled,
         serverSocketTimeout = socketTimeout,
@@ -83,7 +85,7 @@ internal constructor(
       isHttpEnabled: Boolean,
       isSocksEnabled: Boolean,
   ): ProxyManager =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         return@withContext when (type) {
           SharedProxy.Type.NETTY ->
               createNetty(

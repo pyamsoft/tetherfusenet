@@ -31,11 +31,11 @@ import androidx.lifecycle.lifecycleScope
 import com.pyamsoft.pydroid.arch.SaveStateDisposableEffect
 import com.pyamsoft.pydroid.ui.inject.rememberComposableInjector
 import com.pyamsoft.pydroid.ui.util.rememberNotNull
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.status.PermissionRequests
 import com.pyamsoft.tetherfi.status.PermissionResponse
 import com.pyamsoft.tetherfi.ui.ServerViewState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 /** Sets up permission request interaction */
 @Composable
 private fun RegisterPermissionRequests(
+  dispatchers: AppDispatchers,
     permissionResponseBus: Flow<PermissionResponse>,
     onRefreshSystemInfo: CoroutineScope.() -> Unit,
 ) {
@@ -53,8 +54,8 @@ private fun RegisterPermissionRequests(
       permissionResponseBus,
   ) {
     // See MainActivity
-    permissionResponseBus.flowOn(context = Dispatchers.Default).also { f ->
-      launch(context = Dispatchers.Default) {
+    permissionResponseBus.flowOn(context = dispatchers.default).also { f ->
+      launch(context = dispatchers.default) {
         f.collect { resp ->
           when (resp) {
             is PermissionResponse.RefreshNotification -> {
@@ -74,6 +75,7 @@ private fun RegisterPermissionRequests(
 /** On mount hooks */
 @Composable
 private fun MountHooks(
+  dispatchers: AppDispatchers,
     viewModel: BehaviorViewModeler,
     permissionResponseBus: Flow<PermissionResponse>,
     onRefreshConnection: () -> Unit,
@@ -86,6 +88,7 @@ private fun MountHooks(
 
   // As early as possible because of Lifecycle quirks
   RegisterPermissionRequests(
+    dispatchers = dispatchers,
       permissionResponseBus = permissionResponseBus,
       onRefreshSystemInfo = { handleRefreshSystemInfo(this) },
   )
@@ -127,6 +130,7 @@ fun BehaviorEntry(
   val viewModel = rememberNotNull(component.viewModel)
   val permissionRequestBus = rememberNotNull(component.permissionRequestBus)
   val permissionResponseBus = rememberNotNull(component.permissionResponseBus)
+  val dispatchers = rememberNotNull(component.dispatchers)
 
   // Use the LifecycleOwner.CoroutineScope (Activity usually)
   // so that the scope does not die because of navigation events
@@ -136,6 +140,7 @@ fun BehaviorEntry(
   // Hooks that run on mount
   MountHooks(
       viewModel = viewModel,
+    dispatchers = dispatchers,
       permissionResponseBus = permissionResponseBus,
       onRefreshConnection = onRefreshConnection,
   )
@@ -150,7 +155,7 @@ fun BehaviorEntry(
         onLaunchIntent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
       },
       onRequestNotificationPermission = {
-        lifecycleScope.launch(context = Dispatchers.Default) {
+        lifecycleScope.launch(context = dispatchers.default) {
           // See MainActivity
           permissionRequestBus.emit(PermissionRequests.Notification)
         }

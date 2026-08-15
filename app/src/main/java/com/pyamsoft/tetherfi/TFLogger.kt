@@ -20,10 +20,10 @@ import android.app.Application
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.ui.debug.InAppDebugLogger.Companion.createInAppDebugLogger
 import com.pyamsoft.pydroid.ui.debug.InAppDebugStatus
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.PYDroidLogger
 import com.pyamsoft.pydroid.util.isDebugMode
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,6 +31,7 @@ import timber.log.Timber
 
 fun Application.installLogger(
     scope: CoroutineScope,
+    dispatchers: AppDispatchers,
     inAppDebugStatus: InAppDebugStatus,
 ) {
   if (isDebugMode()) {
@@ -46,12 +47,14 @@ fun Application.installLogger(
 
   observeInAppDebugLogger(
       scope = scope,
+    dispatchers = dispatchers,
       inAppDebugStatus = inAppDebugStatus,
   )
 }
 
 private fun Application.observeInAppDebugLogger(
     scope: CoroutineScope,
+    dispatchers: AppDispatchers,
     inAppDebugStatus: InAppDebugStatus,
 ) {
   val self = this
@@ -68,15 +71,15 @@ private fun Application.observeInAppDebugLogger(
 
   val isPlanted = MutableStateFlow(false)
   inAppDebugStatus.listenForInAppDebuggingEnabled().also { f ->
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       f.collect { enabled ->
         if (enabled) {
           if (isPlanted.compareAndSet(expect = false, update = true)) {
-            withContext(context = Dispatchers.Main) { Timber.plant(tree) }
+            withContext(context = dispatchers.main) { Timber.plant(tree) }
           }
         } else {
           if (isPlanted.compareAndSet(expect = true, update = false)) {
-            withContext(context = Dispatchers.Main) { Timber.uproot(tree) }
+            withContext(context = dispatchers.main) { Timber.uproot(tree) }
           }
         }
       }

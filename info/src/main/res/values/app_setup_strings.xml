@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<!--
+<?xml version="1.0" encoding="utf-8" ?><!--
   ~ Copyright 2026 pyamsoft
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,29 +14,15 @@
   ~ limitations under the License.
   -->
 <resources>
-  <string name="turn_on_wi_fi">Turn on Wi-Fi.</string>
-  <string
-    name="wifi_must_be_on"
-  >You do not need to connect to a Network, but Wi-Fi must be on for %1$s to work.</string>
-  <string name="connect_internet">Connect to the Internet.</string>
-  <string
-    name="connect_internet_options"
-  >You can connect via Wi-Fi or Cellular Data</string>
-  <string
-    name="optionally_configure_hotspot"
-  >You can optionally configure the Name, Password, Proxy Port and Broadcast Frequency Band. This is not required, and the defaults will work fine for most people.</string>
-  <string
-    name="optionally_configure_power"
-  >You can optionally choose to ignore Android\'s system battery optimizations, which will allow %1$s to run at maximum performance at all times. This may use more battery but will significantly enhance your networking experience.</string>
-  <string name="start_the_hotspot">Start the %1$s Hotspot.</string>
-  <string
-    name="check_hotspot_green"
-  >Check that the Broadcast, Proxy, and Hotspot status are all up and running.</string>
+    <string name="turn_on_wi_fi">Turn on Wi-Fi.</string>
+    <string name="wifi_must_be_on">You do not need to connect to a Network, but Wi-Fi must be on for %1$s to work.</string>
+    <string name="connect_internet">Connect to the Internet.</string>
+    <string name="connect_internet_options">You can connect via Wi-Fi or Cellular Data</string>
+    <string name="optionally_configure_hotspot">You can optionally configure the Name, Password, Proxy Port and Broadcast Frequency Band. This is not required, and the defaults will work fine for most people.</string>
+    <string name="optionally_configure_power">You can optionally choose to ignore Android\'s system battery optimizations, which will allow %1$s to run at maximum performance at all times. This may use more battery but will significantly enhance your networking experience.</string>
+    <string name="start_the_hotspot">Start the %1$s Hotspot.</string>
+    <string name="check_hotspot_green">Check that the Broadcast, Proxy, and Hotspot status are all up and running.</string>
 
-  <string
-    name="connect_usb_ethernet"
-  >Connect a USB cable to your device</string>
-  <string
-    name="usb_tethering_must_be_on"
-  >You need to start USB Tethering on your device. You do not need to have a Tethering plan, but you need to be able to be in Tethering mode (also called RNDIS) for %1$s to work.</string>
+    <string name="connect_usb_ethernet">Connect a USB cable to your device</string>
+    <string name="usb_tethering_must_be_on">You need to start USB Tethering on your device. You do not need to have a Tethering plan, but you need to be able to be in Tethering mode (also called RNDIS) for %1$s to work.</string>
 </resources>

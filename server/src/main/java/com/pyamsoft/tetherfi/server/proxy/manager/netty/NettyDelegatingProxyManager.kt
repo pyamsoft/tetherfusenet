@@ -17,6 +17,7 @@
 package com.pyamsoft.tetherfi.server.proxy.manager.netty
 
 import android.net.Network
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
@@ -42,6 +43,7 @@ internal constructor(
     private val isHttpEnabled: Boolean,
     private val isSocksEnabled: Boolean,
     private val serverSocketTimeout: ServerSocketTimeout,
+    private val dispatchers: AppDispatchers,
 ) :
     NettyProxyManager(
         socketBinder = socketBinder,
@@ -66,6 +68,7 @@ internal constructor(
         socketTagger = socketTagger,
         isHttpEnabled = isHttpEnabled,
         isSocksEnabled = isSocksEnabled,
+        dispatchers = dispatchers,
         serverSocketTimeout = serverSocketTimeout,
         androidPreferredNetwork = network,
         onOpened = { launch { onOpened() } },

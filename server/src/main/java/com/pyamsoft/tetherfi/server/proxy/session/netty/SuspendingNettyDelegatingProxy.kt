@@ -17,6 +17,7 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty
 
 import android.net.Network
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
 import com.pyamsoft.tetherfi.server.clients.BlockedClients
@@ -35,6 +36,7 @@ class SuspendingNettyDelegatingProxy(
     androidPreferredNetwork: Network?,
     isHttpEnabled: Boolean,
     isSocksEnabled: Boolean,
+    dispatchers: AppDispatchers,
     serverSocketTimeout: ServerSocketTimeout,
     onOpened: () -> Unit,
     onClosing: () -> Unit,
@@ -55,6 +57,7 @@ class SuspendingNettyDelegatingProxy(
         isHttpEnabled = isHttpEnabled,
         isSocksEnabled = isSocksEnabled,
         serverSocketTimeout = serverSocketTimeout,
+        dispatchers = dispatchers,
         onOpened = onOpened,
         onClosing = onClosing,
         onClosed = onClosed,

@@ -14,5 +14,6 @@
   ~ limitations under the License.
   -->
 <resources>
-  <style name="Theme.TetherFuseNet" parent="@android:style/Theme" />
+
+    <style name="Theme.TetherFuseNet" parent="@android:style/Theme" />
 </resources>

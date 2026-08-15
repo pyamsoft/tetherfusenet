@@ -17,6 +17,7 @@
 package com.pyamsoft.tetherfi.connections
 
 import com.pyamsoft.pydroid.arch.AbstractViewModeler
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
 import com.pyamsoft.tetherfi.server.clients.BlockedClientTracker
@@ -25,10 +26,9 @@ import com.pyamsoft.tetherfi.server.clients.ClientEditor
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.clients.TransferAmount
 import com.pyamsoft.tetherfi.server.clients.key
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class ConnectionViewModel
 @Inject
@@ -38,17 +38,18 @@ internal constructor(
     private val blockedClients: BlockedClients,
     private val blockTracker: BlockedClientTracker,
     private val clientEditor: ClientEditor,
+    private val dispatchers: AppDispatchers,
 ) : ConnectionViewState by state, AbstractViewModeler<ConnectionViewState>(state) {
 
   fun bind(scope: CoroutineScope) {
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       allowedClients.listenForClients().collect { clients ->
         val list = clients.sortedBy { it.key() }
         state.connections.value = list
       }
     }
 
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       blockedClients.listenForBlocked().collect { state.blocked.value = it }
     }
   }
@@ -94,7 +95,7 @@ internal constructor(
       return
     }
 
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       Timber.d { "Update client nickName: $client $nickName" }
       clientEditor.updateNickName(client, nickName)
     }
@@ -107,7 +108,7 @@ internal constructor(
       return
     }
 
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       Timber.d { "Update client limit: $client $limit" }
       clientEditor.updateTransferLimit(client, limit)
     }
@@ -120,7 +121,7 @@ internal constructor(
       return
     }
 
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       Timber.d { "Update client brandwidth limit: $client $limit" }
       clientEditor.updateBandwidthLimit(client, limit)
     }

@@ -22,6 +22,7 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreLongMethod
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.cast
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
@@ -53,10 +54,9 @@ import io.netty.handler.codec.socksx.v5.Socks5Message
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
-import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.net.InetSocketAddress
 
 internal class Socks5ProxyHandler
 internal constructor(
@@ -68,6 +68,7 @@ internal constructor(
     private val allowedClients: AllowedClients,
     private val blockedClients: BlockedClients,
     private val udpSocketCreator: ChannelCreator,
+    dispatchers: AppDispatchers,
 ) :
     SocksProxyHandler<Socks5CommandRequest>(
         isDebug = isDebug,
@@ -76,6 +77,7 @@ internal constructor(
         blockedClients = blockedClients,
         tcpSocketCreator = tcpSocketCreator,
         serverSocketTimeout = serverSocketTimeout,
+      dispatchers = dispatchers,
     ) {
 
   private val udpRelayHandlerFactory =
@@ -86,6 +88,7 @@ internal constructor(
           blockedClients = blockedClients,
           clientResolver = clientResolver,
           serverSocketTimeout = serverSocketTimeout,
+        dispatchers = dispatchers,
       )
 
   @CheckResult
@@ -146,7 +149,7 @@ internal constructor(
       return
     }
 
-    scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
+    scope.launch(context = dispatchers.io) { allowedClients.seen(client) }
 
     Timber.d { "(${channelId}) $tag Register UDP for TCP control $tcpControlAddress" }
     val udpControl = udpSocketCreator.bind { ch ->
@@ -370,6 +373,7 @@ internal constructor(
         clientResolver: ClientResolver,
         tcpSocketCreator: ChannelCreator,
         serverSocketTimeout: ServerSocketTimeout,
+        dispatchers: AppDispatchers,
     ): HandlerFactory<ChannelCreator> {
       return { udpSocketCreator ->
         Socks5ProxyHandler(
@@ -381,6 +385,7 @@ internal constructor(
             tcpSocketCreator = tcpSocketCreator,
             udpSocketCreator = udpSocketCreator,
             serverSocketTimeout = serverSocketTimeout,
+          dispatchers = dispatchers,
         )
       }
     }

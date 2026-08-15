@@ -39,6 +39,7 @@ import com.pyamsoft.pydroid.ui.haptics.rememberHapticManager
 import com.pyamsoft.pydroid.ui.theme.Theming
 import com.pyamsoft.pydroid.ui.uri.LocalExternalUriHandler
 import com.pyamsoft.pydroid.ui.uri.rememberExternalUriHandler
+import com.pyamsoft.pydroid.util.AppDispatchers
 
 @Composable
 @ChecksSdkIntAtLeast(Build.VERSION_CODES.S)
@@ -199,14 +200,17 @@ private fun themeColors(
 
 @Composable
 fun ComponentActivity.TFTheme(
+  dispatchers: AppDispatchers,
     theme: Theming.Mode,
     isMaterialYou: Boolean,
     content: @Composable () -> Unit,
 ) {
   val self = this
 
+  val hapticManager = rememberHapticManager(
+    dispatchers = dispatchers,
+  )
   val isDarkMode = theme.getSystemDarkMode()
-  val hapticManager = rememberHapticManager()
   val uriHandler = rememberExternalUriHandler()
 
   PYDroidTheme(

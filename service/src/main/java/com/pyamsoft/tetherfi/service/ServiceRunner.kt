@@ -16,6 +16,7 @@
 
 package com.pyamsoft.tetherfi.service
 
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.core.notification.NotificationErrorLauncher
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastEvent
@@ -24,15 +25,14 @@ import com.pyamsoft.tetherfi.server.broadcast.BroadcastObserver
 import com.pyamsoft.tetherfi.service.foreground.ForegroundLauncher
 import com.pyamsoft.tetherfi.service.foreground.ForegroundWatcher
 import com.pyamsoft.tetherfi.service.notification.NotificationLauncher
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class ServiceRunner
@@ -45,6 +45,7 @@ internal constructor(
     private val foregroundLauncher: ForegroundLauncher,
     private val serviceLauncher: ServiceLauncher,
     private val networkUpdater: BroadcastNetworkUpdater,
+    private val dispatchers: AppDispatchers,
 ) {
   private val runningState = MutableStateFlow(false)
 
@@ -55,7 +56,7 @@ internal constructor(
     // without this block, we do not properly refresh
     // CONNECTION and GROUP info and can lead to errors
     broadcastObserver.listenNetworkEvents().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { event ->
           when (event) {
             is BroadcastEvent.ConnectionChanged -> {
@@ -75,7 +76,7 @@ internal constructor(
     }
 
     // Prepare proxy on create
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       foregroundWatcher.bind(
           onRefreshNotification = {
             Timber.d { "Refresh event received, start notification again" }
@@ -85,7 +86,7 @@ internal constructor(
             Timber.d { "Shutdown event received!" }
 
             // Ensure we are on the main thread
-            withContext(context = Dispatchers.Main) { serviceLauncher.stopForeground() }
+            withContext(context = dispatchers.main) { serviceLauncher.stopForeground() }
 
             // Show an error notification
             if (e != null) {
@@ -102,7 +103,7 @@ internal constructor(
     }
 
     // And Start the proxy Wifi Direct and our HTTP server
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       Timber.d { "Starting Proxy!" }
       foregroundLauncher.startProxy()
     }
@@ -121,7 +122,7 @@ internal constructor(
         return
       }
 
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         Timber.d { "Starting runner!" }
         try {
           startProxy()

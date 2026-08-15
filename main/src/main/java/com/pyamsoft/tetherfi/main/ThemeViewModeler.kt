@@ -23,18 +23,19 @@ import com.pyamsoft.pydroid.arch.AbstractViewModeler
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.ui.theme.Theming
-import javax.inject.Inject
+import com.pyamsoft.pydroid.util.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class ThemeViewModeler
 @Inject
 internal constructor(
     override val state: MutableThemeViewState,
     private val theming: Theming,
+    private val dispatchers: AppDispatchers,
 ) : ThemeViewState by state, AbstractViewModeler<ThemeViewState>(state) {
 
   override fun registerSaveState(
@@ -68,9 +69,9 @@ internal constructor(
         ) { mode, isMaterialYou ->
           emit(listOf(mode, isMaterialYou))
         }
-        .flowOn(context = Dispatchers.Default)
+      .flowOn(context = dispatchers.default)
         .also { f ->
-          scope.launch(context = Dispatchers.Default) {
+          scope.launch(context = dispatchers.default) {
             f.collect { list ->
               val mode = list[0].cast<Theming.Mode>().requireNotNull()
               val isMaterialYou = list[1].cast<Boolean>().requireNotNull()

@@ -24,17 +24,17 @@ import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.pydroid.notify.NotifyGuard
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.ExpertPreferences
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.StatusPreferences
 import com.pyamsoft.tetherfi.server.TweakPreferences
 import com.pyamsoft.tetherfi.server.battery.BatteryOptimizer
 import com.pyamsoft.tetherfi.service.foreground.NotificationRefreshEvent
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class BehaviorViewModeler
 @Inject
@@ -46,6 +46,7 @@ internal constructor(
     private val behaviorPreferences: StatusPreferences,
     private val notifyGuard: NotifyGuard,
     private val batteryOptimizer: BatteryOptimizer,
+    private val dispatchers: AppDispatchers,
 ) : BehaviorViewState by state, AbstractViewModeler<BehaviorViewState>(state) {
 
   private data class LoadConfig(
@@ -118,7 +119,7 @@ internal constructor(
 
     // Always populate the latest ignore value
     tweakPreferences.listenForStartIgnoreVpn().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { ignore ->
           s.isIgnoreVpn.value = ignore
 
@@ -133,7 +134,7 @@ internal constructor(
 
     // Always populate the latest ignore value
     tweakPreferences.listenForStartIgnoreLocation().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { ignore ->
           s.isIgnoreLocation.value = ignore
 
@@ -148,7 +149,7 @@ internal constructor(
 
     // Always populate the latest shutdown value
     tweakPreferences.listenForShutdownWithNoClients().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { shutdown ->
           s.isShutdownWithNoClients.value = shutdown
 
@@ -163,7 +164,7 @@ internal constructor(
 
     // Always populate the latest wakelock value
     tweakPreferences.listenForWakeLock().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { wakelock ->
           s.isHoldWakelock.value = wakelock
 
@@ -183,7 +184,7 @@ internal constructor(
 
     // Always populate the latest keep screen on value
     behaviorPreferences.listenForKeepScreenOn().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { timeout ->
           s.isKeepScreenOn.value = timeout
 
@@ -203,7 +204,7 @@ internal constructor(
 
     // Always populate the latest socket timeout value
     expertPreferences.listenForSocketTimeout().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { timeout ->
           s.socketTimeout.value = timeout
 
@@ -227,7 +228,7 @@ internal constructor(
       scope: CoroutineScope,
       onRefreshConnectionInfo: () -> Unit,
   ) {
-    scope.launch(context = Dispatchers.Main) {
+    scope.launch(context = dispatchers.main) {
       // Refresh system info
       handleRefreshSystemInfo(this)
 
@@ -237,7 +238,7 @@ internal constructor(
   }
 
   fun handleRefreshSystemInfo(scope: CoroutineScope) {
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       val s = state
 
       // Battery optimization

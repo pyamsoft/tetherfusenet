@@ -20,6 +20,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.TetherClient
@@ -29,15 +30,16 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.util.AttributeKey
 import io.netty.util.NetUtil
+import kotlinx.coroutines.CoroutineScope
 import java.io.IOException
 import java.net.InetAddress
-import kotlinx.coroutines.CoroutineScope
 
 internal abstract class ProxyHandler
 internal constructor(
     protected val isDebug: Boolean,
     protected val scope: CoroutineScope,
     protected val serverSocketTimeout: ServerSocketTimeout,
+    protected val dispatchers: AppDispatchers,
 ) : ChannelInboundHandlerAdapter() {
 
   @Volatile private var channelId = ""

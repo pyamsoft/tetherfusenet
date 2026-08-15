@@ -22,14 +22,12 @@ import androidx.activity.ComponentActivity
 import androidx.annotation.CheckResult
 import androidx.lifecycle.lifecycleScope
 import com.pyamsoft.pydroid.core.ThreadEnforcer
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.StatusPreferences
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.status.RunningStatus
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -37,6 +35,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class DefaultScreenOnHandler
@@ -46,6 +46,7 @@ internal constructor(
     private val preferences: StatusPreferences,
     private val networkStatus: BroadcastNetworkStatus,
     private val proxy: SharedProxy,
+    private val dispatchers: AppDispatchers,
 ) : ScreenOnHandler {
 
   private val mutex = Mutex()
@@ -70,11 +71,11 @@ internal constructor(
           .distinctUntilChanged()
 
   private suspend fun markScreenOn(window: Window) {
-    val isOn = mutex.withLock { isKeepScreenOnFlag(window) }
+    val isOn = mutex.withLock { isKeepScreenOnFlag(dispatchers, window) }
     if (!isOn) {
       mutex.withLock {
         Timber.d { "Marking Window as KEEP_SCREEN_ON" }
-        withContext(context = Dispatchers.Main) {
+        withContext(context = dispatchers.main) {
           window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
       }
@@ -84,14 +85,14 @@ internal constructor(
   private suspend fun clearScreenOn(window: Window) {
     mutex.withLock {
       Timber.d { "Clearing Window KEEP_SCREEN_ON" }
-      withContext(context = Dispatchers.Main) {
+      withContext(context = dispatchers.main) {
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
       }
     }
   }
 
   private suspend fun setScreenOnState(activity: ComponentActivity, enable: Boolean) {
-    val window = getWindow(activity)
+    val window = getWindow(dispatchers, activity)
     if (window == null) {
       Timber.w { "No window! Cannot set screen on state" }
       return
@@ -105,7 +106,7 @@ internal constructor(
   }
 
   override fun bind(activity: ComponentActivity) {
-    activity.lifecycleScope.launch(context = Dispatchers.Default) {
+    activity.lifecycleScope.launch(context = dispatchers.default) {
       resolveRunningFlow().also { f ->
         f.collect { isEnabled ->
           setScreenOnState(
@@ -127,20 +128,26 @@ internal constructor(
 
     @JvmStatic
     @CheckResult
-    private suspend fun getWindow(activity: ComponentActivity): Window? =
-        withContext(context = Dispatchers.Main) { activity.window }
+    private suspend fun getWindow(
+      dispatchers: AppDispatchers,
+      activity: ComponentActivity
+    ): Window? =
+      withContext(context = dispatchers.main) { activity.window }
 
     @JvmStatic
     @CheckResult
-    private suspend fun isKeepScreenOnFlag(window: Window): Boolean {
+    private suspend fun isKeepScreenOnFlag(
+      dispatchers: AppDispatchers,
+      window: Window
+    ): Boolean {
       val attrs: WindowManager.LayoutParams? =
-          withContext(context = Dispatchers.Main) { window.attributes }
+        withContext(context = dispatchers.main) { window.attributes }
       if (attrs == null) {
         Timber.w { "No window attrs! Cannot check screen flags" }
         return false
       }
 
-      val flags = withContext(context = Dispatchers.Main) { attrs.flags }
+      val flags = withContext(context = dispatchers.main) { attrs.flags }
       return isFlagSet(flags, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
   }

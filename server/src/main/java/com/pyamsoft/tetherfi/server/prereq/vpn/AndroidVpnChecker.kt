@@ -21,13 +21,13 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.core.content.getSystemService
 import com.pyamsoft.pydroid.core.requireNotNull
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.TweakPreferences
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class AndroidVpnChecker
@@ -35,6 +35,7 @@ internal class AndroidVpnChecker
 internal constructor(
     private val context: Context,
     private val preferences: TweakPreferences,
+    private val dispatchers: AppDispatchers,
 ) : VpnChecker {
 
   private val manager by lazy {
@@ -42,7 +43,7 @@ internal constructor(
   }
 
   override suspend fun isUsingVpn(): Boolean =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         if (preferences.listenForStartIgnoreVpn().first()) {
           Timber.w { "Ignore VPN start blocker" }
           return@withContext false

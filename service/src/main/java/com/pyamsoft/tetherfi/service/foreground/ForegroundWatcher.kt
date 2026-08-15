@@ -19,12 +19,12 @@ package com.pyamsoft.tetherfi.service.foreground
 import com.pyamsoft.pydroid.bus.EventConsumer
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.requireNotNull
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.event.ServerShutdownEvent
-import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 class ForegroundWatcher
 @Inject
@@ -32,22 +32,23 @@ internal constructor(
     private val enforcer: ThreadEnforcer,
     private val shutdownListener: EventConsumer<ServerShutdownEvent>,
     private val notificationRefreshListener: EventConsumer<NotificationRefreshEvent>,
+    private val dispatchers: AppDispatchers,
 ) {
 
   suspend fun bind(
       onShutdownService: suspend (Throwable?) -> Unit,
       onRefreshNotification: suspend () -> Unit,
   ) =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         val scope = this
 
         // Watch everything else as the parent
-        scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
           enforcer.assertOffMainThread()
 
           // When shutdown events are received, we kill the service
           shutdownListener.requireNotNull().also { f ->
-            launch(context = Dispatchers.Default) {
+            launch(context = dispatchers.default) {
               f.collect {
                 Timber.d { "Shutdown event received!" }
                 onShutdownService(it.throwable)
@@ -57,7 +58,7 @@ internal constructor(
 
           // Watch for notification refresh
           notificationRefreshListener.requireNotNull().also { f ->
-            launch(context = Dispatchers.Default) {
+            launch(context = dispatchers.default) {
               f.collect {
                 Timber.d { "Refresh notification" }
                 onRefreshNotification()

@@ -20,6 +20,7 @@ package com.pyamsoft.tetherfi.status
 
 import com.pyamsoft.pydroid.arch.AbstractViewModeler
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.ExpertPreferences
 import com.pyamsoft.tetherfi.server.ProxyPreferences
 import com.pyamsoft.tetherfi.server.ServerDefaults
@@ -27,20 +28,20 @@ import com.pyamsoft.tetherfi.server.ServerNetworkBand
 import com.pyamsoft.tetherfi.server.WifiPreferences
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.server.network.PreferredNetwork
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class StatusViewModeler
 @Inject
 internal constructor(
-    override val state: MutableStatusViewState,
-    private val expertPreferences: ExpertPreferences,
-    private val proxyPreferences: ProxyPreferences,
-    private val wifiPreferences: WifiPreferences,
+  override val state: MutableStatusViewState,
+  private val expertPreferences: ExpertPreferences,
+  private val proxyPreferences: ProxyPreferences,
+  private val wifiPreferences: WifiPreferences,
+  private val dispatchers: AppDispatchers,
 ) : StatusViewState by state, AbstractViewModeler<StatusViewState>(state) {
 
   private data class LoadConfig(
@@ -96,7 +97,7 @@ internal constructor(
     val scope = this
 
     proxyPreferences.listenForHttpEnabledChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         // We don't need to do anything with this, we just need to be sure
         // that some value has loaded.
         // Actual values are provided by ServerViewState
@@ -108,7 +109,7 @@ internal constructor(
     }
 
     proxyPreferences.listenForSocksEnabledChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         // We don't need to do anything with this, we just need to be sure
         // that some value has loaded.
         // Actual values are provided by ServerViewState
@@ -120,7 +121,7 @@ internal constructor(
     }
 
     proxyPreferences.listenForPortChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         // We don't need to do anything with this, we just need to be sure
         // that some value has loaded.
         // Actual values are provided by ServerViewState
@@ -138,7 +139,7 @@ internal constructor(
 
     // Only pull once since after this point, the state will be driven by the input
     wifiPreferences.listenForSsidChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         // Only pull once since after this point, the state will be driven by the input
         val ssid = f.first()
 
@@ -152,7 +153,7 @@ internal constructor(
 
     // Only pull once since after this point, the state will be driven by the input
     wifiPreferences.listenForPasswordChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         // Only pull once since after this point, the state will be driven by the input
         val password = f.first()
 
@@ -165,7 +166,7 @@ internal constructor(
     }
 
     wifiPreferences.listenForNetworkBandChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { band ->
           // Write the band to save it to Preferences
           handleChangeBand(band)

@@ -18,6 +18,7 @@ package com.pyamsoft.tetherfi.tile
 
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.arch.AbstractViewModeler
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.AppCoroutineScope
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.status.RunningStatus
@@ -25,9 +26,8 @@ import com.pyamsoft.tetherfi.service.ServiceLauncher
 import com.pyamsoft.tetherfi.service.prereq.HotspotRequirements
 import com.pyamsoft.tetherfi.service.prereq.HotspotStartBlocker
 import com.pyamsoft.tetherfi.service.tile.TileHandler
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import javax.inject.Inject
 
 class ProxyTileViewModeler
 @Inject
@@ -37,6 +37,7 @@ internal constructor(
     private val serviceLauncher: ServiceLauncher,
     private val requirements: HotspotRequirements,
     private val appScope: AppCoroutineScope,
+    private val dispatchers: AppDispatchers,
 ) : ProxyTileViewState by state, AbstractViewModeler<ProxyTileViewState>(state) {
 
   init {
@@ -125,7 +126,7 @@ internal constructor(
   }
 
   fun handleToggleProxy(onNoAction: suspend () -> Unit) {
-    appScope.launch(context = Dispatchers.Default) {
+    appScope.launch(context = dispatchers.default) {
       val acted = handleProxyAction(action = ProxyTileAction.TOGGLE)
       if (!acted) {
         onNoAction()
@@ -134,7 +135,7 @@ internal constructor(
   }
 
   fun handleStartProxy(onNoAction: suspend () -> Unit) {
-    appScope.launch(context = Dispatchers.Default) {
+    appScope.launch(context = dispatchers.default) {
       val acted = handleProxyAction(action = ProxyTileAction.START)
       if (!acted) {
         onNoAction()
@@ -143,7 +144,7 @@ internal constructor(
   }
 
   fun handleStopProxy(onNoAction: suspend () -> Unit) {
-    appScope.launch(context = Dispatchers.Default) {
+    appScope.launch(context = dispatchers.default) {
       val acted = handleProxyAction(action = ProxyTileAction.STOP)
       if (!acted) {
         onNoAction()

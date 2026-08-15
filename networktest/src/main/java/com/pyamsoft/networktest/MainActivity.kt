@@ -30,11 +30,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.Enumeration
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
@@ -57,17 +57,17 @@ class MainActivity : ComponentActivity() {
               }
 
               val addresses =
-                  iface.inetAddresses
-                      .asSequence()
-                      // TODO(Peter): Support both IPv4 and IPv6
-                      //              Right now UDP CONNECT does not fully support IPv6 tunneling
-                      //              All upstream requests are converted to IPv4
-                      .filter { it is Inet4Address }
-                      .filterNot { it.isLoopbackAddress }
-                      .mapIndexed { index, addr ->
-                        addr.hostName.orEmpty().ifBlank { "$index: MISSING HOSTNAME" }
-                      }
-                      .toList()
+                iface.inetAddresses
+                  .asSequence()
+                  // TODO(Peter): Support both IPv4 and IPv6
+                  //              Right now UDP CONNECT does not fully support IPv6 tunneling
+                  //              All upstream requests are converted to IPv4
+                  .filter { it is Inet4Address }
+                  .filterNot { it.isLoopbackAddress }
+                  .mapIndexed { index, addr ->
+                    addr.hostName.orEmpty().ifBlank { "$index: MISSING HOSTNAME" }
+                  }
+                  .toList()
 
               if (addresses.isEmpty()) {
                 continue
@@ -82,15 +82,17 @@ class MainActivity : ComponentActivity() {
 
       Scaffold { pv ->
         LazyColumn(
-            modifier = Modifier.padding(pv),
+          modifier = Modifier.padding(pv),
         ) {
           items(
-              items = lines,
+            items = lines,
           ) { line ->
             Text(
-                modifier = Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
-                text = line,
-                style = MaterialTheme.typography.bodyMedium,
+              modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .padding(bottom = 8.dp),
+              text = line,
+              style = MaterialTheme.typography.bodyMedium,
             )
           }
         }

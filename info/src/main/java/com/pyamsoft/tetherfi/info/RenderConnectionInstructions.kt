@@ -39,78 +39,78 @@ private enum class ConnectionInstructionContentTypes {
 }
 
 internal fun LazyListScope.renderConnectionInstructions(
-    itemModifier: Modifier = Modifier,
-    appName: String,
-    state: InfoViewState,
-    serverViewState: ServerViewState,
-    onShowQRCode: () -> Unit,
-    onTogglePasswordVisibility: () -> Unit,
-    onShowSlowSpeedHelp: () -> Unit,
-    onToggleShowOptions: (InfoViewOptionsType) -> Unit,
+  itemModifier: Modifier = Modifier,
+  appName: String,
+  state: InfoViewState,
+  serverViewState: ServerViewState,
+  onShowQRCode: () -> Unit,
+  onTogglePasswordVisibility: () -> Unit,
+  onShowSlowSpeedHelp: () -> Unit,
+  onToggleShowOptions: (InfoViewOptionsType) -> Unit,
 ) {
   item(
-      contentType = ConnectionInstructionContentTypes.SPACER,
+    contentType = ConnectionInstructionContentTypes.SPACER,
   ) {
     Spacer(
-        modifier = Modifier.height(MaterialTheme.keylines.content),
+      modifier = Modifier.height(MaterialTheme.keylines.content),
     )
   }
 
   renderDeviceIdentifiers(
-      itemModifier = itemModifier,
+    itemModifier = itemModifier,
   )
 
   item(
-      contentType = ConnectionInstructionContentTypes.SPACER,
+    contentType = ConnectionInstructionContentTypes.SPACER,
   ) {
     Spacer(
-        modifier = Modifier.height(MaterialTheme.keylines.content),
+      modifier = Modifier.height(MaterialTheme.keylines.content),
     )
   }
 
   renderAppSetup(
-      itemModifier = itemModifier,
-      appName = appName,
-      serverViewState = serverViewState,
+    itemModifier = itemModifier,
+    appName = appName,
+    serverViewState = serverViewState,
   )
 
   item(
-      contentType = ConnectionInstructionContentTypes.SPACER,
+    contentType = ConnectionInstructionContentTypes.SPACER,
   ) {
     Spacer(
-        modifier = Modifier.height(MaterialTheme.keylines.content),
+      modifier = Modifier.height(MaterialTheme.keylines.content),
     )
   }
 
   renderDeviceSetup(
-      itemModifier = itemModifier,
-      appName = appName,
-      state = state,
-      serverViewState = serverViewState,
-      onTogglePasswordVisibility = onTogglePasswordVisibility,
-      onShowQRCode = onShowQRCode,
-      onToggleShowOptions = onToggleShowOptions,
+    itemModifier = itemModifier,
+    appName = appName,
+    state = state,
+    serverViewState = serverViewState,
+    onTogglePasswordVisibility = onTogglePasswordVisibility,
+    onShowQRCode = onShowQRCode,
+    onToggleShowOptions = onToggleShowOptions,
   )
 
   item(
-      contentType = ConnectionInstructionContentTypes.SPACER,
+    contentType = ConnectionInstructionContentTypes.SPACER,
   ) {
     Spacer(
-        modifier = Modifier.height(MaterialTheme.keylines.content),
+      modifier = Modifier.height(MaterialTheme.keylines.content),
     )
   }
 
   renderConnectionComplete(
-      itemModifier = itemModifier,
-      appName = appName,
-      onShowSlowSpeedHelp = onShowSlowSpeedHelp,
+    itemModifier = itemModifier,
+    appName = appName,
+    onShowSlowSpeedHelp = onShowSlowSpeedHelp,
   )
 
   item(
-      contentType = ConnectionInstructionContentTypes.SPACER,
+    contentType = ConnectionInstructionContentTypes.SPACER,
   ) {
     Spacer(
-        modifier = Modifier.height(MaterialTheme.keylines.content),
+      modifier = Modifier.height(MaterialTheme.keylines.content),
     )
   }
 }
@@ -118,20 +118,20 @@ internal fun LazyListScope.renderConnectionInstructions(
 @TestOnly
 @Composable
 private fun PreviewConnectionInstructions(
-    state: InfoViewState,
-    server: TestServerState,
-    http: Boolean,
-    socks: Boolean,
+  state: InfoViewState,
+  server: TestServerState,
+  http: Boolean,
+  socks: Boolean,
 ) {
   LazyColumn {
     renderConnectionInstructions(
-        appName = "TEST",
-        serverViewState = makeTestServerState(server, http, socks),
-        state = state,
-        onTogglePasswordVisibility = {},
-        onShowQRCode = {},
-        onShowSlowSpeedHelp = {},
-        onToggleShowOptions = {},
+      appName = "TEST",
+      serverViewState = makeTestServerState(server, http, socks),
+      state = state,
+      onTogglePasswordVisibility = {},
+      onShowQRCode = {},
+      onShowSlowSpeedHelp = {},
+      onToggleShowOptions = {},
     )
   }
 }
@@ -140,10 +140,10 @@ private fun PreviewConnectionInstructions(
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsEmptyHttp() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState(),
-      server = TestServerState.EMPTY,
-      http = true,
-      socks = false,
+    state = MutableInfoViewState(),
+    server = TestServerState.EMPTY,
+    http = true,
+    socks = false,
   )
 }
 
@@ -151,10 +151,10 @@ private fun PreviewConnectionInstructionsEmptyHttp() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsActiveHttp() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState(),
-      server = TestServerState.CONNECTED,
-      http = true,
-      socks = false,
+    state = MutableInfoViewState(),
+    server = TestServerState.CONNECTED,
+    http = true,
+    socks = false,
   )
 }
 
@@ -162,10 +162,10 @@ private fun PreviewConnectionInstructionsActiveHttp() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsActivePasswordHttp() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
-      server = TestServerState.CONNECTED,
-      http = true,
-      socks = false,
+    state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+    server = TestServerState.CONNECTED,
+    http = true,
+    socks = false,
   )
 }
 
@@ -173,10 +173,10 @@ private fun PreviewConnectionInstructionsActivePasswordHttp() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsEmptySocks() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState(),
-      server = TestServerState.EMPTY,
-      http = false,
-      socks = true,
+    state = MutableInfoViewState(),
+    server = TestServerState.EMPTY,
+    http = false,
+    socks = true,
   )
 }
 
@@ -184,10 +184,10 @@ private fun PreviewConnectionInstructionsEmptySocks() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsActiveSocks() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState(),
-      server = TestServerState.CONNECTED,
-      http = false,
-      socks = true,
+    state = MutableInfoViewState(),
+    server = TestServerState.CONNECTED,
+    http = false,
+    socks = true,
   )
 }
 
@@ -195,10 +195,10 @@ private fun PreviewConnectionInstructionsActiveSocks() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsActivePasswordSocks() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
-      server = TestServerState.CONNECTED,
-      http = false,
-      socks = true,
+    state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+    server = TestServerState.CONNECTED,
+    http = false,
+    socks = true,
   )
 }
 
@@ -206,10 +206,10 @@ private fun PreviewConnectionInstructionsActivePasswordSocks() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsEmptyBoth() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState(),
-      server = TestServerState.EMPTY,
-      http = true,
-      socks = true,
+    state = MutableInfoViewState(),
+    server = TestServerState.EMPTY,
+    http = true,
+    socks = true,
   )
 }
 
@@ -217,10 +217,10 @@ private fun PreviewConnectionInstructionsEmptyBoth() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsActiveBoth() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState(),
-      server = TestServerState.CONNECTED,
-      http = true,
-      socks = true,
+    state = MutableInfoViewState(),
+    server = TestServerState.CONNECTED,
+    http = true,
+    socks = true,
   )
 }
 
@@ -228,9 +228,9 @@ private fun PreviewConnectionInstructionsActiveBoth() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsActivePasswordBoth() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
-      server = TestServerState.CONNECTED,
-      http = true,
-      socks = true,
+    state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+    server = TestServerState.CONNECTED,
+    http = true,
+    socks = true,
   )
 }

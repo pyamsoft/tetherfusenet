@@ -19,6 +19,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreLongMethod
 import com.pyamsoft.pydroid.core.cast
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
@@ -39,8 +40,8 @@ import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5ServerEncoder
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
-import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
+import java.net.InetSocketAddress
 
 internal class ProtocolDelegatingHandler
 private constructor(
@@ -50,6 +51,7 @@ private constructor(
     private val allowedClients: AllowedClients,
     private val clientResolver: ClientResolver,
     private val serverSocketTimeout: ServerSocketTimeout,
+    private val dispatchers: AppDispatchers,
     private val tcpSocketCreator: ChannelCreator,
     // IF this is NULL, SOCKS is not enabled
     private val udpSocketCreator: ChannelCreator?,
@@ -64,6 +66,7 @@ private constructor(
           blockedClients = blockedClients,
           tcpSocketCreator = tcpSocketCreator,
           serverSocketTimeout = serverSocketTimeout,
+        dispatchers = dispatchers,
       )
 
   private val socks4HandlerFactory =
@@ -74,6 +77,7 @@ private constructor(
           blockedClients = blockedClients,
           tcpSocketCreator = tcpSocketCreator,
           serverSocketTimeout = serverSocketTimeout,
+        dispatchers = dispatchers,
       )
 
   private val socks5HandlerFactory =
@@ -85,6 +89,7 @@ private constructor(
           clientResolver = clientResolver,
           tcpSocketCreator = tcpSocketCreator,
           serverSocketTimeout = serverSocketTimeout,
+        dispatchers = dispatchers,
       )
 
   @LintIgnoreLongMethod
@@ -235,6 +240,7 @@ private constructor(
         allowedClients: AllowedClients,
         blockedClients: BlockedClients,
         clientResolver: ClientResolver,
+        dispatchers: AppDispatchers,
         isDebug: Boolean,
     ): HandlerFactory<Params> {
       return { params ->
@@ -246,6 +252,7 @@ private constructor(
             allowedClients = allowedClients,
             blockedClients = blockedClients,
             scope = params.scope,
+          dispatchers = dispatchers,
             tcpSocketCreator = params.tcp,
 
             // IF this is NULL, SOCKS is not enabled

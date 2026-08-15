@@ -16,16 +16,20 @@
 
 package com.pyamsoft.tetherfi.server.netty
 
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.runBlockingWithDelays
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import org.junit.Test
+import kotlin.time.Duration.Companion.seconds
 
 class ServerTest {
 
   @Test
   fun `test Netty server starts`(): Unit = runBlockingWithDelays {
-    TestSetup.withNetty {
+    TestSetup.withNetty(
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    ) {
       // Delay for a bit to "keep it running"
       delay(1.seconds)
     }

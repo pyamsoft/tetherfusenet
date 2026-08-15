@@ -17,6 +17,7 @@
 package com.pyamsoft.tetherfi.server.netty.handler
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.netty.TestSetup
 import com.pyamsoft.tetherfi.server.netty.withLogging
 import com.pyamsoft.tetherfi.server.proxy.session.address
@@ -27,11 +28,11 @@ import io.netty.channel.ChannelInboundHandler
 import io.netty.handler.codec.socksx.v5.DefaultSocks5CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5AddressType
 import io.netty.handler.codec.socksx.v5.Socks5CommandType
-import kotlin.test.assertNotNull
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import org.junit.Test
+import kotlin.test.assertNotNull
+import kotlin.time.Duration.Companion.milliseconds
 
 class Socks5HandlerTest {
 
@@ -47,6 +48,7 @@ class Socks5HandlerTest {
             allowedClients = factoryParams.allowed,
             blockedClients = factoryParams.blocked,
             clientResolver = factoryParams.resolver,
+          dispatchers = factoryParams.dispatchers,
             tcpSocketCreator = factoryParams.provideTcpChannelCreator(),
         )
 
@@ -63,6 +65,8 @@ class Socks5HandlerTest {
               isSocksEnabled = false,
               onTcpChannelCreated = { tcpConnection = it },
               factory = { socks5HandlerFactory(it) },
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
           )
       val channel = context.channel
 

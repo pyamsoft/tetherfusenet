@@ -20,18 +20,19 @@ import android.net.wifi.p2p.WifiP2pConfig
 import android.os.Build
 import androidx.annotation.CheckResult
 import androidx.annotation.RequiresApi
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.ServerDefaults
 import com.pyamsoft.tetherfi.server.ServerNetworkBand
 import com.pyamsoft.tetherfi.server.WifiPreferences
-import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 internal class WiDiConfigImpl
 @Inject
 internal constructor(
     private val preferences: WifiPreferences,
+    private val dispatchers: AppDispatchers,
 ) : WiDiConfig {
 
   @CheckResult
@@ -76,7 +77,7 @@ internal constructor(
   }
 
   override suspend fun matchesGroup(ssid: String, password: String): Boolean =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         // If we can't use a custom config, then it always matches based on the system!
         if (!ServerDefaults.canUseCustomConfig()) {
           return@withContext true
@@ -88,7 +89,7 @@ internal constructor(
       }
 
   override suspend fun getConfiguration(): WifiP2pConfig? =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         if (!ServerDefaults.canUseCustomConfig()) {
           return@withContext null
         }

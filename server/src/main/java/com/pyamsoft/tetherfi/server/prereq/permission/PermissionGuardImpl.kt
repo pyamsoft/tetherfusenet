@@ -22,15 +22,16 @@ import android.os.Build
 import androidx.annotation.CheckResult
 import androidx.core.content.ContextCompat
 import com.pyamsoft.pydroid.core.ThreadEnforcer
-import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import com.pyamsoft.pydroid.util.AppDispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 internal class PermissionGuardImpl
 @Inject
 internal constructor(
     private val enforcer: ThreadEnforcer,
     private val context: Context,
+    private val dispatchers: AppDispatchers,
 ) : PermissionGuard {
 
   @CheckResult
@@ -46,7 +47,7 @@ internal constructor(
   }
 
   override suspend fun canCreateNetwork(): Boolean =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         return@withContext requiredPermissions.all { hasPermission(it) }
       }
 

@@ -67,57 +67,57 @@ private enum class DeviceSetupContentTypes {
 @LintIgnoreLongMethod
 @LintIgnoreCyclomaticComplexMethod
 internal fun LazyListScope.renderDeviceSetup(
-    itemModifier: Modifier = Modifier,
-    appName: String,
-    state: InfoViewState,
-    serverViewState: ServerViewState,
-    onShowQRCode: () -> Unit,
-    onTogglePasswordVisibility: () -> Unit,
-    onToggleShowOptions: (InfoViewOptionsType) -> Unit,
+  itemModifier: Modifier = Modifier,
+  appName: String,
+  state: InfoViewState,
+  serverViewState: ServerViewState,
+  onShowQRCode: () -> Unit,
+  onTogglePasswordVisibility: () -> Unit,
+  onToggleShowOptions: (InfoViewOptionsType) -> Unit,
 ) {
   item(
-      contentType = DeviceSetupContentTypes.SETTINGS,
+    contentType = DeviceSetupContentTypes.SETTINGS,
   ) {
     val broadcastType by serverViewState.broadcastType.collectAsStateWithLifecycle()
     if (broadcastType == BroadcastType.WIFI_DIRECT) {
       // Only render this instruction for Wi-Fi Direct
       OtherInstruction(
-          modifier = itemModifier,
+        modifier = itemModifier,
       ) {
         Text(
-            text = stringResource(R.string.open_wifi_settings),
-            style = MaterialTheme.typography.bodyLarge,
+          text = stringResource(R.string.open_wifi_settings),
+          style = MaterialTheme.typography.bodyLarge,
         )
       }
     } else if (broadcastType == BroadcastType.RNDIS) {
       // Only render this instruction for RNDIS
       OtherInstruction(
-          modifier = itemModifier,
+        modifier = itemModifier,
       ) {
         Text(
-            text = stringResource(R.string.open_connection_settings),
-            style = MaterialTheme.typography.bodyLarge,
+          text = stringResource(R.string.open_connection_settings),
+          style = MaterialTheme.typography.bodyLarge,
         )
       }
     }
   }
 
   item(
-      contentType = DeviceSetupContentTypes.CONNECT,
+    contentType = DeviceSetupContentTypes.CONNECT,
   ) {
     val broadcastType by serverViewState.broadcastType.collectAsStateWithLifecycle()
     OtherInstruction(
-        modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
+      modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
     ) {
       Column {
         if (broadcastType == BroadcastType.WIFI_DIRECT) {
           // Only render this instruction for Wi-Fi Direct
           Text(
-              text = stringResource(R.string.connect_to_hotspot, appName),
-              style =
-                  MaterialTheme.typography.labelMedium.copy(
-                      color = MaterialTheme.colorScheme.onSurfaceVariant,
-                  ),
+            text = stringResource(R.string.connect_to_hotspot, appName),
+            style =
+              MaterialTheme.typography.labelMedium.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              ),
           )
 
           Row {
@@ -126,46 +126,47 @@ internal fun LazyListScope.renderDeviceSetup(
 
             val password = rememberServerRawPassword(group)
             val isNetworkReadyForQRCode =
-                remember(
-                    ssid,
-                    password,
-                ) {
-                  ssid.isNotBlank() && password.isNotBlank()
-                }
+              remember(
+                ssid,
+                password,
+              ) {
+                ssid.isNotBlank() && password.isNotBlank()
+              }
 
             Text(
-                text = stringResource(R.string.label_hotspot_name),
-                style =
-                    MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
+              text = stringResource(R.string.label_hotspot_name),
+              style =
+                MaterialTheme.typography.bodyLarge.copy(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
             )
 
             Text(
-                modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                text = ssid,
-                style =
-                    MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.W700,
-                        fontFamily = FontFamily.Monospace,
-                    ),
+              modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
+              text = ssid,
+              style =
+                MaterialTheme.typography.bodyLarge.copy(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  fontWeight = FontWeight.W700,
+                  fontFamily = FontFamily.Monospace,
+                ),
             )
 
             if (isNetworkReadyForQRCode) {
               // Don't use IconButton because we don't care about minimum touch target size
               Box(
-                  modifier =
-                      Modifier.padding(start = MaterialTheme.keylines.baseline)
-                          .clickable { onShowQRCode() }
-                          .padding(MaterialTheme.keylines.typography),
-                  contentAlignment = Alignment.Center,
+                modifier =
+                  Modifier
+                    .padding(start = MaterialTheme.keylines.baseline)
+                    .clickable { onShowQRCode() }
+                    .padding(MaterialTheme.keylines.typography),
+                contentAlignment = Alignment.Center,
               ) {
                 Icon(
-                    modifier = Modifier.size(16.dp),
-                    painter = IconPainters.qrCode(),
-                    contentDescription = stringResource(com.pyamsoft.tetherfi.ui.R.string.qr_code),
-                    tint = MaterialTheme.colorScheme.primary,
+                  modifier = Modifier.size(16.dp),
+                  painter = IconPainters.qrCode(),
+                  contentDescription = stringResource(com.pyamsoft.tetherfi.ui.R.string.qr_code),
+                  tint = MaterialTheme.colorScheme.primary,
                 )
               }
             }
@@ -180,50 +181,51 @@ internal fun LazyListScope.renderDeviceSetup(
             val hapticManager = LocalHapticManager.current
 
             Text(
-                text = stringResource(com.pyamsoft.tetherfi.ui.R.string.password),
-                style =
-                    MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
+              text = stringResource(com.pyamsoft.tetherfi.ui.R.string.password),
+              style =
+                MaterialTheme.typography.bodyLarge.copy(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
             )
             Text(
-                modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                text = password,
-                style =
-                    MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.W700,
-                        fontFamily = FontFamily.Monospace,
-                    ),
+              modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
+              text = password,
+              style =
+                MaterialTheme.typography.bodyLarge.copy(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  fontWeight = FontWeight.W700,
+                  fontFamily = FontFamily.Monospace,
+                ),
             )
 
             if (rawPassword.isNotBlank()) {
               // Don't use IconButton because we don't care about minimum touch target size
               Box(
-                  modifier =
-                      Modifier.padding(start = MaterialTheme.keylines.baseline)
-                          .clickable {
-                            if (isPasswordVisible) {
-                              hapticManager?.toggleOff()
-                            } else {
-                              hapticManager?.toggleOn()
-                            }
-                            onTogglePasswordVisibility()
-                          }
-                          .padding(MaterialTheme.keylines.typography),
-                  contentAlignment = Alignment.Center,
+                modifier =
+                  Modifier
+                    .padding(start = MaterialTheme.keylines.baseline)
+                    .clickable {
+                      if (isPasswordVisible) {
+                        hapticManager?.toggleOff()
+                      } else {
+                        hapticManager?.toggleOn()
+                      }
+                      onTogglePasswordVisibility()
+                    }
+                    .padding(MaterialTheme.keylines.typography),
+                contentAlignment = Alignment.Center,
               ) {
                 Icon(
-                    modifier = Modifier.size(16.dp),
-                    painter =
-                        if (isPasswordVisible) IconPainters.visibilityOff()
-                        else IconPainters.visibility(),
-                    contentDescription =
-                        stringResource(
-                            if (isPasswordVisible) com.pyamsoft.tetherfi.ui.R.string.pass_visible
-                            else com.pyamsoft.tetherfi.ui.R.string.pass_hidden
-                        ),
-                    tint = MaterialTheme.colorScheme.primary,
+                  modifier = Modifier.size(16.dp),
+                  painter =
+                    if (isPasswordVisible) IconPainters.visibilityOff()
+                    else IconPainters.visibility(),
+                  contentDescription =
+                    stringResource(
+                      if (isPasswordVisible) com.pyamsoft.tetherfi.ui.R.string.pass_visible
+                      else com.pyamsoft.tetherfi.ui.R.string.pass_hidden
+                    ),
+                  tint = MaterialTheme.colorScheme.primary,
                 )
               }
             }
@@ -231,104 +233,104 @@ internal fun LazyListScope.renderDeviceSetup(
         }
 
         Text(
-            modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
-            text = stringResource(R.string.configure_the_proxy_settings),
-            style = MaterialTheme.typography.bodyLarge,
+          modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
+          text = stringResource(R.string.configure_the_proxy_settings),
+          style = MaterialTheme.typography.bodyLarge,
         )
 
         Column(
-            modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
+          modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
         ) {
           val showHttpOptions by state.showHttpOptions.collectAsStateWithLifecycle()
 
           val isHttpEnabled by serverViewState.isHttpEnabled.collectAsStateWithLifecycle()
           if (isHttpEnabled) {
             Row(
-                modifier = Modifier.clickable { onToggleShowOptions(InfoViewOptionsType.HTTP) },
-                verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.clickable { onToggleShowOptions(InfoViewOptionsType.HTTP) },
+              verticalAlignment = Alignment.CenterVertically,
             ) {
               Text(
-                  text = stringResource(R.string.view_http_options),
-                  style =
-                      MaterialTheme.typography.labelLarge.copy(
-                          color = MaterialTheme.colorScheme.onSurfaceVariant,
-                      ),
+                text = stringResource(R.string.view_http_options),
+                style =
+                  MaterialTheme.typography.labelLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  ),
               )
 
               Icon(
-                  modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                  painter =
-                      if (showHttpOptions) IconPainters.keyboardArrowRight()
-                      else IconPainters.keyboardArrowDown(),
-                  contentDescription = stringResource(R.string.view_http_options),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
+                painter =
+                  if (showHttpOptions) IconPainters.keyboardArrowRight()
+                  else IconPainters.keyboardArrowDown(),
+                contentDescription = stringResource(R.string.view_http_options),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
               )
             }
           }
 
           AnimatedVisibility(
-              visible = showHttpOptions,
+            visible = showHttpOptions,
           ) {
             Column(
-                modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
+              modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
             ) {
               Text(
-                  text = stringResource(R.string.http_manual_proxy),
-                  style =
-                      MaterialTheme.typography.labelMedium.copy(
-                          color = MaterialTheme.colorScheme.onSurfaceVariant,
-                      ),
+                text = stringResource(R.string.http_manual_proxy),
+                style =
+                  MaterialTheme.typography.labelMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  ),
               )
 
               Row(
-                  modifier = Modifier.padding(top = MaterialTheme.keylines.typography),
-                  verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = MaterialTheme.keylines.typography),
+                verticalAlignment = Alignment.CenterVertically,
               ) {
                 val connection by serverViewState.connection.collectAsStateWithLifecycle()
                 val ipAddress = rememberServerHostname(connection)
 
                 Text(
-                    text = stringResource(R.string.label_hotspot_hostname),
-                    style =
-                        MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
+                  text = stringResource(R.string.label_hotspot_hostname),
+                  style =
+                    MaterialTheme.typography.bodyLarge.copy(
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
                 )
                 Text(
-                    modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                    text = ipAddress,
-                    style =
-                        MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.W700,
-                            fontFamily = FontFamily.Monospace,
-                        ),
+                  modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
+                  text = ipAddress,
+                  style =
+                    MaterialTheme.typography.bodyLarge.copy(
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      fontWeight = FontWeight.W700,
+                      fontFamily = FontFamily.Monospace,
+                    ),
                 )
               }
 
               Row(
-                  verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically,
               ) {
                 val port by serverViewState.port.collectAsStateWithLifecycle()
                 val httpPort = rememberPortNumber(port)
 
                 Text(
-                    text = stringResource(R.string.label_hotspot_http_port),
-                    style =
-                        MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
+                  text = stringResource(R.string.label_hotspot_http_port),
+                  style =
+                    MaterialTheme.typography.bodyLarge.copy(
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
                 )
 
                 Text(
-                    modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                    text = httpPort,
-                    style =
-                        MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.W700,
-                            fontFamily = FontFamily.Monospace,
-                        ),
+                  modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
+                  text = httpPort,
+                  style =
+                    MaterialTheme.typography.bodyLarge.copy(
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      fontWeight = FontWeight.W700,
+                      fontFamily = FontFamily.Monospace,
+                    ),
                 )
               }
             }
@@ -338,95 +340,95 @@ internal fun LazyListScope.renderDeviceSetup(
         val isSocksEnabled by serverViewState.isSocksEnabled.collectAsStateWithLifecycle()
         if (isSocksEnabled) {
           Column(
-              modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
+            modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
           ) {
             val showSocksOptions by state.showSocksOptions.collectAsStateWithLifecycle()
 
             Row(
-                modifier = Modifier.clickable { onToggleShowOptions(InfoViewOptionsType.SOCKS) },
-                verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.clickable { onToggleShowOptions(InfoViewOptionsType.SOCKS) },
+              verticalAlignment = Alignment.CenterVertically,
             ) {
               Text(
-                  text = stringResource(R.string.view_socks_options),
-                  style =
-                      MaterialTheme.typography.labelLarge.copy(
-                          color = MaterialTheme.colorScheme.onSurfaceVariant,
-                      ),
+                text = stringResource(R.string.view_socks_options),
+                style =
+                  MaterialTheme.typography.labelLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  ),
               )
 
               Icon(
-                  modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                  painter =
-                      if (showSocksOptions) IconPainters.keyboardArrowRight()
-                      else IconPainters.keyboardArrowDown(),
-                  contentDescription = stringResource(R.string.view_socks_options),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
+                painter =
+                  if (showSocksOptions) IconPainters.keyboardArrowRight()
+                  else IconPainters.keyboardArrowDown(),
+                contentDescription = stringResource(R.string.view_socks_options),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
               )
             }
 
             AnimatedVisibility(
-                visible = showSocksOptions,
+              visible = showSocksOptions,
             ) {
               Column(
-                  modifier = Modifier.padding(top = MaterialTheme.keylines.content),
+                modifier = Modifier.padding(top = MaterialTheme.keylines.content),
               ) {
                 Text(
-                    text = stringResource(R.string.socks_manual_proxy),
-                    style =
-                        MaterialTheme.typography.labelMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
+                  text = stringResource(R.string.socks_manual_proxy),
+                  style =
+                    MaterialTheme.typography.labelMedium.copy(
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
                 )
 
                 Row(
-                    modifier = Modifier.padding(top = MaterialTheme.keylines.typography),
-                    verticalAlignment = Alignment.CenterVertically,
+                  modifier = Modifier.padding(top = MaterialTheme.keylines.typography),
+                  verticalAlignment = Alignment.CenterVertically,
                 ) {
                   val connection by serverViewState.connection.collectAsStateWithLifecycle()
                   val ipAddress = rememberServerHostname(connection)
 
                   Text(
-                      text = stringResource(R.string.label_hotspot_hostname),
-                      style =
-                          MaterialTheme.typography.bodyLarge.copy(
-                              color = MaterialTheme.colorScheme.onSurfaceVariant,
-                          ),
+                    text = stringResource(R.string.label_hotspot_hostname),
+                    style =
+                      MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      ),
                   )
                   Text(
-                      modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                      text = ipAddress,
-                      style =
-                          MaterialTheme.typography.bodyLarge.copy(
-                              color = MaterialTheme.colorScheme.onSurfaceVariant,
-                              fontWeight = FontWeight.W700,
-                              fontFamily = FontFamily.Monospace,
-                          ),
+                    modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
+                    text = ipAddress,
+                    style =
+                      MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.W700,
+                        fontFamily = FontFamily.Monospace,
+                      ),
                   )
                 }
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                  verticalAlignment = Alignment.CenterVertically,
                 ) {
                   val portNumber by serverViewState.port.collectAsStateWithLifecycle()
                   val socksPort = rememberPortNumber(portNumber)
 
                   Text(
-                      text = stringResource(R.string.label_hotspot_socks_port),
-                      style =
-                          MaterialTheme.typography.bodyLarge.copy(
-                              color = MaterialTheme.colorScheme.onSurfaceVariant,
-                          ),
+                    text = stringResource(R.string.label_hotspot_socks_port),
+                    style =
+                      MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      ),
                   )
 
                   Text(
-                      modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
-                      text = socksPort,
-                      style =
-                          MaterialTheme.typography.bodyLarge.copy(
-                              color = MaterialTheme.colorScheme.onSurfaceVariant,
-                              fontWeight = FontWeight.W700,
-                              fontFamily = FontFamily.Monospace,
-                          ),
+                    modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
+                    text = socksPort,
+                    style =
+                      MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.W700,
+                        fontFamily = FontFamily.Monospace,
+                      ),
                   )
                 }
               }
@@ -441,19 +443,19 @@ internal fun LazyListScope.renderDeviceSetup(
 @TestOnly
 @Composable
 private fun PreviewDeviceSetup(
-    state: InfoViewState,
-    server: TestServerState,
-    http: Boolean,
-    socks: Boolean,
+  state: InfoViewState,
+  server: TestServerState,
+  http: Boolean,
+  socks: Boolean,
 ) {
   LazyColumn {
     renderDeviceSetup(
-        appName = "TEST",
-        serverViewState = makeTestServerState(server, http, socks),
-        state = state,
-        onTogglePasswordVisibility = {},
-        onShowQRCode = {},
-        onToggleShowOptions = {},
+      appName = "TEST",
+      serverViewState = makeTestServerState(server, http, socks),
+      state = state,
+      onTogglePasswordVisibility = {},
+      onShowQRCode = {},
+      onToggleShowOptions = {},
     )
   }
 }
@@ -462,10 +464,10 @@ private fun PreviewDeviceSetup(
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupEmptyHttp() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState(),
-      server = TestServerState.EMPTY,
-      http = true,
-      socks = false,
+    state = MutableInfoViewState(),
+    server = TestServerState.EMPTY,
+    http = true,
+    socks = false,
   )
 }
 
@@ -473,10 +475,10 @@ private fun PreviewDeviceSetupEmptyHttp() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupActiveHttp() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState(),
-      server = TestServerState.CONNECTED,
-      http = true,
-      socks = false,
+    state = MutableInfoViewState(),
+    server = TestServerState.CONNECTED,
+    http = true,
+    socks = false,
   )
 }
 
@@ -484,10 +486,10 @@ private fun PreviewDeviceSetupActiveHttp() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupActivePassword() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
-      server = TestServerState.CONNECTED,
-      http = true,
-      socks = false,
+    state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+    server = TestServerState.CONNECTED,
+    http = true,
+    socks = false,
   )
 }
 
@@ -495,10 +497,10 @@ private fun PreviewDeviceSetupActivePassword() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupEmptySocks() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState(),
-      server = TestServerState.EMPTY,
-      http = false,
-      socks = true,
+    state = MutableInfoViewState(),
+    server = TestServerState.EMPTY,
+    http = false,
+    socks = true,
   )
 }
 
@@ -506,10 +508,10 @@ private fun PreviewDeviceSetupEmptySocks() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupActiveSocks() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState(),
-      server = TestServerState.CONNECTED,
-      http = false,
-      socks = true,
+    state = MutableInfoViewState(),
+    server = TestServerState.CONNECTED,
+    http = false,
+    socks = true,
   )
 }
 
@@ -517,10 +519,10 @@ private fun PreviewDeviceSetupActiveSocks() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupActivePasswordSocks() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
-      server = TestServerState.CONNECTED,
-      http = false,
-      socks = true,
+    state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+    server = TestServerState.CONNECTED,
+    http = false,
+    socks = true,
   )
 }
 
@@ -528,10 +530,10 @@ private fun PreviewDeviceSetupActivePasswordSocks() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupEmptyBoth() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState(),
-      server = TestServerState.EMPTY,
-      http = true,
-      socks = true,
+    state = MutableInfoViewState(),
+    server = TestServerState.EMPTY,
+    http = true,
+    socks = true,
   )
 }
 
@@ -539,10 +541,10 @@ private fun PreviewDeviceSetupEmptyBoth() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupActiveBoth() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState(),
-      server = TestServerState.CONNECTED,
-      http = true,
-      socks = true,
+    state = MutableInfoViewState(),
+    server = TestServerState.CONNECTED,
+    http = true,
+    socks = true,
   )
 }
 
@@ -550,9 +552,9 @@ private fun PreviewDeviceSetupActiveBoth() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupActivePasswordBoth() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
-      server = TestServerState.CONNECTED,
-      http = true,
-      socks = true,
+    state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+    server = TestServerState.CONNECTED,
+    http = true,
+    socks = true,
   )
 }

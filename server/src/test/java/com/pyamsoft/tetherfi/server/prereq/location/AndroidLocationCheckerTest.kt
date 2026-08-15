@@ -19,8 +19,8 @@ package com.pyamsoft.tetherfi.server.prereq.location
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.TweakPreferences
-import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -29,6 +29,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import kotlin.test.assertTrue
 
 private class FakeTweakPreferences(
     private val ignoreLocation: Boolean,
@@ -74,6 +75,8 @@ class AndroidLocationCheckerTest {
         AndroidLocationChecker(
             context = context,
             preferences = FakeTweakPreferences(ignoreLocation = true),
+          // TODO(Peter): Do we need test dispatchers?
+          dispatchers = AppDispatchers.create(),
         )
 
     assertTrue(checker.isLocationOn())
@@ -85,6 +88,8 @@ class AndroidLocationCheckerTest {
         AndroidLocationChecker(
             context = RuntimeEnvironment.getApplication(),
             preferences = FakeTweakPreferences(ignoreLocation = false),
+          // TODO(Peter): Do we need test dispatchers?
+          dispatchers = AppDispatchers.create(),
         )
 
     assertTrue(checker.isLocationOn())

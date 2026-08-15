@@ -17,6 +17,7 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
@@ -48,6 +49,7 @@ internal constructor(
     blockedClients: BlockedClients,
     tcpSocketCreator: ChannelCreator,
     serverSocketTimeout: ServerSocketTimeout,
+    dispatchers: AppDispatchers,
 ) :
     SocksProxyHandler<Socks4CommandRequest>(
         isDebug = isDebug,
@@ -56,6 +58,7 @@ internal constructor(
         blockedClients = blockedClients,
         tcpSocketCreator = tcpSocketCreator,
         serverSocketTimeout = serverSocketTimeout,
+      dispatchers = dispatchers,
     ) {
 
   @CheckResult
@@ -186,6 +189,7 @@ internal constructor(
         blockedClients: BlockedClients,
         tcpSocketCreator: ChannelCreator,
         serverSocketTimeout: ServerSocketTimeout,
+        dispatchers: AppDispatchers,
     ): HandlerFactory<Unit> {
       return {
         Socks4ProxyHandler(
@@ -195,6 +199,7 @@ internal constructor(
             blockedClients = blockedClients,
             tcpSocketCreator = tcpSocketCreator,
             serverSocketTimeout = serverSocketTimeout,
+          dispatchers = dispatchers,
         )
       }
     }

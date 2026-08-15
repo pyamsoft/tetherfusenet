@@ -16,13 +16,14 @@
 
 package com.pyamsoft.tetherfi.service.prereq
 
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.prereq.background.BackgroundDataGuard
 import com.pyamsoft.tetherfi.server.prereq.location.LocationChecker
 import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuard
 import com.pyamsoft.tetherfi.server.prereq.vpn.VpnChecker
-import kotlin.test.assertEquals
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import kotlin.test.assertEquals
 
 private class FakePermissionGuard(private val granted: Boolean) : PermissionGuard {
   override val requiredPermissions: List<String> = emptyList()
@@ -43,6 +44,7 @@ private class FakeLocationChecker(private val locationOn: Boolean) : LocationChe
 }
 
 private fun newRequirements(
+  dispatchers: AppDispatchers,
     permissionGranted: Boolean = true,
     backgroundDataAllowed: Boolean = true,
     usingVpn: Boolean = false,
@@ -53,37 +55,57 @@ private fun newRequirements(
         permissionGuard = FakePermissionGuard(permissionGranted),
         vpnChecker = FakeVpnChecker(usingVpn),
         locationChecker = FakeLocationChecker(locationOn),
+      dispatchers = dispatchers,
     )
 
 class AndroidHotspotRequirementsTest {
 
   @Test
   fun `no blockers when everything is clear`() = runTest {
-    val blockers = newRequirements().blockers()
+    val blockers = newRequirements(
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    ).blockers()
     assertEquals(emptySet(), blockers)
   }
 
   @Test
   fun `missing permission is reported as a blocker`() = runTest {
-    val blockers = newRequirements(permissionGranted = false).blockers()
+    val blockers = newRequirements(
+      permissionGranted = false,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    ).blockers()
     assertEquals(setOf(HotspotStartBlocker.PERMISSION), blockers)
   }
 
   @Test
   fun `restricted background data is reported as a blocker`() = runTest {
-    val blockers = newRequirements(backgroundDataAllowed = false).blockers()
+    val blockers = newRequirements(
+      backgroundDataAllowed = false,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    ).blockers()
     assertEquals(setOf(HotspotStartBlocker.BACKGROUND_DATA), blockers)
   }
 
   @Test
   fun `active vpn is reported as a blocker`() = runTest {
-    val blockers = newRequirements(usingVpn = true).blockers()
+    val blockers = newRequirements(
+      usingVpn = true,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    ).blockers()
     assertEquals(setOf(HotspotStartBlocker.VPN), blockers)
   }
 
   @Test
   fun `location disabled is reported as a blocker`() = runTest {
-    val blockers = newRequirements(locationOn = false).blockers()
+    val blockers = newRequirements(
+      locationOn = false,
+      // TODO(Peter): Do we need test dispatchers?
+      dispatchers = AppDispatchers.create(),
+    ).blockers()
     assertEquals(setOf(HotspotStartBlocker.LOCATION), blockers)
   }
 
@@ -95,6 +117,8 @@ class AndroidHotspotRequirementsTest {
                 backgroundDataAllowed = false,
                 usingVpn = true,
                 locationOn = false,
+          // TODO(Peter): Do we need test dispatchers?
+          dispatchers = AppDispatchers.create(),
             )
             .blockers()
 

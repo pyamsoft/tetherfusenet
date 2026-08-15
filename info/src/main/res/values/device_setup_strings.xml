@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<!--
+<?xml version="1.0" encoding="utf-8" ?><!--
   ~ Copyright 2026 pyamsoft
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,32 +14,24 @@
   ~ limitations under the License.
   -->
 <resources>
-  <string
-    name="configure_the_proxy_settings"
-  >Configure the proxy settings</string>
-  <string name="connect_to_hotspot">Connect to the %1$s Hotspot</string>
-  <string name="open_wifi_settings">Open the Wi-Fi settings page</string>
-  <string name="label_hotspot_name">Name</string>
-  <string name="label_hotspot_hostname">URL</string>
+  <string name="configure_the_proxy_settings">Configure the proxy settings</string>
+    <string name="connect_to_hotspot">Connect to the %1$s Hotspot</string>
+    <string name="open_wifi_settings">Open the Wi-Fi settings page</string>
+    <string name="label_hotspot_name">Name</string>
+    <string name="label_hotspot_hostname">URL</string>
 
-  <string
-    name="open_connection_settings"
-  >Open the Connection/Internet settings page</string>
+    <string name="open_connection_settings">Open the Connection/Internet settings page</string>
 
-  <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="view_http_options">Configure HTTP proxy settings</string>
-  <string name="view_socks_options">Configure SOCKS settings</string>
+    <!-- TODO(Peter): Need zh-rTW translation -->
+    <string name="view_http_options">Configure HTTP proxy settings</string>
+    <string name="view_socks_options">Configure SOCKS settings</string>
 
-  <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="label_hotspot_http_port">HTTP Port</string>
-  <string name="label_hotspot_socks_port">SOCKS Port</string>
+    <!-- TODO(Peter): Need zh-rTW translation -->
+    <string name="label_hotspot_http_port">HTTP Port</string>
+    <string name="label_hotspot_socks_port">SOCKS Port</string>
 
-  <string
-    name="http_manual_proxy"
-  >Use MANUAL mode and configure both HTTP and HTTPS proxy options.</string>
+    <string name="http_manual_proxy">Use MANUAL mode and configure both HTTP and HTTPS proxy options.</string>
 
-  <!-- TODO(Peter): Need zh-rTW translation -->
-  <string
-    name="socks_manual_proxy"
-  >Use MANUAL mode and configure SOCKS proxy options. SOCKS proxy will resolve DNS.</string>
+    <!-- TODO(Peter): Need zh-rTW translation -->
+    <string name="socks_manual_proxy">Use MANUAL mode and configure SOCKS proxy options. SOCKS proxy will resolve DNS.</string>
 </resources>

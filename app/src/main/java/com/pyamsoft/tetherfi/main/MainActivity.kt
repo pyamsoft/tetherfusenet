@@ -39,6 +39,7 @@ import com.pyamsoft.pydroid.ui.app.installPYDroid
 import com.pyamsoft.pydroid.ui.changelog.ChangeLogProvider
 import com.pyamsoft.pydroid.ui.changelog.buildChangeLog
 import com.pyamsoft.pydroid.ui.util.fillUpToPortraitSize
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.ObjectGraph
 import com.pyamsoft.tetherfi.R
 import com.pyamsoft.tetherfi.TFTheme
@@ -50,13 +51,15 @@ import com.pyamsoft.tetherfi.service.ServiceLauncher
 import com.pyamsoft.tetherfi.tile.ProxyTileService
 import com.pyamsoft.tetherfi.ui.InstallPYDroidExtras
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
-import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
 
+  @Inject
+  @JvmField
+  internal var dispatchers: AppDispatchers? = null
   @Inject @JvmField internal var themeViewModeler: ThemeViewModeler? = null
 
   @Inject @JvmField internal var serviceLauncher: ServiceLauncher? = null
@@ -130,11 +133,12 @@ class MainActivity : ComponentActivity() {
   }
 
   private fun handleOpenedWithIntent(intent: Intent) {
-    if (intent.action === Intent.ACTION_APPLICATION_PREFERENCES) {
+    if (intent.action == Intent.ACTION_APPLICATION_PREFERENCES) {
+      val d = dispatchers.requireNotNull()
       // Only attempt one launch emit at a time
       settingsCommandLaunchJob?.cancel()
       settingsCommandLaunchJob =
-          lifecycleScope.launch(context = Dispatchers.Default) { settingsCommandBus.emit(Unit) }
+        lifecycleScope.launch(context = d.default) { settingsCommandBus.emit(Unit) }
     }
   }
 
@@ -143,6 +147,7 @@ class MainActivity : ComponentActivity() {
     setupActivity()
 
     val vm = themeViewModeler.requireNotNull()
+    val dis = dispatchers.requireNotNull()
     val appName = getString(R.string.app_name)
 
     setContent {
@@ -173,6 +178,7 @@ class MainActivity : ComponentActivity() {
       }
 
       TFTheme(
+        dispatchers = dis,
           theme = theme,
           isMaterialYou = isMaterialYou,
       ) {
@@ -180,7 +186,9 @@ class MainActivity : ComponentActivity() {
             isDarkMode = theme.getSystemDarkMode(),
         )
         InstallPYDroidExtras(
-            modifier = Modifier.fillUpToPortraitSize().widthIn(max = LANDSCAPE_MAX_WIDTH),
+          modifier = Modifier
+            .fillUpToPortraitSize()
+            .widthIn(max = LANDSCAPE_MAX_WIDTH),
             appName = appName,
         )
         MainEntry(
@@ -209,9 +217,11 @@ class MainActivity : ComponentActivity() {
     super.onResume()
     reportFullyDrawn()
 
+    val dis = dispatchers.requireNotNull()
+
     // Cancel any old notifications
     notificationErrorLauncher?.also { l ->
-      lifecycleScope.launch(context = Dispatchers.Default) { l.hideError() }
+      lifecycleScope.launch(context = dis.default) { l.hideError() }
     }
   }
 
@@ -226,5 +236,7 @@ class MainActivity : ComponentActivity() {
 
     settingsCommandLaunchJob?.cancel()
     settingsCommandLaunchJob = null
+
+    dispatchers = null
   }
 }

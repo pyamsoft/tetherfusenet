@@ -22,7 +22,7 @@ readonly BINDIR
 readonly ROOT
 
 main() {
-  "${ROOT}"/gradlew spotlessApply || return 1
+  "${ROOT}"/gradlew spotlessApply --rerun-tasks --no-configuration-cache || return 1
   "${BINDIR}"/xmlfmt || return 1
   return 0
 }

@@ -17,16 +17,16 @@
 package com.pyamsoft.tetherfi.service
 
 import android.app.Service
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.AppCoroutineScope
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerStopBroadcaster
 import com.pyamsoft.tetherfi.service.notification.NotificationLauncher
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class ServiceScope
@@ -36,6 +36,7 @@ internal constructor(
     private val notificationLauncher: NotificationLauncher,
     private val stopper: ServerStopBroadcaster,
     private val runner: ServiceRunner,
+    private val dispatchers: AppDispatchers,
 ) {
 
   // Use the MSF so that operations are thread safe
@@ -63,7 +64,7 @@ internal constructor(
     // Start the notification immediately
     val notificationWatcher = notificationLauncher.startForeground(service)
 
-    return@update appScope.launch(context = Dispatchers.Default) {
+    return@update appScope.launch(context = dispatchers.default) {
       val scope = this
 
       Timber.d { "Service scope start() launched!" }

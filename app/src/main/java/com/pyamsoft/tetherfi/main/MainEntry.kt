@@ -37,6 +37,7 @@ import com.pyamsoft.pydroid.ui.haptics.LocalHapticManager
 import com.pyamsoft.pydroid.ui.inject.rememberComposableInjector
 import com.pyamsoft.pydroid.ui.util.fillUpToPortraitSize
 import com.pyamsoft.pydroid.ui.util.rememberNotNull
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.qr.QRCodeEntry
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
@@ -47,7 +48,6 @@ import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
 import com.pyamsoft.tetherfi.ui.ServerPortTypes
 import com.pyamsoft.tetherfi.ui.dialog.SlowSpeedsDialog
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
@@ -58,8 +58,9 @@ import kotlinx.coroutines.withContext
 /** Sets up permission request interaction */
 @Composable
 private fun RegisterPermissionRequests(
-    permissionResponseBus: Flow<PermissionResponse>,
-    onToggleProxy: CoroutineScope.() -> Unit,
+  dispatchers: AppDispatchers,
+  permissionResponseBus: Flow<PermissionResponse>,
+  onToggleProxy: CoroutineScope.() -> Unit,
 ) {
   // Create requesters
   val handleToggleProxy by rememberUpdatedState(onToggleProxy)
@@ -68,8 +69,8 @@ private fun RegisterPermissionRequests(
       permissionResponseBus,
   ) {
     // See MainActivity
-    permissionResponseBus.flowOn(context = Dispatchers.Default).also { f ->
-      launch(context = Dispatchers.Default) {
+    permissionResponseBus.flowOn(context = dispatchers.default).also { f ->
+      launch(context = dispatchers.default) {
         f.collect { resp ->
           when (resp) {
             is PermissionResponse.RefreshNotification -> {
@@ -87,6 +88,7 @@ private fun RegisterPermissionRequests(
 
 @Composable
 private fun WatchTabSwipe(
+  dispatchers: AppDispatchers,
     pagerState: PagerState,
     allTabs: List<MainView>,
 ) {
@@ -111,7 +113,7 @@ private fun WatchTabSwipe(
           // Buzz only when we are caused by a Swipe
           // since, by default, this is mounted with NULL
           if (previousPage != null) {
-            withContext(context = Dispatchers.Main) { hapticManager?.actionButtonPress() }
+            withContext(context = dispatchers.main) { hapticManager?.actionButtonPress() }
           }
           previousPage = page
         }
@@ -120,6 +122,7 @@ private fun WatchTabSwipe(
 
 @Composable
 private fun MountHooks(
+  dispatchers: AppDispatchers,
     viewModel: MainViewModeler,
     pagerState: PagerState,
     allTabs: List<MainView>,
@@ -132,12 +135,14 @@ private fun MountHooks(
   SaveStateDisposableEffect(viewModel)
 
   WatchTabSwipe(
+    dispatchers = dispatchers,
       pagerState = pagerState,
       allTabs = allTabs,
   )
 
   // As early as possible because of Lifecycle quirks
   RegisterPermissionRequests(
+    dispatchers = dispatchers,
       permissionResponseBus = permissionResponseBus,
       onToggleProxy = { onToggleProxy() },
   )
@@ -177,6 +182,7 @@ fun MainEntry(
   val viewModel = rememberNotNull(component.viewModel)
   val permissionRequestBus = rememberNotNull(component.permissionRequestBus)
   val permissionResponseBus = rememberNotNull(component.permissionResponseBus)
+  val dispatchers = rememberNotNull(component.dispatchers)
 
   // TODO Experimental
   // val experimentalRuntimeFlags = rememberNotNull(component.experimentalRuntimeFlags)
@@ -191,7 +197,7 @@ fun MainEntry(
     // The index updating is caught by the snapshot flow
     // Which then triggers the page update function
     val index = allTabs.indexOf(tab)
-    scope.launch(context = Dispatchers.Main) { pagerState.animateScrollToPage(index) }
+    scope.launch(context = dispatchers.main) { pagerState.animateScrollToPage(index) }
   }
 
   MountHooks(
@@ -199,6 +205,7 @@ fun MainEntry(
       permissionResponseBus = permissionResponseBus,
       pagerState = pagerState,
       allTabs = allTabs,
+    dispatchers = dispatchers,
       onShowInAppRating = { handleShowInAppRating() },
       onToggleProxy = { viewModel.handleToggleProxy() },
   )
@@ -227,7 +234,9 @@ fun MainEntry(
   )
 
   MainDialogs(
-      dialogModifier = Modifier.fillUpToPortraitSize().widthIn(max = LANDSCAPE_MAX_WIDTH),
+    dialogModifier = Modifier
+      .fillUpToPortraitSize()
+      .widthIn(max = LANDSCAPE_MAX_WIDTH),
       state = viewModel,
       appName = appName,
       onDismissBlocker = { viewModel.handleDismissBlocker(it) },
@@ -238,7 +247,7 @@ fun MainEntry(
       onHideHotspotError = { viewModel.handleCloseDialog(MainViewDialogs.HOTSPOT_ERROR) },
       onRequestPermissions = {
         // Request permissions
-        lifecycleScope.launch(context = Dispatchers.Default) {
+        lifecycleScope.launch(context = dispatchers.default) {
           // See MainActivity
           permissionRequestBus.emit(PermissionRequests.Server)
         }
@@ -256,10 +265,11 @@ fun MainEntry(
 
     group.cast<BroadcastNetworkStatus.GroupInfo.Connected>()?.also { grp ->
       QRCodeEntry(
-          Modifier.fillUpToPortraitSize()
-              .widthIn(
-                  max = LANDSCAPE_MAX_WIDTH,
-              ),
+        Modifier
+          .fillUpToPortraitSize()
+          .widthIn(
+            max = LANDSCAPE_MAX_WIDTH,
+          ),
           ssid = grp.ssid,
           password = grp.password,
           onDismiss = { viewModel.handleCloseDialog(MainViewDialogs.QR_CODE) },
@@ -270,7 +280,9 @@ fun MainEntry(
   val isShowingSlowSpeedHelp by viewModel.isShowingSlowSpeedHelp.collectAsStateWithLifecycle()
   if (isShowingSlowSpeedHelp) {
     SlowSpeedsDialog(
-        modifier = Modifier.fillUpToPortraitSize().widthIn(max = LANDSCAPE_MAX_WIDTH),
+      modifier = Modifier
+        .fillUpToPortraitSize()
+        .widthIn(max = LANDSCAPE_MAX_WIDTH),
         onDismiss = { viewModel.handleCloseDialog(MainViewDialogs.SLOW_SPEED_HELP) },
     )
   }

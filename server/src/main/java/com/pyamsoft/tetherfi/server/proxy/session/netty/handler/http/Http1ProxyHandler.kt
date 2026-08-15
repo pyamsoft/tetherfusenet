@@ -23,6 +23,7 @@ import com.pyamsoft.pydroid.core.LintIgnoreLongMethod
 import com.pyamsoft.pydroid.core.LintIgnoreMagicNumber
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.cast
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
@@ -53,10 +54,9 @@ import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
-import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.net.InetSocketAddress
 
 // Cannot be shareable because of the local state messageQueue and outboundChannel
 internal class Http1ProxyHandler
@@ -67,11 +67,13 @@ private constructor(
     private val allowedClients: AllowedClients,
     private val blockedClients: BlockedClients,
     private val tcpSocketCreator: ChannelCreator,
+    dispatchers: AppDispatchers,
 ) :
     ProxyHandler(
         isDebug = isDebug,
         scope = scope,
         serverSocketTimeout = serverSocketTimeout,
+      dispatchers = dispatchers,
     ) {
 
   private val relayHandlerFactory =
@@ -81,6 +83,7 @@ private constructor(
           allowedClients = allowedClients,
           blockedClients = blockedClients,
           serverSocketTimeout = serverSocketTimeout,
+        dispatchers = dispatchers,
       )
 
   private val messageQueue = mutableListOf<Any>()
@@ -226,7 +229,7 @@ private constructor(
       return
     }
 
-    scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
+    scope.launch(context = dispatchers.io) { allowedClients.seen(client) }
 
     val future =
         tcpSocketCreator.connect(
@@ -375,7 +378,7 @@ private constructor(
       return
     }
 
-    scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
+    scope.launch(context = dispatchers.io) { allowedClients.seen(client) }
 
     val future =
         tcpSocketCreator.connect(
@@ -707,6 +710,7 @@ private constructor(
         blockedClients: BlockedClients,
         tcpSocketCreator: ChannelCreator,
         serverSocketTimeout: ServerSocketTimeout,
+        dispatchers: AppDispatchers,
     ): HandlerFactory<Unit> {
       return {
         Http1ProxyHandler(
@@ -716,6 +720,7 @@ private constructor(
             blockedClients = blockedClients,
             tcpSocketCreator = tcpSocketCreator,
             serverSocketTimeout = serverSocketTimeout,
+          dispatchers = dispatchers,
         )
       }
     }

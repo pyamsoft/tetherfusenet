@@ -17,6 +17,7 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import io.netty.bootstrap.ServerBootstrap
@@ -31,7 +32,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.util.concurrent.Future
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.updateAndGet
 
 abstract class NettyProxy
 protected constructor(
+  protected val dispatchers: AppDispatchers,
     private val socketTagger: SocketTagger,
     private val host: String,
     private val port: Int,
@@ -96,7 +97,7 @@ protected constructor(
 
     val serverScope =
         CoroutineScope(
-            context = SupervisorJob() + Dispatchers.IO + CoroutineName(this::class.java.name)
+          context = SupervisorJob() + dispatchers.io + CoroutineName(this::class.java.name)
         )
 
     val bootstrap =

@@ -25,20 +25,19 @@ import com.pyamsoft.pydroid.ui.ModuleProvider
 import com.pyamsoft.pydroid.ui.PYDroid
 import com.pyamsoft.pydroid.ui.debug.InAppDebugStatus
 import com.pyamsoft.pydroid.ui.installPYDroid
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.isDebugMode
 import com.pyamsoft.tetherfi.core.GITHUB_URL
 import com.pyamsoft.tetherfi.core.PRIVACY_POLICY_URL
 import com.pyamsoft.tetherfi.core.TERMS_CONDITIONS_URL
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 class TFApp : Application() {
 
   @CheckResult
-  private fun initPYDroid(): ModuleProvider {
-
+  private fun initPYDroid(dispatchers: AppDispatchers): ModuleProvider {
     return installPYDroid(
         PYDroid.Parameters(
             viewSourceUrl = GITHUB_URL,
@@ -47,6 +46,7 @@ class TFApp : Application() {
             termsConditionsUrl = TERMS_CONDITIONS_URL,
             version = BuildConfig.VERSION_CODE,
             logger = createLogger(),
+            dispatchers = dispatchers,
         ),
     )
   }
@@ -71,6 +71,7 @@ class TFApp : Application() {
                 imageLoader = mods.imageLoader(),
                 theming = mods.theming(),
                 enforcer = mods.enforcer(),
+              dispatchers = mods.dispatchers(),
             )
 
     installObjectGraph(component)
@@ -78,16 +79,18 @@ class TFApp : Application() {
 
   override fun onCreate() {
     super.onCreate()
-    val modules = initPYDroid()
+    val dispatchers = AppDispatchers.create()
+    val modules = initPYDroid(dispatchers = dispatchers)
 
     val scope =
         CoroutineScope(
-            context = SupervisorJob() + Dispatchers.Default + CoroutineName(this::class.java.name),
+          context = SupervisorJob() + dispatchers.default + CoroutineName(this::class.java.name),
         )
 
     val inAppDebugStatus = modules.get().inAppDebugStatus()
     installLogger(
         scope = scope,
+      dispatchers = dispatchers,
         inAppDebugStatus = inAppDebugStatus,
     )
 

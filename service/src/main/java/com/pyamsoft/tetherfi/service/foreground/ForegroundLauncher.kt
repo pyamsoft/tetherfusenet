@@ -16,21 +16,24 @@
 
 package com.pyamsoft.tetherfi.service.foreground
 
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetwork
 import com.pyamsoft.tetherfi.server.lock.Locker
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class ForegroundLauncher
 @Inject
-internal constructor(private val locker: Locker, private val network: BroadcastNetwork) {
+internal constructor(
+  private val dispatchers: AppDispatchers,
+  private val locker: Locker, private val network: BroadcastNetwork
+) {
 
   suspend fun startProxy() =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         val lock = locker.createLock()
         // This will suspend until network.start() completes, which is suspended until the proxy
         // server loop dies

@@ -16,13 +16,13 @@
 
 package com.pyamsoft.tetherfi.service.prereq
 
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.prereq.background.BackgroundDataGuard
 import com.pyamsoft.tetherfi.server.prereq.location.LocationChecker
 import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuard
 import com.pyamsoft.tetherfi.server.prereq.vpn.VpnChecker
-import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 internal class AndroidHotspotRequirements
 @Inject
@@ -31,10 +31,11 @@ internal constructor(
     private val permissionGuard: PermissionGuard,
     private val vpnChecker: VpnChecker,
     private val locationChecker: LocationChecker,
+    private val dispatchers: AppDispatchers,
 ) : HotspotRequirements {
 
   override suspend fun blockers(): Collection<HotspotStartBlocker> =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         val blockers = mutableSetOf<HotspotStartBlocker>()
 
         if (!permissionGuard.canCreateNetwork()) {

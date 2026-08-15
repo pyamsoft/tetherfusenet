@@ -20,21 +20,22 @@ import android.content.Context
 import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.pyamsoft.pydroid.core.requireNotNull
-import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import com.pyamsoft.pydroid.util.AppDispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 internal class BatteryOptimizerImpl
 @Inject
 internal constructor(
     private val context: Context,
+    private val dispatchers: AppDispatchers,
 ) : BatteryOptimizer {
 
   private val powerManager by lazy { context.getSystemService<PowerManager>().requireNotNull() }
 
   override suspend fun isOptimizationsIgnored(): Boolean =
       // Don't use proxyDispatcher since this is used from UI
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         powerManager.isIgnoringBatteryOptimizations(context.packageName)
       }
 }

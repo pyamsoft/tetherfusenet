@@ -19,6 +19,7 @@ package com.pyamsoft.tetherfi.server.netty
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreEmptyFunctionBlock
 import com.pyamsoft.pydroid.core.LintIgnoreLongMethod
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
 import com.pyamsoft.tetherfi.server.clients.BlockedClients
@@ -37,15 +38,7 @@ import io.netty.channel.ChannelInboundHandler
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.embedded.EmbeddedChannel
 import io.netty.channel.nio.NioIoHandler
-import java.net.InetSocketAddress
-import java.net.SocketAddress
-import java.time.Clock
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
@@ -53,6 +46,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import java.net.InetSocketAddress
+import java.net.SocketAddress
+import java.time.Clock
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 @ConsistentCopyVisibility
 data class IntHolder
@@ -135,6 +135,7 @@ internal object TestSetup {
       val blocked: BlockedClients,
       val resolver: ClientResolver,
       val serverSocketTimeout: ServerSocketTimeout,
+      val dispatchers: AppDispatchers,
       val provideTcpChannelCreator: () -> ChannelCreator,
       val provideUdpChannelCreator: () -> ChannelCreator,
   )
@@ -146,6 +147,7 @@ internal object TestSetup {
   )
 
   internal fun withHandler(
+    dispatchers: AppDispatchers,
       isHttpEnabled: Boolean,
       isSocksEnabled: Boolean,
       onTcpChannelCreated: (Channel) -> Unit = {},
@@ -218,6 +220,7 @@ internal object TestSetup {
                     blocked = blocked,
                     resolver = resolver,
                     serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
+                  dispatchers = dispatchers,
                     provideTcpChannelCreator = {
                       tcpSocketCreator.wrap { onTcpChannelCreated(it) }
                     },
@@ -239,6 +242,7 @@ internal object TestSetup {
   suspend fun withNetty(
       hostName: String = "127.0.0.1",
       port: Int = 8228,
+      dispatchers: AppDispatchers,
       isLoggingEnabled: Boolean = true,
       block: suspend NettyTestContext.(SuspendingNettyDelegatingProxy) -> Unit,
   ) {
@@ -300,6 +304,7 @@ internal object TestSetup {
             isHttpEnabled = true,
             isSocksEnabled = true,
             serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
+          dispatchers = dispatchers,
             onOpened = { openCount.inc() },
             onClosing = { closingCount.inc() },
             onClosed = { closedCount.inc() },
@@ -310,7 +315,7 @@ internal object TestSetup {
         isLoggingEnabled = isLoggingEnabled,
     ) {
       // Need a real scope for the Netty server to actually start
-      val nettyScope = CoroutineScope(context = Dispatchers.Default)
+      val nettyScope = CoroutineScope(context = dispatchers.default)
       try {
         // Before job starts, callbacks have not run
         assertEquals(openCount.get(), 0)

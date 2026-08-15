@@ -20,6 +20,7 @@ import androidx.activity.ComponentActivity
 import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.bus.EventConsumer
 import com.pyamsoft.pydroid.ui.inject.ComposableInjector
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.ObjectGraph
 import com.pyamsoft.tetherfi.status.PermissionRequests
 import com.pyamsoft.tetherfi.status.PermissionResponse
@@ -28,10 +29,12 @@ import javax.inject.Inject
 internal class BehaviorInjector : ComposableInjector() {
 
   @JvmField @Inject internal var viewModel: BehaviorViewModeler? = null
-
   @JvmField @Inject internal var permissionRequestBus: EventBus<PermissionRequests>? = null
-
   @JvmField @Inject internal var permissionResponseBus: EventConsumer<PermissionResponse>? = null
+
+  @JvmField
+  @Inject
+  internal var dispatchers: AppDispatchers? = null
 
   override fun onInject(activity: ComponentActivity) {
     ObjectGraph.ActivityScope.retrieve(activity).plusBehavior().create().inject(this)
@@ -41,5 +44,6 @@ internal class BehaviorInjector : ComposableInjector() {
     viewModel = null
     permissionRequestBus = null
     permissionResponseBus = null
+    dispatchers = null
   }
 }

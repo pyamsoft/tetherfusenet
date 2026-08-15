@@ -25,6 +25,7 @@ import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.pydroid.core.requireNotNull
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
 import com.pyamsoft.tetherfi.core.AppDevEnvironment
 import com.pyamsoft.tetherfi.core.InAppRatingPreferences
@@ -38,13 +39,7 @@ import com.pyamsoft.tetherfi.server.lock.Locker
 import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuard
 import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.status.RunningStatus
-import java.time.Clock
-import java.time.LocalDateTime
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
@@ -57,6 +52,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.time.Clock
+import java.time.LocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 typealias ServerDataType = Any
 
@@ -77,6 +77,7 @@ internal constructor(
     private val clock: Clock,
     private val wifiDirectImplementation: WifiDirectServer,
     private val rndisImplementation: RNDISServer,
+    private val dispatchers: AppDispatchers,
     status: BroadcastStatus,
 ) :
     BaseServer(status),
@@ -105,7 +106,7 @@ internal constructor(
   private var heldSource: ServerDataType? = null
 
   private suspend fun withLockInitializeNetwork(source: ServerDataType) =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         enforcer.assertOffMainThread()
 
         // Make sure the network is up-to-date before starting the rest of the proxy
@@ -122,7 +123,7 @@ internal constructor(
       }
 
   private suspend fun startNetwork(lock: Locker.Lock) =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         enforcer.assertOffMainThread()
 
         // Mark starting
@@ -178,7 +179,7 @@ internal constructor(
         // Do this outside of the lock, since this will run "forever"
         if (launchProxy) {
           val newProxyJob =
-              launch(context = Dispatchers.IO) {
+            launch(context = dispatchers.io) {
                 onNetworkStarted(
                     scope = this,
                     lock = lock,
@@ -221,7 +222,7 @@ internal constructor(
   }
 
   private suspend fun stopNetwork(clearErrorStatus: Boolean) =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         enforcer.assertOffMainThread()
 
         mutex.withLock {
@@ -412,7 +413,7 @@ internal constructor(
       source: ServerDataType?,
       strategy: NetworkUpdateStrategy,
   ): UpdateResult =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         enforcer.assertOffMainThread()
 
         // Always go to the system IF the strategy is one of our internal hooks
@@ -492,7 +493,7 @@ internal constructor(
   }
 
   override suspend fun updateNetworkInfo() =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         mutex.withLock {
           val source = heldSource
 
@@ -510,7 +511,7 @@ internal constructor(
       }
 
   override suspend fun start(lock: Locker.Lock) =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         enforcer.assertOffMainThread()
 
         if (status.get() is RunningStatus.Error) {
@@ -577,12 +578,12 @@ internal constructor(
     Timber.d { "Broadcast server is fully set up!" }
     status.set(RunningStatus.Running)
 
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) {
       resolveImplementation()
           .onNetworkStarted(scope = this, lock = lock, connectionStatus = connectionStatus)
     }
-    scope.launch(context = Dispatchers.Default) { inAppRatingPreferences.markHotspotUsed() }
-    scope.launch(context = Dispatchers.Default) {
+    scope.launch(context = dispatchers.default) { inAppRatingPreferences.markHotspotUsed() }
+    scope.launch(context = dispatchers.default) {
       proxy.start(
           lock = lock,
           connectionStatus = connectionStatus,

@@ -18,9 +18,8 @@ package com.pyamsoft.tetherfi.server.lock
 
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
-import kotlin.math.max
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
@@ -28,11 +27,13 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.math.max
 
 internal abstract class AbstractLocker protected constructor() : Locker {
 
   internal abstract class AbstractLock
   protected constructor(
+    protected val dispatchers: AppDispatchers,
       private val lockType: String,
       private val lockTag: String,
   ) : Locker.Lock {
@@ -71,7 +72,7 @@ internal abstract class AbstractLocker protected constructor() : Locker {
     }
 
     private suspend fun acquireLock() =
-        withContext(context = Dispatchers.Default) {
+      withContext(context = dispatchers.default) {
           mutex.withLock {
             if (alive.value) {
               withMutexAcquireLock()
@@ -82,7 +83,7 @@ internal abstract class AbstractLocker protected constructor() : Locker {
         }
 
     private suspend fun releaseLock(destroy: Boolean) =
-        withContext(context = Dispatchers.Default) {
+      withContext(context = dispatchers.default) {
           mutex.withLock {
             val updated = refCount.updateAndGet { max(it - 1, 0) }
 
@@ -102,18 +103,18 @@ internal abstract class AbstractLocker protected constructor() : Locker {
         }
 
     final override suspend fun acquire(): Locker.Lock.Releaser =
-        withContext(context = Dispatchers.Default) {
+      withContext(context = dispatchers.default) {
           acquireLock()
 
           return@withContext Locker.Lock.Releaser {
-            withContext(context = Dispatchers.Default + NonCancellable) {
+            withContext(context = dispatchers.default + NonCancellable) {
               releaseLock(destroy = false)
             }
           }
         }
 
     final override suspend fun release() =
-        withContext(context = Dispatchers.Default + NonCancellable) { releaseLock(destroy = true) }
+      withContext(context = dispatchers.default + NonCancellable) { releaseLock(destroy = true) }
 
     @CheckResult protected abstract suspend fun isHeld(): Boolean
 

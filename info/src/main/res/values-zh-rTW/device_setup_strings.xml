@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<!--
+<?xml version="1.0" encoding="utf-8" ?><!--
   ~ Copyright 2026 pyamsoft
   ~ Copyright 2026 林博仁(Buo-ren Lin)
   ~
@@ -16,16 +15,12 @@
   ~ limitations under the License.
   -->
 <resources>
-  <string name="configure_the_proxy_settings">設定代理服務設定</string>
-  <string
-    name="http_manual_proxy"
-  >使用「手動」模式並設定 HTTP 跟 HTTPS 的代理服務設定。</string>
-  <string name="connect_to_hotspot">連接至 %1$s 網路熱點</string>
-  <string name="open_wifi_settings">打開 Wi-Fi 連線設定頁面</string>
-  <string name="label_hotspot_name">名稱</string>
-  <string name="label_hotspot_hostname">網址(URL)</string>
+    <string name="configure_the_proxy_settings">設定代理服務設定</string>
+    <string name="http_manual_proxy">使用「手動」模式並設定 HTTP 跟 HTTPS 的代理服務設定。</string>
+    <string name="connect_to_hotspot">連接至 %1$s 網路熱點</string>
+    <string name="open_wifi_settings">打開 Wi-Fi 連線設定頁面</string>
+    <string name="label_hotspot_name">名稱</string>
+    <string name="label_hotspot_hostname">網址(URL)</string>
 
-  <string
-    name="open_connection_settings"
-  >開啟網路連線／網際網路設定頁面</string>
+    <string name="open_connection_settings">開啟網路連線／網際網路設定頁面</string>
 </resources>

@@ -22,21 +22,21 @@ import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.notify.Notifier
 import com.pyamsoft.pydroid.notify.NotifyChannelInfo
 import com.pyamsoft.pydroid.notify.toNotifyId
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
 import com.pyamsoft.tetherfi.server.clients.BlockedClients
 import com.pyamsoft.tetherfi.server.status.RunningStatus
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class NotificationLauncherImpl
@@ -47,6 +47,7 @@ internal constructor(
     private val broadcastStatus: BroadcastNetworkStatus,
     private val allowedClients: AllowedClients,
     private val blockedClients: BlockedClients,
+    private val dispatchers: AppDispatchers,
 ) : NotificationLauncher {
 
   private val showing = MutableStateFlow(false)
@@ -80,7 +81,7 @@ internal constructor(
       return
     }
 
-    withContext(context = Dispatchers.Main) {
+    withContext(context = dispatchers.main) {
       val data =
           ServerNotificationData(
               broadcastStatus = runningBroadcastStatus.value,
@@ -215,7 +216,7 @@ internal constructor(
   }
 
   override suspend fun update() =
-      withContext(context = Dispatchers.Default) {
+    withContext(context = dispatchers.default) {
         if (!showing.value) {
           Timber.w { "Cannot update notification since not showing" }
           return@withContext
@@ -229,7 +230,7 @@ internal constructor(
       start(service)
 
       return NotificationLauncher.Watcher { scope: CoroutineScope ->
-        scope.launch(context = Dispatchers.Default) {
+        scope.launch(context = dispatchers.default) {
           try {
             Timber.d { "Launch notification watcher" }
             // Then immediately open a channel to update
@@ -242,7 +243,7 @@ internal constructor(
             withContext(context = NonCancellable) {
               Timber.d { "Notification scope is done, cancel notification!" }
               if (showing.compareAndSet(expect = true, update = false)) {
-                withContext(context = Dispatchers.Main) { stop(service) }
+                withContext(context = dispatchers.main) { stop(service) }
               }
             }
           }

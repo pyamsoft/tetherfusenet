@@ -20,6 +20,7 @@ import androidx.activity.ComponentActivity
 import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.bus.EventConsumer
 import com.pyamsoft.pydroid.ui.inject.ComposableInjector
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.ObjectGraph
 import com.pyamsoft.tetherfi.core.ExperimentalRuntimeFlags
 import com.pyamsoft.tetherfi.status.PermissionRequests
@@ -33,6 +34,10 @@ internal class MainInjector @Inject internal constructor() : ComposableInjector(
   @JvmField @Inject internal var permissionResponseBus: EventConsumer<PermissionResponse>? = null
   @JvmField @Inject internal var experimentalRuntimeFlags: ExperimentalRuntimeFlags? = null
 
+  @JvmField
+  @Inject
+  internal var dispatchers: AppDispatchers? = null
+
   override fun onInject(activity: ComponentActivity) {
     ObjectGraph.ActivityScope.retrieve(activity).inject(this)
   }
@@ -42,5 +47,6 @@ internal class MainInjector @Inject internal constructor() : ComposableInjector(
     permissionRequestBus = null
     permissionResponseBus = null
     experimentalRuntimeFlags = null
+    dispatchers = null
   }
 }

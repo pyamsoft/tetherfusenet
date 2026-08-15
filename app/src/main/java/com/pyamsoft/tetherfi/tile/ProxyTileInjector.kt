@@ -18,6 +18,7 @@ package com.pyamsoft.tetherfi.tile
 
 import androidx.activity.ComponentActivity
 import com.pyamsoft.pydroid.ui.inject.ComposableInjector
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.ObjectGraph
 import javax.inject.Inject
 
@@ -25,11 +26,16 @@ internal class ProxyTileInjector : ComposableInjector() {
 
   @Inject @JvmField internal var viewModel: ProxyTileViewModeler? = null
 
+  @Inject
+  @JvmField
+  internal var dispatchers: AppDispatchers? = null
+
   override fun onInject(activity: ComponentActivity) {
     ObjectGraph.ApplicationScope.retrieve(activity).plusTile().create().inject(this)
   }
 
   override fun onDispose() {
     viewModel = null
+    dispatchers = null
   }
 }

@@ -24,6 +24,7 @@ import com.pyamsoft.pydroid.arch.AbstractViewModeler
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.cast
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.AppCoroutineScope
 import com.pyamsoft.tetherfi.core.InAppRatingPreferences
 import com.pyamsoft.tetherfi.core.Timber
@@ -39,9 +40,7 @@ import com.pyamsoft.tetherfi.service.ServiceLauncher
 import com.pyamsoft.tetherfi.service.prereq.HotspotRequirements
 import com.pyamsoft.tetherfi.service.prereq.HotspotStartBlocker
 import com.pyamsoft.tetherfi.ui.ServerPortTypes
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combineTransform
@@ -51,6 +50,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 class MainViewModeler
 @Inject
@@ -67,6 +67,7 @@ internal constructor(
     private val expertPreferences: ExpertPreferences,
     private val serviceLauncher: ServiceLauncher,
     private val appScope: AppCoroutineScope,
+    private val dispatchers: AppDispatchers,
 ) : MainViewState by state, AbstractViewModeler<MainViewState>(state) {
 
   private val isNetworkCurrentlyRunning =
@@ -77,12 +78,12 @@ internal constructor(
 
     // Watch group info
     networkStatus.onGroupInfoChanged().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.group.value = it } }
+      scope.launch(context = dispatchers.default) { f.collect { s.group.value = it } }
     }
 
     // Watch connection info
     networkStatus.onConnectionInfoChanged().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.connection.value = it } }
+      scope.launch(context = dispatchers.default) { f.collect { s.connection.value = it } }
     }
   }
 
@@ -91,32 +92,32 @@ internal constructor(
 
     // Enabled state is its own thing, not part of group info
     proxyPreferences.listenForHttpEnabledChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.isHttpEnabled.value = it } }
+      scope.launch(context = dispatchers.default) { f.collect { s.isHttpEnabled.value = it } }
     }
 
     proxyPreferences.listenForSocksEnabledChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.isSocksEnabled.value = it } }
+      scope.launch(context = dispatchers.default) { f.collect { s.isSocksEnabled.value = it } }
     }
 
     // Port is its own thing, not part of group info
     proxyPreferences.listenForPortChanges().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.port.value = it } }
+      scope.launch(context = dispatchers.default) { f.collect { s.port.value = it } }
     }
 
     // Broadcast type
     expertPreferences.listenForBroadcastType().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.broadcastType.value = it } }
+      scope.launch(context = dispatchers.default) { f.collect { s.broadcastType.value = it } }
     }
 
     // Preferred Network
     expertPreferences.listenForPreferredNetwork().also { f ->
-      scope.launch(context = Dispatchers.Default) { f.collect { s.preferredNetwork.value = it } }
+      scope.launch(context = dispatchers.default) { f.collect { s.preferredNetwork.value = it } }
     }
   }
 
   private fun listenServerStatus(scope: CoroutineScope) {
     proxy.onStatusChanged().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { status ->
           Timber.d { "Proxy Status Changed: $status" }
           state.proxyStatus.value = status
@@ -125,7 +126,7 @@ internal constructor(
     }
 
     networkStatus.onStatusChanged().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { status ->
           Timber.d { "WiDi Status Changed: $status" }
           state.wiDiStatus.value = status
@@ -137,8 +138,8 @@ internal constructor(
   private fun listenProxySetupError(scope: CoroutineScope) {
     // If either of these sets an error state, we will mark the error dialog as shown
     // Need this or we run on the main thread
-    resolveErrorFlow().flowOn(context = Dispatchers.Default).also { f ->
-      scope.launch(context = Dispatchers.Default) {
+    resolveErrorFlow().flowOn(context = dispatchers.default).also { f ->
+      scope.launch(context = dispatchers.default) {
         f.collect { show ->
           enforcer.assertOffMainThread()
           state.isShowingSetupError.value = show
@@ -152,7 +153,7 @@ internal constructor(
 
     // Watch the server status and update if it is running
     networkStatus.onStatusChanged().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { s ->
           val wasRunning = isNetworkCurrentlyRunning.value
           val currentlyRunning = s == RunningStatus.Running
@@ -180,7 +181,7 @@ internal constructor(
     // But then once we are done editing and we start getting events from the receiver,
     // take them instead
     broadcastObserver.listenNetworkEvents().also { f ->
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         f.collect { event ->
           when (event) {
             is BroadcastEvent.ConnectionChanged -> {
@@ -207,11 +208,11 @@ internal constructor(
         .filter { it }
         .distinctUntilChanged()
         .also { f ->
-          scope.launch(context = Dispatchers.Default) {
+          scope.launch(context = dispatchers.default) {
             f.collect { show ->
               if (show) {
                 Timber.d { "Show in-app rating" }
-                withContext(context = Dispatchers.Main) { onShowInAppRating() }
+                withContext(context = dispatchers.main) { onShowInAppRating() }
               }
             }
           }
@@ -333,7 +334,7 @@ internal constructor(
   }
 
   fun handleRefreshConnectionInfo(scope: CoroutineScope) {
-    scope.launch(context = Dispatchers.Default) { networkUpdater.updateNetworkInfo() }
+    scope.launch(context = dispatchers.default) { networkUpdater.updateNetworkInfo() }
   }
 
   fun handleOpenDialog(dialog: MainViewDialogs) =
@@ -400,7 +401,7 @@ internal constructor(
     // Close any open dialogs
     closeAllDialogs()
 
-    appScope.launch(context = Dispatchers.Default) {
+    appScope.launch(context = dispatchers.default) {
       val broadcastStatus = networkStatus.getCurrentStatus()
       val proxyStatus = proxy.getCurrentStatus()
 

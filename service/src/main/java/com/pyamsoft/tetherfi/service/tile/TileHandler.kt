@@ -19,14 +19,14 @@ package com.pyamsoft.tetherfi.service.tile
 import androidx.annotation.CheckResult
 import androidx.annotation.VisibleForTesting
 import com.pyamsoft.pydroid.core.ThreadEnforcer
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.status.RunningStatus
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class TileHandler
 @Inject
@@ -35,6 +35,7 @@ constructor(
     private val enforcer: ThreadEnforcer,
     private val networkStatus: BroadcastNetworkStatus,
     private val proxy: SharedProxy,
+    private val dispatchers: AppDispatchers,
 ) {
 
   private fun CoroutineScope.watchStatusUpdates(
@@ -44,11 +45,11 @@ constructor(
       onNetworkRunning: () -> Unit,
       onNetworkStopping: () -> Unit,
   ) {
-    launch(context = Dispatchers.Default) {
+    launch(context = dispatchers.default) {
       enforcer.assertOffMainThread()
 
       proxy.onStatusChanged().also { f ->
-        launch(context = Dispatchers.Default) {
+        launch(context = dispatchers.default) {
           enforcer.assertOffMainThread()
 
           f.collect { status ->
@@ -64,7 +65,7 @@ constructor(
       }
 
       networkStatus.onStatusChanged().also { f ->
-        launch(context = Dispatchers.Default) {
+        launch(context = dispatchers.default) {
           enforcer.assertOffMainThread()
 
           f.collect { status ->

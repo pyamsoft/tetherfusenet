@@ -21,6 +21,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.udp
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.cast
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
@@ -40,15 +41,14 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
 import io.netty.util.AttributeKey
 import io.netty.util.ReferenceCountUtil
-import java.net.InetSocketAddress
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 
 internal class UdpRelayHandler
 private constructor(
@@ -58,10 +58,12 @@ private constructor(
     private val allowedClients: AllowedClients,
     private val blockedClients: BlockedClients,
     private val clientResolver: ClientResolver,
+    dispatchers: AppDispatchers,
 ) :
     ProxyHandler(
         isDebug = isDebug,
         scope = scope,
+      dispatchers = dispatchers,
         serverSocketTimeout = serverSocketTimeout,
     ) {
 
@@ -124,7 +126,7 @@ private constructor(
           val amountMoved = retainedData.readableBytes()
 
           // Side effect for client tracking
-          scope.launch(context = Dispatchers.IO) {
+          scope.launch(context = dispatchers.io) {
             // Update latest client activity
             allowedClients.seen(client)
 
@@ -247,7 +249,7 @@ private constructor(
     val amountMoved = response.readableBytes()
 
     // Side effect for client tracking
-    scope.launch(context = Dispatchers.IO) {
+    scope.launch(context = dispatchers.io) {
       // Update latest client activity
       allowedClients.seen(client)
 
@@ -317,7 +319,7 @@ private constructor(
 
     byteCountJob?.cancel()
     byteCountJob =
-        scope.launch(context = Dispatchers.IO) {
+      scope.launch(context = dispatchers.io) {
           while (isActive) {
             // Don't report too often
             delay(10.seconds)
@@ -377,6 +379,7 @@ private constructor(
         blockedClients: BlockedClients,
         clientResolver: ClientResolver,
         serverSocketTimeout: ServerSocketTimeout,
+        dispatchers: AppDispatchers,
     ): HandlerFactory<Unit> {
       return {
         UdpRelayHandler(
@@ -386,6 +389,7 @@ private constructor(
             blockedClients = blockedClients,
             clientResolver = clientResolver,
             serverSocketTimeout = serverSocketTimeout,
+          dispatchers = dispatchers,
         )
       }
     }

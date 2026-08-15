@@ -24,6 +24,7 @@ import com.pyamsoft.pydroid.core.LintIgnoreLongMethod
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.ThreadEnforcer
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
 import com.pyamsoft.tetherfi.core.AppDevEnvironment
 import com.pyamsoft.tetherfi.core.Timber
@@ -37,11 +38,7 @@ import com.pyamsoft.tetherfi.server.event.ServerShutdownEvent
 import com.pyamsoft.tetherfi.server.lock.Locker
 import com.pyamsoft.tetherfi.server.proxy.manager.ProxyManager
 import com.pyamsoft.tetherfi.server.status.RunningStatus
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
@@ -58,6 +55,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 @Singleton
 internal class WifiSharedProxy
@@ -70,6 +70,7 @@ internal constructor(
     private val shutdownBus: EventBus<ServerShutdownEvent>,
     private val appEnvironment: AppDevEnvironment,
     private val preferences: ProxyPreferences,
+    private val dispatchers: AppDispatchers,
     status: ProxyStatus,
 ) : BaseServer(status), SharedProxy {
 
@@ -168,7 +169,7 @@ internal constructor(
           RunningStatus.ProxyError(RuntimeException("Must enable either HTTP or SOCKS server"))
       )
     } else {
-      scope.launch(context = Dispatchers.Default) {
+      scope.launch(context = dispatchers.default) {
         beginProxyLoop(
             type = SharedProxy.Type.NETTY,
             lock = lock,
@@ -205,7 +206,7 @@ internal constructor(
         .map { it.isReady() }
         .filter { it }
         .also { f ->
-          launch(context = Dispatchers.Default) {
+          launch(context = dispatchers.default) {
             f.collect { ready ->
               if (ready) {
                 Timber.d { "Proxy has fully launched, update status!" }
@@ -235,10 +236,10 @@ internal constructor(
         watchServerReadyStatus()
 
         // Notify the client connection watcher that we have started
-        launch(context = Dispatchers.Default) { startedClients.started() }
+        launch(context = dispatchers.default) { startedClients.started() }
 
         // Start the proxy server loop
-        launch(context = Dispatchers.Default) {
+        launch(context = dispatchers.default) {
           proxyLoop(
               scope = this,
               lock = lock,
@@ -263,7 +264,7 @@ internal constructor(
       lock: Locker.Lock,
       connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
   ) =
-      withContext(context = Dispatchers.IO) {
+    withContext(context = dispatchers.io) {
         // Scope local
         val mutex = Mutex()
 
@@ -305,7 +306,7 @@ internal constructor(
 
                     // Hold onto the job here so we can cancel it if we need to
                     proxyJob =
-                        launch(context = Dispatchers.Default) {
+                      launch(context = dispatchers.default) {
                           startServer(
                               lock = lock,
                               info = info,
@@ -335,7 +336,7 @@ internal constructor(
                     // Assign kill timer when we first see EMPTY
                     if (killTimerJob == null) {
                       killTimerJob =
-                          launch(context = Dispatchers.Default) {
+                        launch(context = dispatchers.default) {
                             delay(5.seconds)
 
                             Timber.w { "Connection has been EMPTY for too long!" }

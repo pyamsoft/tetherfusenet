@@ -25,6 +25,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.ThreadEnforcer
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
 import com.pyamsoft.tetherfi.core.InAppRatingPreferences
 import com.pyamsoft.tetherfi.core.Timber
@@ -38,12 +39,8 @@ import com.pyamsoft.tetherfi.server.TweakPreferences
 import com.pyamsoft.tetherfi.server.WifiPreferences
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.server.network.PreferredNetwork
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.random.Random
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -52,6 +49,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.random.Random
 
 @Singleton
 @LintIgnoreTooManyFunctions
@@ -59,6 +59,7 @@ internal class PreferencesImpl
 @Inject
 internal constructor(
     private val enforcer: ThreadEnforcer,
+    private val dispatchers: AppDispatchers,
     dataStore: DataStore<Preferences>,
 ) :
     StatusPreferences,
@@ -78,12 +79,12 @@ internal constructor(
 
   private val scope by lazy {
     CoroutineScope(
-        context = SupervisorJob() + Dispatchers.IO + CoroutineName(this::class.java.name)
+      context = SupervisorJob() + dispatchers.io + CoroutineName(this::class.java.name)
     )
   }
 
   private fun onClearOldPreferences(store: DataStore<Preferences>) {
-    scope.launch(context = Dispatchers.IO) {
+    scope.launch(context = dispatchers.io) {
       store.edit { mutableStore ->
         for (key in OldKeys) {
           mutableStore.remove(key)
@@ -97,7 +98,7 @@ internal constructor(
       fallbackValue: T,
       crossinline value: suspend (Preferences) -> T,
   ) {
-    scope.launch(context = Dispatchers.IO) {
+    scope.launch(context = dispatchers.io) {
       try {
         preferences.edit { it[key] = value(it) }
       } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
@@ -132,7 +133,7 @@ internal constructor(
 
   override fun listenForSsidChanges(): Flow<String> =
       getPreference(key = PreferenceKeys.SSID, value = ServerDefaults.WIFI_SSID)
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setSsid(ssid: String) =
       setPreference(
@@ -143,7 +144,7 @@ internal constructor(
 
   override fun listenForPasswordChanges(): Flow<String> =
       getPreference(key = PreferenceKeys.PASSWORD, value = fallbackPassword)
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setPassword(password: String) =
       setPreference(
@@ -154,7 +155,7 @@ internal constructor(
 
   override fun listenForHttpEnabledChanges(): Flow<Boolean> =
       getPreference(key = PreferenceKeys.IS_HTTP_ENABLED, value = DEFAULT_IS_HTTP_ENABLED)
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setHttpEnabled(enabled: Boolean) =
       setPreference(
@@ -165,7 +166,7 @@ internal constructor(
 
   override fun listenForPortChanges(): Flow<Int> =
       getPreference(key = PreferenceKeys.PORT, value = ServerDefaults.HTTP_PORT)
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setPort(port: Int) =
       setPreference(
@@ -176,7 +177,7 @@ internal constructor(
 
   override fun listenForSocksEnabledChanges(): Flow<Boolean> =
       getPreference(key = PreferenceKeys.IS_SOCKS_ENABLED, value = DEFAULT_IS_SOCKS_ENABLED)
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setSocksEnabled(enabled: Boolean) =
       setPreference(
@@ -191,7 +192,7 @@ internal constructor(
               value = ServerDefaults.WIFI_NETWORK_BAND.name,
           )
           .map { ServerNetworkBand.valueOf(it) }
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setNetworkBand(band: ServerNetworkBand) =
       setPreference(
@@ -202,7 +203,7 @@ internal constructor(
 
   override fun listenForStartIgnoreVpn(): Flow<Boolean> =
       getPreference(key = PreferenceKeys.START_IGNORE_VPN, value = DEFAULT_START_IGNORE_VPN)
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setStartIgnoreVpn(ignore: Boolean) =
       setPreference(
@@ -216,7 +217,7 @@ internal constructor(
               key = PreferenceKeys.START_IGNORE_LOCATION,
               value = DEFAULT_START_IGNORE_LOCATION,
           )
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setStartIgnoreLocation(ignore: Boolean) =
       setPreference(
@@ -230,7 +231,7 @@ internal constructor(
               key = PreferenceKeys.SHUTDOWN_NO_CLIENTS,
               value = DEFAULT_SHUTDOWN_NO_CLIENTS,
           )
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setShutdownWithNoClients(shutdown: Boolean) =
       setPreference(
@@ -241,7 +242,7 @@ internal constructor(
 
   override fun listenForWakeLock(): Flow<Boolean> =
       getPreference(key = PreferenceKeys.HOLD_WAKELOCK, value = DEFAULT_HOLD_WAKELOCK)
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setWakeLock(wakelock: Boolean) =
       setPreference(
@@ -252,7 +253,7 @@ internal constructor(
 
   override fun listenForKeepScreenOn(): Flow<Boolean> =
       getPreference(key = PreferenceKeys.KEEP_SCREEN_ON, value = DEFAULT_KEEP_SCREEN_ON)
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setKeepScreenOn(keep: Boolean) =
       setPreference(
@@ -267,7 +268,7 @@ internal constructor(
               value = BroadcastType.WIFI_DIRECT.name,
           )
           .map { BroadcastType.valueOf(it) }
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setBroadcastType(type: BroadcastType) =
       setPreference(
@@ -279,7 +280,7 @@ internal constructor(
   override fun listenForPreferredNetwork(): Flow<PreferredNetwork> =
       getPreference(key = PreferenceKeys.PREFERRED_NETWORK, value = PreferredNetwork.NONE.name)
           .map { PreferredNetwork.valueOf(it) }
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun setPreferredNetwork(network: PreferredNetwork) =
       setPreference(
@@ -341,7 +342,7 @@ internal constructor(
             emit(false)
           }
           // Need this or we run on the main thread
-          .flowOn(context = Dispatchers.IO)
+        .flowOn(context = dispatchers.io)
 
   override fun markHotspotUsed() =
       setPreference(

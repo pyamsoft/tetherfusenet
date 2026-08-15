@@ -18,6 +18,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.cast
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.AllowedClients
@@ -31,14 +32,13 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.util.AttributeKey
 import io.netty.util.ReferenceCountUtil
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 
 internal class RelayHandler
 private constructor(
@@ -47,10 +47,12 @@ private constructor(
     serverSocketTimeout: ServerSocketTimeout,
     private val allowedClients: AllowedClients,
     private val blockedClients: BlockedClients,
+    dispatchers: AppDispatchers,
 ) :
     ProxyHandler(
         scope = scope,
         serverSocketTimeout = serverSocketTimeout,
+      dispatchers = dispatchers,
         isDebug = isDebug,
     ) {
 
@@ -125,7 +127,7 @@ private constructor(
 
     byteCountJob?.cancel()
     byteCountJob =
-        scope.launch(context = Dispatchers.IO) {
+      scope.launch(context = dispatchers.io) {
           while (isActive) {
             // Don't report too often
             delay(10.seconds)
@@ -191,7 +193,7 @@ private constructor(
       return
     }
 
-    scope.launch(context = Dispatchers.IO) { allowedClients.seen(client) }
+    scope.launch(context = dispatchers.io) { allowedClients.seen(client) }
 
     // Grab the amount BEFORE the data buffer is released
     val amountMoved = bytes.readableBytes()
@@ -264,6 +266,7 @@ private constructor(
         allowedClients: AllowedClients,
         blockedClients: BlockedClients,
         serverSocketTimeout: ServerSocketTimeout,
+        dispatchers: AppDispatchers,
     ): HandlerFactory<Unit> {
       return {
         RelayHandler(
@@ -272,6 +275,7 @@ private constructor(
             allowedClients = allowedClients,
             blockedClients = blockedClients,
             serverSocketTimeout = serverSocketTimeout,
+          dispatchers = dispatchers,
         )
       }
     }
