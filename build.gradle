@@ -108,7 +108,7 @@ allprojects {
     }
     groovyGradle {
       target("*.gradle")
-      greclipse()
+      greclipse(libs.versions.greclipse.get())
 
       trimTrailingWhitespace()
       endWithNewline()

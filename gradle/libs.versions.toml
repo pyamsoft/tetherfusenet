@@ -45,6 +45,7 @@ coil = "3.5.0"
 
 # Developer Tools
 ktfmt = "0.64"
+greclipse = "4.40"
 spotless = "8.9.0"
 jdkDesugar = "2.1.5"
 caupain = "1.10.1"
