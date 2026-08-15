@@ -54,9 +54,9 @@ import io.netty.handler.codec.socksx.v5.Socks5Message
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
+import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.net.InetSocketAddress
 
 internal class Socks5ProxyHandler
 internal constructor(
@@ -77,7 +77,7 @@ internal constructor(
         blockedClients = blockedClients,
         tcpSocketCreator = tcpSocketCreator,
         serverSocketTimeout = serverSocketTimeout,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
     ) {
 
   private val udpRelayHandlerFactory =
@@ -88,7 +88,7 @@ internal constructor(
           blockedClients = blockedClients,
           clientResolver = clientResolver,
           serverSocketTimeout = serverSocketTimeout,
-        dispatchers = dispatchers,
+          dispatchers = dispatchers,
       )
 
   @CheckResult
@@ -385,7 +385,7 @@ internal constructor(
             tcpSocketCreator = tcpSocketCreator,
             udpSocketCreator = udpSocketCreator,
             serverSocketTimeout = serverSocketTimeout,
-          dispatchers = dispatchers,
+            dispatchers = dispatchers,
         )
       }
     }

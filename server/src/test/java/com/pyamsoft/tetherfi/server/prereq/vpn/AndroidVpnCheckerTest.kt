@@ -21,6 +21,7 @@ import android.content.ContextWrapper
 import android.os.Build
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.TweakPreferences
+import kotlin.test.assertFalse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -29,7 +30,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
-import kotlin.test.assertFalse
 
 private class FakeTweakPreferences(
     private val ignoreVpn: Boolean,
@@ -74,11 +74,12 @@ class AndroidVpnCheckerTest {
   fun `vpn override bypasses actual vpn manager`() = runTest {
     val context = ThrowingConnectivityContext(RuntimeEnvironment.getApplication())
     val checker =
-      AndroidVpnChecker(
-        context = context, preferences = FakeTweakPreferences(ignoreVpn = true),
-        // TODO(Peter): Do we need test dispatchers?
-        dispatchers = AppDispatchers.create(),
-      )
+        AndroidVpnChecker(
+            context = context,
+            preferences = FakeTweakPreferences(ignoreVpn = true),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     assertFalse(checker.isUsingVpn())
   }
@@ -89,8 +90,8 @@ class AndroidVpnCheckerTest {
         AndroidVpnChecker(
             context = RuntimeEnvironment.getApplication(),
             preferences = FakeTweakPreferences(ignoreVpn = false),
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
 
     // By default robolectric is not vpn connected

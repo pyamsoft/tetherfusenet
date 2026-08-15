@@ -22,9 +22,9 @@ import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.event.ServerShutdownEvent
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 class ForegroundWatcher
 @Inject
@@ -39,11 +39,11 @@ internal constructor(
       onShutdownService: suspend (Throwable?) -> Unit,
       onRefreshNotification: suspend () -> Unit,
   ) =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         val scope = this
 
         // Watch everything else as the parent
-      scope.launch(context = dispatchers.default) {
+        scope.launch(context = dispatchers.default) {
           enforcer.assertOffMainThread()
 
           // When shutdown events are received, we kill the service

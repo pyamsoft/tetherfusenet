@@ -25,18 +25,18 @@ import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.StatusPreferences
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 @Singleton
 internal class ScreenLocker
 @Inject
 internal constructor(
-  context: Context,
-  private val statusPreferences: StatusPreferences,
-  private val dispatchers: AppDispatchers,
+    context: Context,
+    private val statusPreferences: StatusPreferences,
+    private val dispatchers: AppDispatchers,
 ) : AbstractLocker() {
 
   private val powerManager by lazy {
@@ -67,27 +67,28 @@ internal constructor(
   }
 
   override suspend fun createLock(): Locker.Lock =
-    withContext(context = dispatchers.default) {
-      val isKeepScreenOn = statusPreferences.listenForKeepScreenOn().first()
-      if (isKeepScreenOn) {
-        // Not every device supports SCREEN_ON wakelock
-        val wakeLock = createWakeLock() ?: return@withContext NoopLock
+      withContext(context = dispatchers.default) {
+        val isKeepScreenOn = statusPreferences.listenForKeepScreenOn().first()
+        if (isKeepScreenOn) {
+          // Not every device supports SCREEN_ON wakelock
+          val wakeLock = createWakeLock() ?: return@withContext NoopLock
 
-        return@withContext Lock(wakeLock, dispatchers, tag)
+          return@withContext Lock(wakeLock, dispatchers, tag)
+        }
+
+        return@withContext NoopLock
       }
 
-      return@withContext NoopLock
-    }
-
   internal class Lock(
-    private val wakeLock: PowerManager.WakeLock,
-    dispatchers: AppDispatchers,
-    lockTag: String,
-  ) : AbstractLock(
-    lockType = "Screen",
-    dispatchers = dispatchers,
-    lockTag = lockTag
-  ) {
+      private val wakeLock: PowerManager.WakeLock,
+      dispatchers: AppDispatchers,
+      lockTag: String,
+  ) :
+      AbstractLock(
+          lockType = "Screen",
+          dispatchers = dispatchers,
+          lockTag = lockTag,
+      ) {
 
     override suspend fun isHeld(): Boolean {
       return wakeLock.isHeld

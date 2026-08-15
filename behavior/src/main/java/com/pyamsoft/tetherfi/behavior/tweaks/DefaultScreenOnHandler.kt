@@ -28,6 +28,8 @@ import com.pyamsoft.tetherfi.server.StatusPreferences
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.status.RunningStatus
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -35,8 +37,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 @Singleton
 internal class DefaultScreenOnHandler
@@ -129,19 +129,18 @@ internal constructor(
     @JvmStatic
     @CheckResult
     private suspend fun getWindow(
-      dispatchers: AppDispatchers,
-      activity: ComponentActivity
-    ): Window? =
-      withContext(context = dispatchers.main) { activity.window }
+        dispatchers: AppDispatchers,
+        activity: ComponentActivity,
+    ): Window? = withContext(context = dispatchers.main) { activity.window }
 
     @JvmStatic
     @CheckResult
     private suspend fun isKeepScreenOnFlag(
-      dispatchers: AppDispatchers,
-      window: Window
+        dispatchers: AppDispatchers,
+        window: Window,
     ): Boolean {
       val attrs: WindowManager.LayoutParams? =
-        withContext(context = dispatchers.main) { window.attributes }
+          withContext(context = dispatchers.main) { window.attributes }
       if (attrs == null) {
         Timber.w { "No window attrs! Cannot check screen flags" }
         return false

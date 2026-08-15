@@ -45,38 +45,38 @@ private enum class DeviceIdentifiersContentTypes {
 }
 
 internal fun LazyListScope.renderDeviceIdentifiers(
-  itemModifier: Modifier = Modifier,
+    itemModifier: Modifier = Modifier,
 ) {
   item(
-    contentType = DeviceIdentifiersContentTypes.THIS,
+      contentType = DeviceIdentifiersContentTypes.THIS,
   ) {
     ThisInstruction(
-      modifier = itemModifier,
-      small = true,
+        modifier = itemModifier,
+        small = true,
     ) {
       Text(
-        text = stringResource(R.string.this_device),
-        style =
-          MaterialTheme.typography.labelMedium.copy(
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          ),
+          text = stringResource(R.string.this_device),
+          style =
+              MaterialTheme.typography.labelMedium.copy(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+              ),
       )
     }
   }
 
   item(
-    contentType = DeviceIdentifiersContentTypes.OTHER,
+      contentType = DeviceIdentifiersContentTypes.OTHER,
   ) {
     OtherInstruction(
-      modifier = itemModifier,
-      small = true,
+        modifier = itemModifier,
+        small = true,
     ) {
       Text(
-        text = stringResource(R.string.other_device),
-        style =
-          MaterialTheme.typography.labelMedium.copy(
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          ),
+          text = stringResource(R.string.other_device),
+          style =
+              MaterialTheme.typography.labelMedium.copy(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+              ),
       )
     }
   }
@@ -84,77 +84,75 @@ internal fun LazyListScope.renderDeviceIdentifiers(
 
 @Composable
 private fun ThisDevice(
-  modifier: Modifier = Modifier,
-  small: Boolean,
+    modifier: Modifier = Modifier,
+    small: Boolean,
 ) {
   val adjustment = MaterialTheme.keylines.typography
   val sizeAdjustment =
-    remember(
-      small,
-      adjustment,
-    ) {
-      if (small) adjustment else ZeroSize
-    }
+      remember(
+          small,
+          adjustment,
+      ) {
+        if (small) adjustment else ZeroSize
+      }
 
   Icon(
-    modifier =
-      modifier
-        .padding(start = if (small) 2.dp else ZeroSize)
-        .size(ImageDefaults.IconSize - sizeAdjustment)
-        .padding(end = if (small) 2.dp else ZeroSize),
-    painter = IconPainters.mobile(),
-    contentDescription = stringResource(R.string.this_device),
-    tint = MaterialTheme.colorScheme.primary,
+      modifier =
+          modifier
+              .padding(start = if (small) 2.dp else ZeroSize)
+              .size(ImageDefaults.IconSize - sizeAdjustment)
+              .padding(end = if (small) 2.dp else ZeroSize),
+      painter = IconPainters.mobile(),
+      contentDescription = stringResource(R.string.this_device),
+      tint = MaterialTheme.colorScheme.primary,
   )
 }
 
 @Composable
 private fun OtherDevice(
-  modifier: Modifier = Modifier,
-  small: Boolean,
+    modifier: Modifier = Modifier,
+    small: Boolean,
 ) {
   val adjustment = MaterialTheme.keylines.typography
   val sizeAdjustment =
-    remember(
-      small,
-      adjustment,
-    ) {
-      if (small) adjustment else ZeroSize
-    }
+      remember(
+          small,
+          adjustment,
+      ) {
+        if (small) adjustment else ZeroSize
+      }
 
   Icon(
-    modifier =
-      modifier
-        .padding(start = if (small) 2.dp else ZeroSize)
-        .size(ImageDefaults.IconSize - sizeAdjustment)
-        .padding(end = if (small) 2.dp else ZeroSize),
-    painter = IconPainters.devices(),
-    contentDescription = stringResource(R.string.other_device),
-    tint = MaterialTheme.colorScheme.tertiary,
+      modifier =
+          modifier
+              .padding(start = if (small) 2.dp else ZeroSize)
+              .size(ImageDefaults.IconSize - sizeAdjustment)
+              .padding(end = if (small) 2.dp else ZeroSize),
+      painter = IconPainters.devices(),
+      contentDescription = stringResource(R.string.other_device),
+      tint = MaterialTheme.colorScheme.tertiary,
   )
 }
 
 @Composable
 internal fun ThisInstruction(
-  modifier: Modifier = Modifier,
-  small: Boolean = false,
-  content: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    small: Boolean = false,
+    content: @Composable () -> Unit,
 ) {
   Row(
-    modifier = modifier,
-    verticalAlignment = Alignment.CenterVertically,
+      modifier = modifier,
+      verticalAlignment = Alignment.CenterVertically,
   ) {
     Box(
-      modifier = Modifier.fillMaxHeight(),
-      contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxHeight(),
+        contentAlignment = Alignment.Center,
     ) {
       ThisDevice(small = small)
     }
 
     Box(
-      modifier = Modifier
-        .weight(1F)
-        .padding(start = MaterialTheme.keylines.content),
+        modifier = Modifier.weight(1F).padding(start = MaterialTheme.keylines.content),
     ) {
       content()
     }
@@ -163,25 +161,23 @@ internal fun ThisInstruction(
 
 @Composable
 internal fun OtherInstruction(
-  modifier: Modifier = Modifier,
-  small: Boolean = false,
-  content: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    small: Boolean = false,
+    content: @Composable () -> Unit,
 ) {
   Row(
-    modifier = modifier,
-    verticalAlignment = Alignment.CenterVertically,
+      modifier = modifier,
+      verticalAlignment = Alignment.CenterVertically,
   ) {
     Box(
-      modifier = Modifier.fillMaxHeight(),
-      contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxHeight(),
+        contentAlignment = Alignment.Center,
     ) {
       OtherDevice(small = small)
     }
 
     Box(
-      modifier = Modifier
-        .weight(1F)
-        .padding(start = MaterialTheme.keylines.content),
+        modifier = Modifier.weight(1F).padding(start = MaterialTheme.keylines.content),
     ) {
       content()
     }

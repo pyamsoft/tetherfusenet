@@ -51,15 +51,13 @@ import com.pyamsoft.tetherfi.service.ServiceLauncher
 import com.pyamsoft.tetherfi.tile.ProxyTileService
 import com.pyamsoft.tetherfi.ui.InstallPYDroidExtras
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
 
-  @Inject
-  @JvmField
-  internal var dispatchers: AppDispatchers? = null
+  @Inject @JvmField internal var dispatchers: AppDispatchers? = null
   @Inject @JvmField internal var themeViewModeler: ThemeViewModeler? = null
 
   @Inject @JvmField internal var serviceLauncher: ServiceLauncher? = null
@@ -138,7 +136,7 @@ class MainActivity : ComponentActivity() {
       // Only attempt one launch emit at a time
       settingsCommandLaunchJob?.cancel()
       settingsCommandLaunchJob =
-        lifecycleScope.launch(context = d.default) { settingsCommandBus.emit(Unit) }
+          lifecycleScope.launch(context = d.default) { settingsCommandBus.emit(Unit) }
     }
   }
 
@@ -178,7 +176,7 @@ class MainActivity : ComponentActivity() {
       }
 
       TFTheme(
-        dispatchers = dis,
+          dispatchers = dis,
           theme = theme,
           isMaterialYou = isMaterialYou,
       ) {
@@ -186,9 +184,7 @@ class MainActivity : ComponentActivity() {
             isDarkMode = theme.getSystemDarkMode(),
         )
         InstallPYDroidExtras(
-          modifier = Modifier
-            .fillUpToPortraitSize()
-            .widthIn(max = LANDSCAPE_MAX_WIDTH),
+            modifier = Modifier.fillUpToPortraitSize().widthIn(max = LANDSCAPE_MAX_WIDTH),
             appName = appName,
         )
         MainEntry(

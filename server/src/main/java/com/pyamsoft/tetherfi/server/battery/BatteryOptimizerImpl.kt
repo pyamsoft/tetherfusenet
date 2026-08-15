@@ -21,8 +21,8 @@ import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlinx.coroutines.withContext
 
 internal class BatteryOptimizerImpl
 @Inject
@@ -35,7 +35,7 @@ internal constructor(
 
   override suspend fun isOptimizationsIgnored(): Boolean =
       // Don't use proxyDispatcher since this is used from UI
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         powerManager.isIgnoringBatteryOptimizations(context.packageName)
       }
 }

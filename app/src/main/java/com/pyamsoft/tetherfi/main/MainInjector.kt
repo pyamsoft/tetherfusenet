@@ -34,9 +34,7 @@ internal class MainInjector @Inject internal constructor() : ComposableInjector(
   @JvmField @Inject internal var permissionResponseBus: EventConsumer<PermissionResponse>? = null
   @JvmField @Inject internal var experimentalRuntimeFlags: ExperimentalRuntimeFlags? = null
 
-  @JvmField
-  @Inject
-  internal var dispatchers: AppDispatchers? = null
+  @JvmField @Inject internal var dispatchers: AppDispatchers? = null
 
   override fun onInject(activity: ComponentActivity) {
     ObjectGraph.ActivityScope.retrieve(activity).inject(this)

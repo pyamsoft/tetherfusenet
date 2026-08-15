@@ -34,17 +34,15 @@ import com.pyamsoft.tetherfi.R
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.status.RunningStatus
 import com.pyamsoft.tetherfi.service.tile.TileHandler
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import javax.inject.Inject
 
 internal class ProxyTileService internal constructor() : TileService() {
 
-  @Inject
-  @JvmField
-  internal var dispatchers: AppDispatchers? = null
+  @Inject @JvmField internal var dispatchers: AppDispatchers? = null
   @Inject @JvmField internal var tileHandler: TileHandler? = null
 
   @Inject @JvmField internal var tileActivityLauncher: ProxyTileActivityLauncher? = null
@@ -57,7 +55,7 @@ internal class ProxyTileService internal constructor() : TileService() {
   private fun makeScope(): CoroutineScope {
     val dis = dispatchers.requireNotNull()
     return CoroutineScope(
-      context = SupervisorJob() + dis.default + CoroutineName(this::class.java.name),
+        context = SupervisorJob() + dis.default + CoroutineName(this::class.java.name),
     )
   }
 

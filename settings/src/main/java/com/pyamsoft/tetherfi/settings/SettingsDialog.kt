@@ -26,27 +26,27 @@ import com.pyamsoft.tetherfi.core.AppDevEnvironment
 
 @Composable
 fun SettingsScreen(
-  modifier: Modifier = Modifier,
-  itemModifier: Modifier = Modifier,
-  listState: LazyListState,
-  appEnvironment: AppDevEnvironment,
+    modifier: Modifier = Modifier,
+    itemModifier: Modifier = Modifier,
+    listState: LazyListState,
+    appEnvironment: AppDevEnvironment,
 ) {
   val context = LocalContext.current
 
   SettingsPage(
-    modifier = modifier,
-    listState = listState,
-    extraDebugContent = {
-      renderExperiments(
-        itemModifier = itemModifier,
-      )
-
-      if (context.isDebugMode()) {
-        renderExtraDebugContent(
-          itemModifier = itemModifier,
-          appEnvironment = appEnvironment,
+      modifier = modifier,
+      listState = listState,
+      extraDebugContent = {
+        renderExperiments(
+            itemModifier = itemModifier,
         )
-      }
-    },
+
+        if (context.isDebugMode()) {
+          renderExtraDebugContent(
+              itemModifier = itemModifier,
+              appEnvironment = appEnvironment,
+          )
+        }
+      },
   )
 }

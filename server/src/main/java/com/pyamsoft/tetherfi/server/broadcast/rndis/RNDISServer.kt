@@ -25,24 +25,26 @@ import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastServerImplementation
 import com.pyamsoft.tetherfi.server.broadcast.DelegatingBroadcastServer
 import com.pyamsoft.tetherfi.server.lock.Locker
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.Enumeration
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 
 @Singleton
-internal class RNDISServer @Inject internal constructor(
-  private val dispatchers: AppDispatchers,
+internal class RNDISServer
+@Inject
+internal constructor(
+    private val dispatchers: AppDispatchers,
 ) : BroadcastServerImplementation<String> {
 
   @CheckResult
   @LintIgnoreCyclomaticComplexMethod
   private suspend fun resolveRNDISNetwork(): String =
-    withContext(context = dispatchers.io) {
+      withContext(context = dispatchers.io) {
         // On some devices, this method does not return interfaces?
         // https://github.com/pyamsoft/tetherfusenet/issues/351
         val allIfaces: Enumeration<NetworkInterface>? = NetworkInterface.getNetworkInterfaces()

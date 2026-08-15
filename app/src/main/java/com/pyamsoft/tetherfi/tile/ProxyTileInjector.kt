@@ -26,9 +26,7 @@ internal class ProxyTileInjector : ComposableInjector() {
 
   @Inject @JvmField internal var viewModel: ProxyTileViewModeler? = null
 
-  @Inject
-  @JvmField
-  internal var dispatchers: AppDispatchers? = null
+  @Inject @JvmField internal var dispatchers: AppDispatchers? = null
 
   override fun onInject(activity: ComponentActivity) {
     ObjectGraph.ApplicationScope.retrieve(activity).plusTile().create().inject(this)

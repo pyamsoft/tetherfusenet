@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?><!--
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
   ~ Copyright 2026 pyamsoft
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +15,14 @@
   ~ limitations under the License.
   -->
 <resources>
-  <string name="sharing_complete">Your device should now be sharing its Internet connection!</string>
-    <string name="sharing_caveat">At this point, normal Internet browsing and email should work. If it does not, disconnect from the %1$s Hotspot and double-check that you have entered the correct Network and Proxy settings.</string>
-    <string name="proxy_having_trouble">Having trouble configuring Proxy Settings? See more detailed instructions %1$s.</string>
-    <string name="proxy_having_link_text">here</string>
+  <string
+    name="sharing_complete"
+  >Your device should now be sharing its Internet connection!</string>
+  <string
+    name="sharing_caveat"
+  >At this point, normal Internet browsing and email should work. If it does not, disconnect from the %1$s Hotspot and double-check that you have entered the correct Network and Proxy settings.</string>
+  <string
+    name="proxy_having_trouble"
+  >Having trouble configuring Proxy Settings? See more detailed instructions %1$s.</string>
+  <string name="proxy_having_link_text">here</string>
 </resources>

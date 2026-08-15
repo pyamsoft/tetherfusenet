@@ -23,8 +23,8 @@ import androidx.annotation.CheckResult
 import androidx.core.content.ContextCompat
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.util.AppDispatchers
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlinx.coroutines.withContext
 
 internal class PermissionGuardImpl
 @Inject
@@ -47,7 +47,7 @@ internal constructor(
   }
 
   override suspend fun canCreateNetwork(): Boolean =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         return@withContext requiredPermissions.all { hasPermission(it) }
       }
 

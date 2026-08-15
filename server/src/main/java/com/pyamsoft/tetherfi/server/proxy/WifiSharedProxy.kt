@@ -38,6 +38,9 @@ import com.pyamsoft.tetherfi.server.event.ServerShutdownEvent
 import com.pyamsoft.tetherfi.server.lock.Locker
 import com.pyamsoft.tetherfi.server.proxy.manager.ProxyManager
 import com.pyamsoft.tetherfi.server.status.RunningStatus
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -55,9 +58,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.seconds
 
 @Singleton
 internal class WifiSharedProxy
@@ -264,7 +264,7 @@ internal constructor(
       lock: Locker.Lock,
       connectionStatus: Flow<BroadcastNetworkStatus.ConnectionInfo>,
   ) =
-    withContext(context = dispatchers.io) {
+      withContext(context = dispatchers.io) {
         // Scope local
         val mutex = Mutex()
 
@@ -306,7 +306,7 @@ internal constructor(
 
                     // Hold onto the job here so we can cancel it if we need to
                     proxyJob =
-                      launch(context = dispatchers.default) {
+                        launch(context = dispatchers.default) {
                           startServer(
                               lock = lock,
                               info = info,
@@ -336,7 +336,7 @@ internal constructor(
                     // Assign kill timer when we first see EMPTY
                     if (killTimerJob == null) {
                       killTimerJob =
-                        launch(context = dispatchers.default) {
+                          launch(context = dispatchers.default) {
                             delay(5.seconds)
 
                             Timber.w { "Connection has been EMPTY for too long!" }

@@ -33,6 +33,9 @@ import com.pyamsoft.tetherfi.service.ServiceLauncher
 import com.pyamsoft.tetherfi.service.prereq.HotspotRequirements
 import com.pyamsoft.tetherfi.service.prereq.HotspotStartBlocker
 import com.pyamsoft.tetherfi.service.tile.TileHandler
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -46,9 +49,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 private class TestForegroundService : Service() {
   override fun onBind(intent: Intent?): IBinder? = null
@@ -98,7 +98,7 @@ private fun newServiceLauncher(): ServiceLauncher =
     )
 
 private fun newViewModeler(
-  dispatchers: AppDispatchers,
+    dispatchers: AppDispatchers,
     state: MutableProxyTileViewState = MutableProxyTileViewState(),
     networkStatus: BroadcastNetworkStatus = FakeBroadcastNetworkStatus(),
     proxy: SharedProxy = FakeSharedProxy(),
@@ -113,12 +113,12 @@ private fun newViewModeler(
                 enforcer = createThreadEnforcer(debug = false),
                 networkStatus = networkStatus,
                 proxy = proxy,
-              dispatchers = dispatchers,
+                dispatchers = dispatchers,
             ),
         serviceLauncher = serviceLauncher,
         requirements = requirements,
         appScope = appScope,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
     )
 
 @RunWith(RobolectricTestRunner::class)
@@ -134,9 +134,10 @@ class ProxyTileViewModelerTest {
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.Running)
     val state = MutableProxyTileViewState()
     newViewModeler(
-      state = state, networkStatus = networkStatus,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
+        state = state,
+        networkStatus = networkStatus,
+        // TODO(Peter): Do we need test dispatchers?
+        dispatchers = AppDispatchers.create(),
     )
 
     assertEquals(RunningStatus.Running, state.status.value)
@@ -151,8 +152,8 @@ class ProxyTileViewModelerTest {
             networkStatus = networkStatus,
             requirements = FakeHotspotRequirements(blockers = emptySet()),
             appScope = AppCoroutineScope(appScope = backingScope),
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
     var noActionCalled = false
 
@@ -172,8 +173,8 @@ class ProxyTileViewModelerTest {
         newViewModeler(
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
     var noActionCalled = false
 
@@ -193,8 +194,8 @@ class ProxyTileViewModelerTest {
         newViewModeler(
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
     var noActionCalled = false
 
@@ -213,8 +214,8 @@ class ProxyTileViewModelerTest {
         newViewModeler(
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
     var noActionCalled = false
 
@@ -234,8 +235,8 @@ class ProxyTileViewModelerTest {
             networkStatus = networkStatus,
             requirements = FakeHotspotRequirements(blockers = emptySet()),
             appScope = AppCoroutineScope(appScope = backingScope),
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
     var noActionCalled = false
 
@@ -256,8 +257,8 @@ class ProxyTileViewModelerTest {
             networkStatus = networkStatus,
             requirements = FakeHotspotRequirements(blockers = setOf(blocker)),
             appScope = AppCoroutineScope(appScope = backingScope),
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
     var noActionCalled = false
 
@@ -291,11 +292,12 @@ class ProxyTileViewModelerTest {
   fun `handleDismissed hides the tile`() {
     val state = MutableProxyTileViewState()
     state.isShowing.value = true
-    val viewModeler = newViewModeler(
-      state = state,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            state = state,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModeler.handleDismissed()
 
@@ -307,11 +309,14 @@ class ProxyTileViewModelerTest {
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
     val proxy = FakeSharedProxy(initialStatus = RunningStatus.NotRunning)
     val state = MutableProxyTileViewState()
-    val viewModeler = newViewModeler(
-      state = state, networkStatus = networkStatus, proxy = proxy,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            state = state,
+            networkStatus = networkStatus,
+            proxy = proxy,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     val bindScope = CoroutineScope(Job())
     try {

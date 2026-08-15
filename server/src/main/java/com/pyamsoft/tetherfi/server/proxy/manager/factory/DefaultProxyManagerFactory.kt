@@ -31,10 +31,10 @@ import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.manager.ProxyManager
 import com.pyamsoft.tetherfi.server.proxy.manager.netty.NettyDelegatingProxyManager
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Named
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 internal class DefaultProxyManagerFactory
 @Inject
@@ -69,7 +69,7 @@ internal constructor(
         clientResolver = clientResolver,
         socketBinder = socketBinder,
         socketTagger = socketTagger,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
         isHttpEnabled = isHttpEnabled,
         isSocksEnabled = isSocksEnabled,
         serverSocketTimeout = socketTimeout,
@@ -85,7 +85,7 @@ internal constructor(
       isHttpEnabled: Boolean,
       isSocksEnabled: Boolean,
   ): ProxyManager =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         return@withContext when (type) {
           SharedProxy.Type.NETTY ->
               createNetty(

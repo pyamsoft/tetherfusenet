@@ -32,9 +32,7 @@ internal class BehaviorInjector : ComposableInjector() {
   @JvmField @Inject internal var permissionRequestBus: EventBus<PermissionRequests>? = null
   @JvmField @Inject internal var permissionResponseBus: EventConsumer<PermissionResponse>? = null
 
-  @JvmField
-  @Inject
-  internal var dispatchers: AppDispatchers? = null
+  @JvmField @Inject internal var dispatchers: AppDispatchers? = null
 
   override fun onInject(activity: ComponentActivity) {
     ObjectGraph.ActivityScope.retrieve(activity).plusBehavior().create().inject(this)

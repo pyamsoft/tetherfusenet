@@ -21,11 +21,6 @@ import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.InAppRatingPreferences
 import com.pyamsoft.tetherfi.server.TweakPreferences
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
-import org.junit.Test
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
@@ -38,6 +33,11 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
+import org.junit.Test
 
 private class MutableClock(
     private var current: Instant,
@@ -99,7 +99,7 @@ private fun newManager(
         inAppRatingPreferences = inAppRatingPreferences,
         clock = clock,
         shutdownBus = EventBus.create(),
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
         tweakPreferences = tweakPreferences,
     )
 
@@ -112,8 +112,8 @@ class ClientManagerImplTest {
         newManager(
             clock = MutableClock(Instant.EPOCH),
             inAppRatingPreferences = ratingPreferences,
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
 
     val first = manager.ensure("1.2.3.4")
@@ -126,11 +126,12 @@ class ClientManagerImplTest {
 
   @Test
   fun `block marks client blocked and unblock reverses it`() = runTest {
-    val manager = newManager(
-      clock = MutableClock(Instant.EPOCH),
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = MutableClock(Instant.EPOCH),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
     val client = manager.ensure("1.2.3.4")
 
     assertFalse(manager.isBlocked(client))
@@ -146,11 +147,12 @@ class ClientManagerImplTest {
 
   @Test
   fun `isBlocked is true when over transfer limit without being manually blocked`() = runTest {
-    val manager = newManager(
-      clock = MutableClock(Instant.EPOCH),
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = MutableClock(Instant.EPOCH),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
     val overLimitClient =
         TetherClient.testCreate(
             hostNameOrIp = "1.2.3.4",
@@ -167,11 +169,12 @@ class ClientManagerImplTest {
   fun `seen updates last seen time for known client and is a no-op for unknown`() = runTest {
     val start = Instant.EPOCH
     val clock = MutableClock(start)
-    val manager = newManager(
-      clock = clock,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = clock,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     val client = manager.ensure("1.2.3.4")
     val seenAt = client.mostRecentlySeen
@@ -189,11 +192,12 @@ class ClientManagerImplTest {
 
   @Test
   fun `reportTransfer merges bytes for known client and is a no-op for unknown`() = runTest {
-    val manager = newManager(
-      clock = MutableClock(Instant.EPOCH),
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = MutableClock(Instant.EPOCH),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
     val client = manager.ensure("1.2.3.4")
 
     manager.reportTransfer(
@@ -216,11 +220,12 @@ class ClientManagerImplTest {
 
   @Test
   fun `updateNickName updates known client and is a no-op for unknown`() = runTest {
-    val manager = newManager(
-      clock = MutableClock(Instant.EPOCH),
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = MutableClock(Instant.EPOCH),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
     val client = manager.ensure("1.2.3.4")
 
     manager.updateNickName(client, "Bob")
@@ -233,11 +238,12 @@ class ClientManagerImplTest {
 
   @Test
   fun `updateTransferLimit updates known client and is a no-op for unknown`() = runTest {
-    val manager = newManager(
-      clock = MutableClock(Instant.EPOCH),
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = MutableClock(Instant.EPOCH),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
     val client = manager.ensure("1.2.3.4")
     val limit = TransferAmount(amount = 5, unit = TransferUnit.MB)
 
@@ -251,11 +257,12 @@ class ClientManagerImplTest {
 
   @Test
   fun `updateBandwidthLimit updates known client and is a no-op for unknown`() = runTest {
-    val manager = newManager(
-      clock = MutableClock(Instant.EPOCH),
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = MutableClock(Instant.EPOCH),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
     val client = manager.ensure("1.2.3.4")
     val limit = TransferAmount(amount = 5, unit = TransferUnit.MB)
 
@@ -270,11 +277,12 @@ class ClientManagerImplTest {
   @Test
   fun `purge ages out old clients`() = runTest {
     val clock = MutableClock(Instant.EPOCH)
-    val manager = newManager(
-      clock = clock,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = clock,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     @SuppressLint("CheckResult") manager.ensure("1.1.1.1")
 
@@ -293,11 +301,12 @@ class ClientManagerImplTest {
   @Test
   fun `block clears after time expires`() = runTest {
     val clock = MutableClock(Instant.EPOCH)
-    val manager = newManager(
-      clock = clock,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = clock,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     val client = manager.ensure("1.1.1.1")
     manager.block(client)
@@ -320,11 +329,12 @@ class ClientManagerImplTest {
 
   @Test
   fun clear() = runTest {
-    val manager = newManager(
-      clock = MutableClock(Instant.EPOCH),
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val manager =
+        newManager(
+            clock = MutableClock(Instant.EPOCH),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
     val client = manager.ensure("1.1.1.1")
     manager.block(client)
 

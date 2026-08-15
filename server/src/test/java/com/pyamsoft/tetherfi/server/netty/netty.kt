@@ -38,6 +38,13 @@ import io.netty.channel.ChannelInboundHandler
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.embedded.EmbeddedChannel
 import io.netty.channel.nio.NioIoHandler
+import java.net.InetSocketAddress
+import java.net.SocketAddress
+import java.time.Clock
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -46,13 +53,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import java.net.InetSocketAddress
-import java.net.SocketAddress
-import java.time.Clock
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
 
 @ConsistentCopyVisibility
 data class IntHolder
@@ -147,7 +147,7 @@ internal object TestSetup {
   )
 
   internal fun withHandler(
-    dispatchers: AppDispatchers,
+      dispatchers: AppDispatchers,
       isHttpEnabled: Boolean,
       isSocksEnabled: Boolean,
       onTcpChannelCreated: (Channel) -> Unit = {},
@@ -220,7 +220,7 @@ internal object TestSetup {
                     blocked = blocked,
                     resolver = resolver,
                     serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
-                  dispatchers = dispatchers,
+                    dispatchers = dispatchers,
                     provideTcpChannelCreator = {
                       tcpSocketCreator.wrap { onTcpChannelCreated(it) }
                     },
@@ -304,7 +304,7 @@ internal object TestSetup {
             isHttpEnabled = true,
             isSocksEnabled = true,
             serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
-          dispatchers = dispatchers,
+            dispatchers = dispatchers,
             onOpened = { openCount.inc() },
             onClosing = { closingCount.inc() },
             onClosed = { closedCount.inc() },

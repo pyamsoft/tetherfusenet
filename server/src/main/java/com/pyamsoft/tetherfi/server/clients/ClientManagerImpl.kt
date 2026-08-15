@@ -28,6 +28,13 @@ import com.pyamsoft.tetherfi.core.InAppRatingPreferences
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.TweakPreferences
 import com.pyamsoft.tetherfi.server.event.ServerShutdownEvent
+import java.time.Clock
+import java.time.LocalDateTime
+import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -39,13 +46,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.Clock
-import java.time.LocalDateTime
-import java.util.concurrent.ConcurrentHashMap
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 @Singleton
 internal class ClientManagerImpl
@@ -150,7 +150,7 @@ internal constructor(
     val scope = this
 
     jobs.add(
-      scope.launch(context = dispatchers.default) {
+        scope.launch(context = dispatchers.default) {
           Timber.d { "Watch client count and purge old clients" }
           onTimerElapsed(OLD_CLIENT_TIMER_PERIOD) { purgeOldClients(it) }
         }
@@ -175,7 +175,7 @@ internal constructor(
       val startedAt = LocalDateTime.now(clock)
 
       jobs.add(
-        scope.launch(context = dispatchers.default) {
+          scope.launch(context = dispatchers.default) {
             Timber.d { "Watch client count and shutdown if none" }
             onTimerElapsed(NO_CLIENTS_TIMER_PERIOD) { cutoff ->
               if (startedAt >= cutoff) {
@@ -254,7 +254,7 @@ internal constructor(
   }
 
   override suspend fun started() =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         watchForOldClients()
         watchForNoClients()
       }
@@ -292,17 +292,17 @@ internal constructor(
   }
 
   override suspend fun updateNickName(client: TetherClient, nickName: String) =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         handleClientUpdate(client) { editNickName(it, nickName) }
       }
 
   override suspend fun updateTransferLimit(client: TetherClient, limit: TransferAmount?) =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         handleClientUpdate(client) { editTransferLimit(it, limit) }
       }
 
   override suspend fun updateBandwidthLimit(client: TetherClient, limit: TransferAmount?) =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         handleClientUpdate(client) { editBandwidthLimit(it, limit) }
       }
 

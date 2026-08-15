@@ -49,97 +49,97 @@ private enum class AppSetupContentTypes {
 
 @LintIgnoreLongMethod
 internal fun LazyListScope.renderAppSetup(
-  itemModifier: Modifier = Modifier,
-  appName: String,
-  serverViewState: ServerViewState,
+    itemModifier: Modifier = Modifier,
+    appName: String,
+    serverViewState: ServerViewState,
 ) {
   renderConnectionPrep(
-    itemModifier = itemModifier,
-    appName = appName,
-    serverViewState = serverViewState,
+      itemModifier = itemModifier,
+      appName = appName,
+      serverViewState = serverViewState,
   )
 
   item(
-    contentType = AppSetupContentTypes.INTERNET,
+      contentType = AppSetupContentTypes.INTERNET,
   ) {
     ThisInstruction(
-      modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
+        modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
     ) {
       Column {
         Text(
-          text = stringResource(R.string.connect_internet),
-          style = MaterialTheme.typography.bodyLarge,
+            text = stringResource(R.string.connect_internet),
+            style = MaterialTheme.typography.bodyLarge,
         )
         Text(
-          text = stringResource(R.string.connect_internet_options),
-          style =
-            MaterialTheme.typography.bodyMedium.copy(
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
+            text = stringResource(R.string.connect_internet_options),
+            style =
+                MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
         )
       }
     }
   }
 
   item(
-    contentType = AppSetupContentTypes.CONFIG,
+      contentType = AppSetupContentTypes.CONFIG,
   ) {
     if (ServerDefaults.canUseCustomConfig()) {
       ThisInstruction(
-        modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
-        small = true,
+          modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
+          small = true,
       ) {
         Text(
-          text = stringResource(R.string.optionally_configure_hotspot),
-          style =
-            MaterialTheme.typography.bodyMedium.copy(
-              color =
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                  alpha = TypographyDefaults.ALPHA_DISABLED,
+            text = stringResource(R.string.optionally_configure_hotspot),
+            style =
+                MaterialTheme.typography.bodyMedium.copy(
+                    color =
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                            alpha = TypographyDefaults.ALPHA_DISABLED,
+                        ),
                 ),
-            ),
         )
       }
     }
   }
 
   item(
-    contentType = AppSetupContentTypes.BATTERY,
+      contentType = AppSetupContentTypes.BATTERY,
   ) {
     ThisInstruction(
-      modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
-      small = true,
+        modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
+        small = true,
     ) {
       Text(
-        text = stringResource(R.string.optionally_configure_power, appName),
-        style =
-          MaterialTheme.typography.bodyMedium.copy(
-            color =
-              MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                alpha = TypographyDefaults.ALPHA_DISABLED,
+          text = stringResource(R.string.optionally_configure_power, appName),
+          style =
+              MaterialTheme.typography.bodyMedium.copy(
+                  color =
+                      MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                          alpha = TypographyDefaults.ALPHA_DISABLED,
+                      ),
               ),
-          ),
       )
     }
   }
 
   item(
-    contentType = AppSetupContentTypes.START,
+      contentType = AppSetupContentTypes.START,
   ) {
     ThisInstruction(
-      modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
+        modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
     ) {
       Column {
         Text(
-          text = stringResource(R.string.start_the_hotspot, appName),
-          style = MaterialTheme.typography.bodyLarge,
+            text = stringResource(R.string.start_the_hotspot, appName),
+            style = MaterialTheme.typography.bodyLarge,
         )
         Text(
-          text = stringResource(R.string.check_hotspot_green),
-          style =
-            MaterialTheme.typography.bodyMedium.copy(
-              color = MaterialTheme.colorScheme.onSurface,
-            ),
+            text = stringResource(R.string.check_hotspot_green),
+            style =
+                MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
         )
       }
     }
@@ -147,12 +147,12 @@ internal fun LazyListScope.renderAppSetup(
 }
 
 private fun LazyListScope.renderConnectionPrep(
-  itemModifier: Modifier = Modifier,
-  appName: String,
-  serverViewState: ServerViewState,
+    itemModifier: Modifier = Modifier,
+    appName: String,
+    serverViewState: ServerViewState,
 ) {
   item(
-    contentType = AppSetupContentTypes.PREP,
+      contentType = AppSetupContentTypes.PREP,
   ) {
     val type by serverViewState.broadcastType.collectAsStateWithLifecycle()
 
@@ -175,19 +175,19 @@ private fun LazyListScope.renderConnectionPrep(
     }
 
     ThisInstruction(
-      modifier = itemModifier,
+        modifier = itemModifier,
     ) {
       Column {
         Text(
-          text = stringResource(titleRes),
-          style = MaterialTheme.typography.bodyLarge,
+            text = stringResource(titleRes),
+            style = MaterialTheme.typography.bodyLarge,
         )
         Text(
-          text = stringResource(descRes, appName),
-          style =
-            MaterialTheme.typography.bodyMedium.copy(
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
+            text = stringResource(descRes, appName),
+            style =
+                MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
         )
       }
     }
@@ -199,14 +199,14 @@ private fun LazyListScope.renderConnectionPrep(
 private fun PreviewAppSetupWifiDirect() {
   LazyColumn {
     renderAppSetup(
-      appName = "TEST",
-      serverViewState =
-        makeTestServerState(
-          state = TestServerState.CONNECTED,
-          broadcastType = BroadcastType.WIFI_DIRECT,
-          isHttpEnabled = false,
-          isSocksEnabled = false,
-        ),
+        appName = "TEST",
+        serverViewState =
+            makeTestServerState(
+                state = TestServerState.CONNECTED,
+                broadcastType = BroadcastType.WIFI_DIRECT,
+                isHttpEnabled = false,
+                isSocksEnabled = false,
+            ),
     )
   }
 }
@@ -216,14 +216,14 @@ private fun PreviewAppSetupWifiDirect() {
 private fun PreviewAppSetupRndis() {
   LazyColumn {
     renderAppSetup(
-      appName = "TEST",
-      serverViewState =
-        makeTestServerState(
-          state = TestServerState.CONNECTED,
-          broadcastType = BroadcastType.RNDIS,
-          isHttpEnabled = false,
-          isSocksEnabled = false,
-        ),
+        appName = "TEST",
+        serverViewState =
+            makeTestServerState(
+                state = TestServerState.CONNECTED,
+                broadcastType = BroadcastType.RNDIS,
+                isHttpEnabled = false,
+                isSocksEnabled = false,
+            ),
     )
   }
 }
@@ -233,14 +233,14 @@ private fun PreviewAppSetupRndis() {
 private fun PreviewAppSetupNone() {
   LazyColumn {
     renderAppSetup(
-      appName = "TEST",
-      serverViewState =
-        makeTestServerState(
-          state = TestServerState.CONNECTED,
-          broadcastType = null,
-          isHttpEnabled = false,
-          isSocksEnabled = false,
-        ),
+        appName = "TEST",
+        serverViewState =
+            makeTestServerState(
+                state = TestServerState.CONNECTED,
+                broadcastType = null,
+                isHttpEnabled = false,
+                isSocksEnabled = false,
+            ),
     )
   }
 }

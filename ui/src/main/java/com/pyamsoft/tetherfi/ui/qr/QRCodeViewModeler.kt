@@ -22,12 +22,12 @@ import com.pyamsoft.pydroid.arch.AbstractViewModeler
 import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
+import javax.inject.Inject
+import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import qrcode.QRCode
-import javax.inject.Inject
-import javax.inject.Named
 
 class QRCodeViewModeler
 @Inject
@@ -47,7 +47,7 @@ internal constructor(
 
   @CheckResult
   private suspend fun renderQRCode(): Bitmap =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         QRCode.ofSquares().build(qrData).render().nativeImage().cast<Bitmap>().requireNotNull()
       }
 

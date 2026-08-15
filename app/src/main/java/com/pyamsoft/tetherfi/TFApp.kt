@@ -71,7 +71,7 @@ class TFApp : Application() {
                 imageLoader = mods.imageLoader(),
                 theming = mods.theming(),
                 enforcer = mods.enforcer(),
-              dispatchers = mods.dispatchers(),
+                dispatchers = mods.dispatchers(),
             )
 
     installObjectGraph(component)
@@ -84,13 +84,13 @@ class TFApp : Application() {
 
     val scope =
         CoroutineScope(
-          context = SupervisorJob() + dispatchers.default + CoroutineName(this::class.java.name),
+            context = SupervisorJob() + dispatchers.default + CoroutineName(this::class.java.name),
         )
 
     val inAppDebugStatus = modules.get().inAppDebugStatus()
     installLogger(
         scope = scope,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
         inAppDebugStatus = inAppDebugStatus,
     )
 

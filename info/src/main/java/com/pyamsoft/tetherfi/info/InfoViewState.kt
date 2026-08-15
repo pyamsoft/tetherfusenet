@@ -18,9 +18,9 @@ package com.pyamsoft.tetherfi.info
 
 import androidx.compose.runtime.Stable
 import com.pyamsoft.pydroid.arch.UiViewState
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import javax.inject.Inject
 
 enum class InfoViewOptionsType {
   HTTP,

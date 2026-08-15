@@ -92,7 +92,7 @@ allprojects {
     }
     kotlin {
       target("src/**/*.kt")
-      ktfmt()
+      ktfmt(libs.versions.ktfmt.get())
 
       trimTrailingWhitespace()
       endWithNewline()
@@ -100,7 +100,7 @@ allprojects {
     }
     kotlinGradle {
       target("*.gradle.kts")
-      ktfmt()
+      ktfmt(libs.versions.ktfmt.get())
 
       trimTrailingWhitespace()
       endWithNewline()

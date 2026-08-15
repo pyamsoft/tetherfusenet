@@ -25,6 +25,12 @@ import com.pyamsoft.tetherfi.server.clients.ClientEditor
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.clients.TransferAmount
 import com.pyamsoft.tetherfi.server.clients.TransferUnit
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -34,12 +40,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 private val FIXED_CLOCK: Clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC)
 
@@ -97,7 +97,7 @@ private class FakeClientEditor : ClientEditor {
 }
 
 private fun newViewModel(
-  dispatchers: AppDispatchers,
+    dispatchers: AppDispatchers,
     allowedClients: AllowedClients = FakeAllowedClients(),
     blockedClients: BlockedClients = FakeBlockedClients(),
     blockTracker: BlockedClientTracker = FakeBlockedClientTracker(),
@@ -109,7 +109,7 @@ private fun newViewModel(
         blockedClients = blockedClients,
         blockTracker = blockTracker,
         clientEditor = clientEditor,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
     )
 
 class ConnectionViewModelTest {
@@ -124,8 +124,8 @@ class ConnectionViewModelTest {
         newViewModel(
             allowedClients = FakeAllowedClients(allowedFlow),
             blockedClients = FakeBlockedClients(blockedFlow),
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
 
     val bindScope = CoroutineScope(Job())
@@ -149,8 +149,8 @@ class ConnectionViewModelTest {
         newViewModel(
             blockedClients = FakeBlockedClients(isBlockedResult = true),
             blockTracker = blockTracker,
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
     val client = clientFor("1.1.1.1")
 
@@ -167,8 +167,8 @@ class ConnectionViewModelTest {
         newViewModel(
             blockedClients = FakeBlockedClients(isBlockedResult = false),
             blockTracker = blockTracker,
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
         )
     val client = clientFor("1.1.1.1")
 
@@ -180,11 +180,11 @@ class ConnectionViewModelTest {
 
   @Test
   fun `handleOpenManage routes to the matching dialog state`() {
-    val viewModel = newViewModel(
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-
-      )
+    val viewModel =
+        newViewModel(
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
     val client = clientFor("1.1.1.1")
 
     assertNull(viewModel.managingNickName.value)
@@ -210,11 +210,12 @@ class ConnectionViewModelTest {
   @Test
   fun `handleUpdateNickName is a no-op when no client is being managed`() = runTest {
     val clientEditor = FakeClientEditor()
-    val viewModel = newViewModel(
-      clientEditor = clientEditor,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModel =
+        newViewModel(
+            clientEditor = clientEditor,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModel.handleUpdateNickName(this, "Bob")
 
@@ -225,11 +226,12 @@ class ConnectionViewModelTest {
   fun `handleUpdateNickName delegates to the client editor for the managed client`() = runTest {
     val client = clientFor("1.1.1.1")
     val clientEditor = FakeClientEditor()
-    val viewModel = newViewModel(
-      clientEditor = clientEditor,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModel =
+        newViewModel(
+            clientEditor = clientEditor,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModel.handleOpenManage(client, ConnectionViewManagement.NICK_NAME)
 
@@ -242,11 +244,12 @@ class ConnectionViewModelTest {
   @Test
   fun `handleUpdateTransferLimit is a no-op when no client is being managed`() = runTest {
     val clientEditor = FakeClientEditor()
-    val viewModel = newViewModel(
-      clientEditor = clientEditor,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModel =
+        newViewModel(
+            clientEditor = clientEditor,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModel.handleUpdateTransferLimit(this, TransferAmount(amount = 1, unit = TransferUnit.MB))
 
@@ -258,11 +261,12 @@ class ConnectionViewModelTest {
       runTest {
         val client = clientFor("1.1.1.1")
         val clientEditor = FakeClientEditor()
-        val viewModel = newViewModel(
-          clientEditor = clientEditor,
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
-        )
+        val viewModel =
+            newViewModel(
+                clientEditor = clientEditor,
+                // TODO(Peter): Do we need test dispatchers?
+                dispatchers = AppDispatchers.create(),
+            )
         val limit = TransferAmount(amount = 5, unit = TransferUnit.MB)
 
         viewModel.handleOpenManage(client, ConnectionViewManagement.TRANSFER_LIMIT)
@@ -275,11 +279,12 @@ class ConnectionViewModelTest {
   @Test
   fun `handleUpdateBandwidthLimit is a no-op when no client is being managed`() = runTest {
     val clientEditor = FakeClientEditor()
-    val viewModel = newViewModel(
-      clientEditor = clientEditor,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModel =
+        newViewModel(
+            clientEditor = clientEditor,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModel.handleUpdateBandwidthLimit(this, TransferAmount(amount = 1, unit = TransferUnit.MB))
 
@@ -291,11 +296,12 @@ class ConnectionViewModelTest {
       runTest {
         val client = clientFor("1.1.1.1")
         val clientEditor = FakeClientEditor()
-        val viewModel = newViewModel(
-          clientEditor = clientEditor,
-          // TODO(Peter): Do we need test dispatchers?
-          dispatchers = AppDispatchers.create(),
-        )
+        val viewModel =
+            newViewModel(
+                clientEditor = clientEditor,
+                // TODO(Peter): Do we need test dispatchers?
+                dispatchers = AppDispatchers.create(),
+            )
         val limit = TransferAmount(amount = 5, unit = TransferUnit.MB)
 
         viewModel.handleOpenManage(client, ConnectionViewManagement.BANDWIDTH_LIMIT)

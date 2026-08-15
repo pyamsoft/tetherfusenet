@@ -50,67 +50,67 @@ private enum class ConnectionCompleteContentTypes {
 }
 
 internal fun LazyListScope.renderConnectionComplete(
-  itemModifier: Modifier = Modifier,
-  appName: String,
-  onShowSlowSpeedHelp: () -> Unit,
+    itemModifier: Modifier = Modifier,
+    appName: String,
+    onShowSlowSpeedHelp: () -> Unit,
 ) {
   item(
-    contentType = ConnectionCompleteContentTypes.SHARING,
+      contentType = ConnectionCompleteContentTypes.SHARING,
   ) {
     ThisInstruction(
-      modifier = itemModifier,
+        modifier = itemModifier,
     ) {
       Text(
-        text = stringResource(R.string.sharing_complete),
-        style = MaterialTheme.typography.bodyLarge,
+          text = stringResource(R.string.sharing_complete),
+          style = MaterialTheme.typography.bodyLarge,
       )
     }
   }
 
   item(
-    contentType = ConnectionCompleteContentTypes.DONE,
+      contentType = ConnectionCompleteContentTypes.DONE,
   ) {
     OtherInstruction(
-      modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
+        modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
     ) {
       Text(
-        text = stringResource(R.string.sharing_caveat, appName),
-        style =
-          MaterialTheme.typography.bodyMedium.copy(
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          ),
+          text = stringResource(R.string.sharing_caveat, appName),
+          style =
+              MaterialTheme.typography.bodyMedium.copy(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+              ),
       )
     }
   }
 
   item(
-    contentType = ConnectionCompleteContentTypes.SLOW,
+      contentType = ConnectionCompleteContentTypes.SLOW,
   ) {
     OtherInstruction(
-      modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
+        modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
     ) {
       SlowSpeedsUpsell(
-        style =
-          MaterialTheme.typography.bodyMedium.copy(
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          ),
-        onClick = onShowSlowSpeedHelp,
+          style =
+              MaterialTheme.typography.bodyMedium.copy(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+              ),
+          onClick = onShowSlowSpeedHelp,
       )
     }
   }
 
   item(
-    contentType = ConnectionCompleteContentTypes.FULL,
+      contentType = ConnectionCompleteContentTypes.FULL,
   ) {
     FullConnectionInstructions(
-      modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
+        modifier = itemModifier.padding(top = MaterialTheme.keylines.content),
     )
   }
 }
 
 @Composable
 private fun FullConnectionInstructions(
-  modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier,
 ) {
   val uriHandler = rememberUriHandler()
   val handleLinkClicked by rememberUpdatedState { link: LinkAnnotation ->
@@ -124,65 +124,63 @@ private fun FullConnectionInstructions(
   val linkText = stringResource(R.string.proxy_having_link_text)
   val rawBlurb = stringResource(R.string.proxy_having_trouble, linkText)
   val linkBlurb =
-    remember(
-      linkColor,
-      rawBlurb,
-      linkText,
-    ) {
-      val linkIndex = rawBlurb.indexOf(linkText)
-
-      val linkStyle =
-        SpanStyle(
-          color = linkColor,
-          textDecoration = TextDecoration.Underline,
-        )
-
-      val spanStyles =
-        listOf(
-          AnnotatedString.Range(
-            linkStyle,
-            start = linkIndex,
-            end = linkIndex + linkText.length,
-          ),
-        )
-
-      val visualString =
-        AnnotatedString(
+      remember(
+          linkColor,
           rawBlurb,
-          spanStyles = spanStyles,
-        )
+          linkText,
+      ) {
+        val linkIndex = rawBlurb.indexOf(linkText)
 
-      // Can only add annotations to builders
-      return@remember AnnotatedString.Builder(visualString)
-        .apply {
-          addLink(
-            url =
-              LinkAnnotation.Url(
-                url = "${GITHUB_URL}/wiki/Setup-A-Proxy",
-                linkInteractionListener = { handleLinkClicked(it) },
-              ),
-            start = linkIndex,
-            end = linkIndex + linkText.length,
-          )
-        }
-        .toAnnotatedString()
-    }
+        val linkStyle =
+            SpanStyle(
+                color = linkColor,
+                textDecoration = TextDecoration.Underline,
+            )
+
+        val spanStyles =
+            listOf(
+                AnnotatedString.Range(
+                    linkStyle,
+                    start = linkIndex,
+                    end = linkIndex + linkText.length,
+                ),
+            )
+
+        val visualString =
+            AnnotatedString(
+                rawBlurb,
+                spanStyles = spanStyles,
+            )
+
+        // Can only add annotations to builders
+        return@remember AnnotatedString.Builder(visualString)
+            .apply {
+              addLink(
+                  url =
+                      LinkAnnotation.Url(
+                          url = "${GITHUB_URL}/wiki/Setup-A-Proxy",
+                          linkInteractionListener = { handleLinkClicked(it) },
+                      ),
+                  start = linkIndex,
+                  end = linkIndex + linkText.length,
+              )
+            }
+            .toAnnotatedString()
+      }
 
   Card(
-    modifier = modifier.padding(vertical = MaterialTheme.keylines.content),
-    border =
-      BorderStroke(
-        width = 2.dp,
-        color = MaterialTheme.colorScheme.primaryContainer,
-      ),
-    shape = MaterialTheme.shapes.large,
+      modifier = modifier.padding(vertical = MaterialTheme.keylines.content),
+      border =
+          BorderStroke(
+              width = 2.dp,
+              color = MaterialTheme.colorScheme.primaryContainer,
+          ),
+      shape = MaterialTheme.shapes.large,
   ) {
     Text(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(MaterialTheme.keylines.content),
-      text = linkBlurb,
-      style = MaterialTheme.typography.bodyLarge,
+        modifier = Modifier.fillMaxWidth().padding(MaterialTheme.keylines.content),
+        text = linkBlurb,
+        style = MaterialTheme.typography.bodyLarge,
     )
   }
 }
@@ -192,8 +190,8 @@ private fun FullConnectionInstructions(
 private fun PreviewConnectionComplete() {
   LazyColumn {
     renderConnectionComplete(
-      appName = "TEST",
-      onShowSlowSpeedHelp = {},
+        appName = "TEST",
+        onShowSlowSpeedHelp = {},
     )
   }
 }

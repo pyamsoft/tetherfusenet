@@ -64,11 +64,11 @@ import dagger.BindsInstance
 import dagger.Component
 import dagger.Module
 import dagger.Provides
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import java.time.Clock
 import javax.inject.Named
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 
 // NOTE(Peter): Since our shared preferences was the DEFAULT process one, loading up
 //              a migration without specifying all keys will also migrate
@@ -141,14 +141,14 @@ internal interface TFAppComponent {
 
     @CheckResult
     fun create(
-      @Named("debug") @BindsInstance debug: Boolean,
-      @Named("in_app_debug") @BindsInstance inAppDebug: Flow<Boolean>,
-      @Named("app_scope") @BindsInstance scope: CoroutineScope,
-      @BindsInstance application: Application,
-      @BindsInstance imageLoader: ImageLoader,
-      @BindsInstance theming: Theming,
-      @BindsInstance enforcer: ThreadEnforcer,
-      @BindsInstance dispatchers: AppDispatchers,
+        @Named("debug") @BindsInstance debug: Boolean,
+        @Named("in_app_debug") @BindsInstance inAppDebug: Flow<Boolean>,
+        @Named("app_scope") @BindsInstance scope: CoroutineScope,
+        @BindsInstance application: Application,
+        @BindsInstance imageLoader: ImageLoader,
+        @BindsInstance theming: Theming,
+        @BindsInstance enforcer: ThreadEnforcer,
+        @BindsInstance dispatchers: AppDispatchers,
     ): TFAppComponent
   }
 

@@ -40,8 +40,8 @@ import io.netty.handler.codec.socksx.v5.Socks5InitialRequestDecoder
 import io.netty.handler.codec.socksx.v5.Socks5ServerEncoder
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
-import kotlinx.coroutines.CoroutineScope
 import java.net.InetSocketAddress
+import kotlinx.coroutines.CoroutineScope
 
 internal class ProtocolDelegatingHandler
 private constructor(
@@ -66,7 +66,7 @@ private constructor(
           blockedClients = blockedClients,
           tcpSocketCreator = tcpSocketCreator,
           serverSocketTimeout = serverSocketTimeout,
-        dispatchers = dispatchers,
+          dispatchers = dispatchers,
       )
 
   private val socks4HandlerFactory =
@@ -77,7 +77,7 @@ private constructor(
           blockedClients = blockedClients,
           tcpSocketCreator = tcpSocketCreator,
           serverSocketTimeout = serverSocketTimeout,
-        dispatchers = dispatchers,
+          dispatchers = dispatchers,
       )
 
   private val socks5HandlerFactory =
@@ -89,7 +89,7 @@ private constructor(
           clientResolver = clientResolver,
           tcpSocketCreator = tcpSocketCreator,
           serverSocketTimeout = serverSocketTimeout,
-        dispatchers = dispatchers,
+          dispatchers = dispatchers,
       )
 
   @LintIgnoreLongMethod
@@ -252,7 +252,7 @@ private constructor(
             allowedClients = allowedClients,
             blockedClients = blockedClients,
             scope = params.scope,
-          dispatchers = dispatchers,
+            dispatchers = dispatchers,
             tcpSocketCreator = params.tcp,
 
             // IF this is NULL, SOCKS is not enabled

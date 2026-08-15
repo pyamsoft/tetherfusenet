@@ -46,60 +46,57 @@ private enum class InfoContentTypes {
 
 @Composable
 fun InfoScreen(
-  modifier: Modifier = Modifier,
-  appName: String,
-  lazyListState: LazyListState,
-  state: InfoViewState,
-  serverViewState: ServerViewState,
-  onTogglePasswordVisibility: () -> Unit,
-  onShowQRCode: () -> Unit,
-  onShowSlowSpeedHelp: () -> Unit,
-  onToggleShowOptions: (InfoViewOptionsType) -> Unit,
+    modifier: Modifier = Modifier,
+    appName: String,
+    lazyListState: LazyListState,
+    state: InfoViewState,
+    serverViewState: ServerViewState,
+    onTogglePasswordVisibility: () -> Unit,
+    onShowQRCode: () -> Unit,
+    onShowSlowSpeedHelp: () -> Unit,
+    onToggleShowOptions: (InfoViewOptionsType) -> Unit,
 ) {
   LazyColumn(
-    modifier = modifier,
-    state = lazyListState,
-    contentPadding = PaddingValues(horizontal = MaterialTheme.keylines.content),
-    horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = modifier,
+      state = lazyListState,
+      contentPadding = PaddingValues(horizontal = MaterialTheme.keylines.content),
+      horizontalAlignment = Alignment.CenterHorizontally,
   ) {
     renderPYDroidExtras(
-      modifier = Modifier.widthIn(max = LANDSCAPE_MAX_WIDTH),
+        modifier = Modifier.widthIn(max = LANDSCAPE_MAX_WIDTH),
     )
 
     renderLinks(
-      modifier = Modifier.widthIn(max = LANDSCAPE_MAX_WIDTH),
-      appName = appName,
+        modifier = Modifier.widthIn(max = LANDSCAPE_MAX_WIDTH),
+        appName = appName,
     )
 
     item(
-      contentType = InfoContentTypes.SPACER,
+        contentType = InfoContentTypes.SPACER,
     ) {
       Spacer(
-        modifier =
-          Modifier
-            .padding(top = MaterialTheme.keylines.content)
-            .height(MaterialTheme.keylines.baseline),
+          modifier =
+              Modifier.padding(top = MaterialTheme.keylines.content)
+                  .height(MaterialTheme.keylines.baseline),
       )
     }
 
     renderConnectionInstructions(
-      itemModifier = Modifier.widthIn(max = LANDSCAPE_MAX_WIDTH),
-      appName = appName,
-      state = state,
-      serverViewState = serverViewState,
-      onTogglePasswordVisibility = onTogglePasswordVisibility,
-      onShowQRCode = onShowQRCode,
-      onShowSlowSpeedHelp = onShowSlowSpeedHelp,
-      onToggleShowOptions = onToggleShowOptions,
+        itemModifier = Modifier.widthIn(max = LANDSCAPE_MAX_WIDTH),
+        appName = appName,
+        state = state,
+        serverViewState = serverViewState,
+        onTogglePasswordVisibility = onTogglePasswordVisibility,
+        onShowQRCode = onShowQRCode,
+        onShowSlowSpeedHelp = onShowSlowSpeedHelp,
+        onToggleShowOptions = onToggleShowOptions,
     )
 
     item(
-      contentType = InfoContentTypes.BOTTOM_SPACER,
+        contentType = InfoContentTypes.BOTTOM_SPACER,
     ) {
       Spacer(
-        modifier = Modifier
-          .padding(top = MaterialTheme.keylines.content)
-          .navigationBarsPadding(),
+          modifier = Modifier.padding(top = MaterialTheme.keylines.content).navigationBarsPadding(),
       )
     }
   }
@@ -109,14 +106,14 @@ fun InfoScreen(
 @Composable
 private fun PreviewInfoScreen(http: Boolean, socks: Boolean) {
   InfoScreen(
-    appName = "TEST",
-    state = MutableInfoViewState(),
-    lazyListState = rememberLazyListState(),
-    serverViewState = makeTestServerState(TestServerState.EMPTY, http, socks),
-    onTogglePasswordVisibility = {},
-    onShowQRCode = {},
-    onShowSlowSpeedHelp = {},
-    onToggleShowOptions = {},
+      appName = "TEST",
+      state = MutableInfoViewState(),
+      lazyListState = rememberLazyListState(),
+      serverViewState = makeTestServerState(TestServerState.EMPTY, http, socks),
+      onTogglePasswordVisibility = {},
+      onShowQRCode = {},
+      onShowSlowSpeedHelp = {},
+      onToggleShowOptions = {},
   )
 }
 
@@ -124,8 +121,8 @@ private fun PreviewInfoScreen(http: Boolean, socks: Boolean) {
 @Preview(showBackground = true)
 private fun PreviewInfoScreenHttp() {
   PreviewInfoScreen(
-    http = true,
-    socks = false,
+      http = true,
+      socks = false,
   )
 }
 
@@ -133,8 +130,8 @@ private fun PreviewInfoScreenHttp() {
 @Preview(showBackground = true)
 private fun PreviewInfoScreenSocks() {
   PreviewInfoScreen(
-    http = false,
-    socks = true,
+      http = false,
+      socks = true,
   )
 }
 
@@ -142,7 +139,7 @@ private fun PreviewInfoScreenSocks() {
 @Preview(showBackground = true)
 private fun PreviewInfoScreenBoth() {
   PreviewInfoScreen(
-    http = true,
-    socks = true,
+      http = true,
+      socks = true,
   )
 }

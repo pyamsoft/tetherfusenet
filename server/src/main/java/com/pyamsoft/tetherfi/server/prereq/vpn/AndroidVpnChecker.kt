@@ -24,10 +24,10 @@ import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.TweakPreferences
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 @Singleton
 internal class AndroidVpnChecker
@@ -43,7 +43,7 @@ internal constructor(
   }
 
   override suspend fun isUsingVpn(): Boolean =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         if (preferences.listenForStartIgnoreVpn().first()) {
           Timber.w { "Ignore VPN start blocker" }
           return@withContext false

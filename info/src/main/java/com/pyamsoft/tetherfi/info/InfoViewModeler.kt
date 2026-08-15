@@ -19,27 +19,27 @@ package com.pyamsoft.tetherfi.info
 import androidx.compose.runtime.saveable.SaveableStateRegistry
 import com.pyamsoft.pydroid.arch.AbstractViewModeler
 import com.pyamsoft.pydroid.core.cast
-import kotlinx.coroutines.flow.update
 import javax.inject.Inject
+import kotlinx.coroutines.flow.update
 
 class InfoViewModeler
 @Inject
 internal constructor(
-  override val state: MutableInfoViewState,
+    override val state: MutableInfoViewState,
 ) : InfoViewState by state, AbstractViewModeler<InfoViewState>(state) {
 
   override fun registerSaveState(
-    registry: SaveableStateRegistry
+      registry: SaveableStateRegistry
   ): List<SaveableStateRegistry.Entry> =
-    mutableListOf<SaveableStateRegistry.Entry>().apply {
-      registry
-        .registerProvider(KEY_SHOW_HTTP_OPTIONS) { state.showHttpOptions.value }
-        .also { add(it) }
+      mutableListOf<SaveableStateRegistry.Entry>().apply {
+        registry
+            .registerProvider(KEY_SHOW_HTTP_OPTIONS) { state.showHttpOptions.value }
+            .also { add(it) }
 
-      registry
-        .registerProvider(KEY_SHOW_SOCKS_OPTIONS) { state.showSocksOptions.value }
-        .also { add(it) }
-    }
+        registry
+            .registerProvider(KEY_SHOW_SOCKS_OPTIONS) { state.showSocksOptions.value }
+            .also { add(it) }
+      }
 
   override fun consumeRestoredState(registry: SaveableStateRegistry) {
     registry.consumeRestored(KEY_SHOW_HTTP_OPTIONS)?.cast<Boolean>()?.also {
@@ -56,15 +56,15 @@ internal constructor(
   }
 
   fun handleToggleOptions(type: InfoViewOptionsType) =
-    when (type) {
-      InfoViewOptionsType.HTTP -> {
-        state.showHttpOptions.update { !it }
-      }
+      when (type) {
+        InfoViewOptionsType.HTTP -> {
+          state.showHttpOptions.update { !it }
+        }
 
-      InfoViewOptionsType.SOCKS -> {
-        state.showSocksOptions.update { !it }
+        InfoViewOptionsType.SOCKS -> {
+          state.showSocksOptions.update { !it }
+        }
       }
-    }
 
   companion object {
 

@@ -56,7 +56,7 @@ internal constructor(
     onError: (Throwable) -> Unit,
 ) :
     NettyProxy(
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
         socketTagger = socketTagger,
         host = host,
         port = port,
@@ -77,7 +77,7 @@ internal constructor(
           isHttpEnabled = isHttpEnabled,
           serverSocketTimeout = serverSocketTimeout,
           clientResolver = clientResolver,
-        dispatchers = dispatchers,
+          dispatchers = dispatchers,
       )
 
   override fun onServerStarted(

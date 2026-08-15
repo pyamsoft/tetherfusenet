@@ -30,9 +30,9 @@ import io.netty.handler.codec.http.DefaultFullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpVersion
+import kotlin.test.assertNotNull
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Test
-import kotlin.test.assertNotNull
 
 class Http1HandlerTest {
 
@@ -47,7 +47,7 @@ class Http1HandlerTest {
             serverSocketTimeout = factory.serverSocketTimeout,
             allowedClients = factory.allowed,
             blockedClients = factory.blocked,
-          dispatchers = factory.dispatchers,
+            dispatchers = factory.dispatchers,
             tcpSocketCreator = factory.provideTcpChannelCreator(),
         )
     return factory.create(Unit)
@@ -63,8 +63,8 @@ class Http1HandlerTest {
               isSocksEnabled = false,
               onTcpChannelCreated = { tcpConnection = it },
               factory = { http1HandlerFactory(it) },
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+              // TODO(Peter): Do we need test dispatchers?
+              dispatchers = AppDispatchers.create(),
           )
       val channel = context.channel
 

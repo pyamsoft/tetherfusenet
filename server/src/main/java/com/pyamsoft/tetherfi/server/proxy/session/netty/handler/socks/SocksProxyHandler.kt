@@ -40,9 +40,9 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
+import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.net.InetSocketAddress
 
 internal abstract class SocksProxyHandler<T : SocksMessage>
 internal constructor(
@@ -57,7 +57,7 @@ internal constructor(
     ProxyHandler(
         scope = scope,
         serverSocketTimeout = serverSocketTimeout,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
         isDebug = isDebug,
     ) {
 
@@ -68,7 +68,7 @@ internal constructor(
           allowedClients = allowedClients,
           blockedClients = blockedClients,
           serverSocketTimeout = serverSocketTimeout,
-        dispatchers = dispatchers,
+          dispatchers = dispatchers,
       )
 
   protected fun handleSocksConnectRequest(ctx: ChannelHandlerContext, channelId: String, msg: T) {

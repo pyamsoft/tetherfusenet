@@ -40,9 +40,7 @@ import javax.inject.Inject
 
 class ProxyTileActivity : ComponentActivity() {
 
-  @Inject
-  @JvmField
-  internal var dispatchers: AppDispatchers? = null
+  @Inject @JvmField internal var dispatchers: AppDispatchers? = null
   @Inject @JvmField internal var viewModel: ThemeViewModeler? = null
 
   @CheckResult
@@ -79,7 +77,7 @@ class ProxyTileActivity : ComponentActivity() {
       SaveStateDisposableEffect(vm)
 
       TFTheme(
-        dispatchers = dis,
+          dispatchers = dis,
           theme = theme,
           isMaterialYou = isMaterialYou,
       ) {

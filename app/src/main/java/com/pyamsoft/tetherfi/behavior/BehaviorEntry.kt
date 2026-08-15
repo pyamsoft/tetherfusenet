@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 /** Sets up permission request interaction */
 @Composable
 private fun RegisterPermissionRequests(
-  dispatchers: AppDispatchers,
+    dispatchers: AppDispatchers,
     permissionResponseBus: Flow<PermissionResponse>,
     onRefreshSystemInfo: CoroutineScope.() -> Unit,
 ) {
@@ -75,7 +75,7 @@ private fun RegisterPermissionRequests(
 /** On mount hooks */
 @Composable
 private fun MountHooks(
-  dispatchers: AppDispatchers,
+    dispatchers: AppDispatchers,
     viewModel: BehaviorViewModeler,
     permissionResponseBus: Flow<PermissionResponse>,
     onRefreshConnection: () -> Unit,
@@ -88,7 +88,7 @@ private fun MountHooks(
 
   // As early as possible because of Lifecycle quirks
   RegisterPermissionRequests(
-    dispatchers = dispatchers,
+      dispatchers = dispatchers,
       permissionResponseBus = permissionResponseBus,
       onRefreshSystemInfo = { handleRefreshSystemInfo(this) },
   )
@@ -140,7 +140,7 @@ fun BehaviorEntry(
   // Hooks that run on mount
   MountHooks(
       viewModel = viewModel,
-    dispatchers = dispatchers,
+      dispatchers = dispatchers,
       permissionResponseBus = permissionResponseBus,
       onRefreshConnection = onRefreshConnection,
   )

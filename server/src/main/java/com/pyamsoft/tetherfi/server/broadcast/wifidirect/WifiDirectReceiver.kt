@@ -33,6 +33,9 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastEvent
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastObserver
 import com.pyamsoft.tetherfi.server.event.ServerShutdownEvent
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
@@ -45,23 +48,20 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.seconds
 
 @Singleton
 internal class WifiDirectReceiver
 @Inject
 internal constructor(
-  private val enforcer: ThreadEnforcer,
-  private val context: Context,
-  private val shutdownBus: EventBus<ServerShutdownEvent>,
-  private val dispatchers: AppDispatchers,
+    private val enforcer: ThreadEnforcer,
+    private val context: Context,
+    private val shutdownBus: EventBus<ServerShutdownEvent>,
+    private val dispatchers: AppDispatchers,
 ) : BroadcastReceiver(), WifiDirectRegister, BroadcastObserver {
 
   private val receiverScope by lazy {
     CoroutineScope(
-      context = SupervisorJob() + dispatchers.default + CoroutineName(this::class.java.name),
+        context = SupervisorJob() + dispatchers.default + CoroutineName(this::class.java.name),
     )
   }
 

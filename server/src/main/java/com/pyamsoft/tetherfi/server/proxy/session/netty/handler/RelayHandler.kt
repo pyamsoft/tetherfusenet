@@ -32,13 +32,13 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.util.AttributeKey
 import io.netty.util.ReferenceCountUtil
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
 
 internal class RelayHandler
 private constructor(
@@ -52,7 +52,7 @@ private constructor(
     ProxyHandler(
         scope = scope,
         serverSocketTimeout = serverSocketTimeout,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
         isDebug = isDebug,
     ) {
 
@@ -127,7 +127,7 @@ private constructor(
 
     byteCountJob?.cancel()
     byteCountJob =
-      scope.launch(context = dispatchers.io) {
+        scope.launch(context = dispatchers.io) {
           while (isActive) {
             // Don't report too often
             delay(10.seconds)
@@ -275,7 +275,7 @@ private constructor(
             allowedClients = allowedClients,
             blockedClients = blockedClients,
             serverSocketTimeout = serverSocketTimeout,
-          dispatchers = dispatchers,
+            dispatchers = dispatchers,
         )
       }
     }

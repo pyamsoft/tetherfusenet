@@ -200,16 +200,17 @@ private fun themeColors(
 
 @Composable
 fun ComponentActivity.TFTheme(
-  dispatchers: AppDispatchers,
+    dispatchers: AppDispatchers,
     theme: Theming.Mode,
     isMaterialYou: Boolean,
     content: @Composable () -> Unit,
 ) {
   val self = this
 
-  val hapticManager = rememberHapticManager(
-    dispatchers = dispatchers,
-  )
+  val hapticManager =
+      rememberHapticManager(
+          dispatchers = dispatchers,
+      )
   val isDarkMode = theme.getSystemDarkMode()
   val uriHandler = rememberExternalUriHandler()
 

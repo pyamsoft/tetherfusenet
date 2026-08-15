@@ -41,14 +41,14 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
 import io.netty.util.AttributeKey
 import io.netty.util.ReferenceCountUtil
+import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.net.InetSocketAddress
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
 
 internal class UdpRelayHandler
 private constructor(
@@ -63,7 +63,7 @@ private constructor(
     ProxyHandler(
         isDebug = isDebug,
         scope = scope,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
         serverSocketTimeout = serverSocketTimeout,
     ) {
 
@@ -319,7 +319,7 @@ private constructor(
 
     byteCountJob?.cancel()
     byteCountJob =
-      scope.launch(context = dispatchers.io) {
+        scope.launch(context = dispatchers.io) {
           while (isActive) {
             // Don't report too often
             delay(10.seconds)
@@ -389,7 +389,7 @@ private constructor(
             blockedClients = blockedClients,
             clientResolver = clientResolver,
             serverSocketTimeout = serverSocketTimeout,
-          dispatchers = dispatchers,
+            dispatchers = dispatchers,
         )
       }
     }

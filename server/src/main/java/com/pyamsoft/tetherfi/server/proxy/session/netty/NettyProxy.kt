@@ -40,7 +40,7 @@ import kotlinx.coroutines.flow.updateAndGet
 
 abstract class NettyProxy
 protected constructor(
-  protected val dispatchers: AppDispatchers,
+    protected val dispatchers: AppDispatchers,
     private val socketTagger: SocketTagger,
     private val host: String,
     private val port: Int,
@@ -97,7 +97,7 @@ protected constructor(
 
     val serverScope =
         CoroutineScope(
-          context = SupervisorJob() + dispatchers.io + CoroutineName(this::class.java.name)
+            context = SupervisorJob() + dispatchers.io + CoroutineName(this::class.java.name)
         )
 
     val bootstrap =

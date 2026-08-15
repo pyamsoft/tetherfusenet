@@ -21,9 +21,9 @@ import com.pyamsoft.pydroid.notify.NotifyChannelInfo
 import com.pyamsoft.pydroid.notify.toNotifyId
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.withContext
 
 @Singleton
 internal class NotificationErrorLauncherImpl
@@ -34,13 +34,13 @@ internal constructor(
 ) : NotificationErrorLauncher {
 
   override suspend fun hideError() =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         notifier.cancel(ERROR_ID)
         return@withContext
       }
 
   override suspend fun showError(throwable: Throwable) =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         notifier
             .show(
                 id = ERROR_ID,

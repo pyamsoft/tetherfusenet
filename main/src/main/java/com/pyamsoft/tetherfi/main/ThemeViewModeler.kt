@@ -24,11 +24,11 @@ import com.pyamsoft.pydroid.core.cast
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.ui.theme.Theming
 import com.pyamsoft.pydroid.util.AppDispatchers
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class ThemeViewModeler
 @Inject
@@ -69,7 +69,7 @@ internal constructor(
         ) { mode, isMaterialYou ->
           emit(listOf(mode, isMaterialYou))
         }
-      .flowOn(context = dispatchers.default)
+        .flowOn(context = dispatchers.default)
         .also { f ->
           scope.launch(context = dispatchers.default) {
             f.collect { list ->

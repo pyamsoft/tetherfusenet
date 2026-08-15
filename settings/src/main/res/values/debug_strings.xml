@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?><!--
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
   ~ Copyright 2026 pyamsoft
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,32 +15,56 @@
   ~ limitations under the License.
   -->
 <resources>
-    <string name="yolo_title">Force TCP Server Error (for Stubborn Proxy)</string>
-    <string name="yolo_explain">Force simulate a TCP Server IOException, see if Stubborn Proxy works (YOLO mode)</string>
-    <string name="broadcast_title">Force Broadcast Error</string>
-    <string name="broadcast_explain">Force simulate a Broadcast Error</string>
-    <string name="proxy_title">Force Proxy Error</string>
-    <string name="proxy_explain">Force simulate a Proxy Error</string>
-    <string name="empty_group_title">Empty Group Info</string>
-    <string name="empty_group_explain">Force the WiFi Direct server to simulate returning an empty response</string>
-    <string name="connected_group_title">Connected Group Info</string>
-    <string name="connected_group_explain">Force the WiFi Direct server to simulate returning a connected response</string>
-    <string name="error_group_title">Error Group Info</string>
-    <string name="error_group_explain">Force the WiFi Direct server to simulate returning an error response</string>
-    <string name="empty_connection_title">Empty Connection Info</string>
-    <string name="empty_connection_explain">Force the WiFi Direct server to simulate returning an empty response</string>
-    <string name="connected_connection_title">Connected Connection Info</string>
-    <string name="connected_connection_explain">Force the WiFi Direct server to simulate returning a connected response</string>
-    <string name="error_connection_title">Error Connection Info</string>
-    <string name="error_connection_explain">Force the WiFi Direct server to simulate returning an error response</string>
+  <string name="yolo_title">Force TCP Server Error (for Stubborn Proxy)</string>
+  <string
+    name="yolo_explain"
+  >Force simulate a TCP Server IOException, see if Stubborn Proxy works (YOLO mode)</string>
+  <string name="broadcast_title">Force Broadcast Error</string>
+  <string name="broadcast_explain">Force simulate a Broadcast Error</string>
+  <string name="proxy_title">Force Proxy Error</string>
+  <string name="proxy_explain">Force simulate a Proxy Error</string>
+  <string name="empty_group_title">Empty Group Info</string>
+  <string
+    name="empty_group_explain"
+  >Force the WiFi Direct server to simulate returning an empty response</string>
+  <string name="connected_group_title">Connected Group Info</string>
+  <string
+    name="connected_group_explain"
+  >Force the WiFi Direct server to simulate returning a connected response</string>
+  <string name="error_group_title">Error Group Info</string>
+  <string
+    name="error_group_explain"
+  >Force the WiFi Direct server to simulate returning an error response</string>
+  <string name="empty_connection_title">Empty Connection Info</string>
+  <string
+    name="empty_connection_explain"
+  >Force the WiFi Direct server to simulate returning an empty response</string>
+  <string name="connected_connection_title">Connected Connection Info</string>
+  <string
+    name="connected_connection_explain"
+  >Force the WiFi Direct server to simulate returning a connected response</string>
+  <string name="error_connection_title">Error Connection Info</string>
+  <string
+    name="error_connection_explain"
+  >Force the WiFi Direct server to simulate returning an error response</string>
 
-    <!-- TODO(Peter): Need zh-rTW translation -->
-    <string name="experimental_flags_title">Experiments</string>
-    <string name="experimental_flags_description">These options are all experimental. They may reduce the stability of the application and could be removed or changed at any time</string>
-    <string name="runtime_flag_enable_socks_proxy_title">Enable SOCKS Proxy</string>
-    <string name="runtime_flag_enable_socks_proxy_description">Enable experimental support for SOCKS proxy (4A / 5H)</string>
-    <string name="error_socket_oom_server_title">Fake Socket OOM (Server)</string>
-    <string name="error_socket_oom_server_explain">Force the server socket builder to simulate an OOM error</string>
-    <string name="error_socket_oom_client_title">Fake Socket OOM (Client)</string>
-    <string name="error_socket_oom_client_explain">Force the client socket builder to simulate an an OOM error</string>
+  <!-- TODO(Peter): Need zh-rTW translation -->
+  <string name="experimental_flags_title">Experiments</string>
+  <string
+    name="experimental_flags_description"
+  >These options are all experimental. They may reduce the stability of the application and could be removed or changed at any time</string>
+  <string
+    name="runtime_flag_enable_socks_proxy_title"
+  >Enable SOCKS Proxy</string>
+  <string
+    name="runtime_flag_enable_socks_proxy_description"
+  >Enable experimental support for SOCKS proxy (4A / 5H)</string>
+  <string name="error_socket_oom_server_title">Fake Socket OOM (Server)</string>
+  <string
+    name="error_socket_oom_server_explain"
+  >Force the server socket builder to simulate an OOM error</string>
+  <string name="error_socket_oom_client_title">Fake Socket OOM (Client)</string>
+  <string
+    name="error_socket_oom_client_explain"
+  >Force the client socket builder to simulate an an OOM error</string>
 </resources>

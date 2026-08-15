@@ -58,9 +58,9 @@ import kotlinx.coroutines.withContext
 /** Sets up permission request interaction */
 @Composable
 private fun RegisterPermissionRequests(
-  dispatchers: AppDispatchers,
-  permissionResponseBus: Flow<PermissionResponse>,
-  onToggleProxy: CoroutineScope.() -> Unit,
+    dispatchers: AppDispatchers,
+    permissionResponseBus: Flow<PermissionResponse>,
+    onToggleProxy: CoroutineScope.() -> Unit,
 ) {
   // Create requesters
   val handleToggleProxy by rememberUpdatedState(onToggleProxy)
@@ -88,7 +88,7 @@ private fun RegisterPermissionRequests(
 
 @Composable
 private fun WatchTabSwipe(
-  dispatchers: AppDispatchers,
+    dispatchers: AppDispatchers,
     pagerState: PagerState,
     allTabs: List<MainView>,
 ) {
@@ -122,7 +122,7 @@ private fun WatchTabSwipe(
 
 @Composable
 private fun MountHooks(
-  dispatchers: AppDispatchers,
+    dispatchers: AppDispatchers,
     viewModel: MainViewModeler,
     pagerState: PagerState,
     allTabs: List<MainView>,
@@ -135,14 +135,14 @@ private fun MountHooks(
   SaveStateDisposableEffect(viewModel)
 
   WatchTabSwipe(
-    dispatchers = dispatchers,
+      dispatchers = dispatchers,
       pagerState = pagerState,
       allTabs = allTabs,
   )
 
   // As early as possible because of Lifecycle quirks
   RegisterPermissionRequests(
-    dispatchers = dispatchers,
+      dispatchers = dispatchers,
       permissionResponseBus = permissionResponseBus,
       onToggleProxy = { onToggleProxy() },
   )
@@ -205,7 +205,7 @@ fun MainEntry(
       permissionResponseBus = permissionResponseBus,
       pagerState = pagerState,
       allTabs = allTabs,
-    dispatchers = dispatchers,
+      dispatchers = dispatchers,
       onShowInAppRating = { handleShowInAppRating() },
       onToggleProxy = { viewModel.handleToggleProxy() },
   )
@@ -234,9 +234,7 @@ fun MainEntry(
   )
 
   MainDialogs(
-    dialogModifier = Modifier
-      .fillUpToPortraitSize()
-      .widthIn(max = LANDSCAPE_MAX_WIDTH),
+      dialogModifier = Modifier.fillUpToPortraitSize().widthIn(max = LANDSCAPE_MAX_WIDTH),
       state = viewModel,
       appName = appName,
       onDismissBlocker = { viewModel.handleDismissBlocker(it) },
@@ -265,11 +263,10 @@ fun MainEntry(
 
     group.cast<BroadcastNetworkStatus.GroupInfo.Connected>()?.also { grp ->
       QRCodeEntry(
-        Modifier
-          .fillUpToPortraitSize()
-          .widthIn(
-            max = LANDSCAPE_MAX_WIDTH,
-          ),
+          Modifier.fillUpToPortraitSize()
+              .widthIn(
+                  max = LANDSCAPE_MAX_WIDTH,
+              ),
           ssid = grp.ssid,
           password = grp.password,
           onDismiss = { viewModel.handleCloseDialog(MainViewDialogs.QR_CODE) },
@@ -280,9 +277,7 @@ fun MainEntry(
   val isShowingSlowSpeedHelp by viewModel.isShowingSlowSpeedHelp.collectAsStateWithLifecycle()
   if (isShowingSlowSpeedHelp) {
     SlowSpeedsDialog(
-      modifier = Modifier
-        .fillUpToPortraitSize()
-        .widthIn(max = LANDSCAPE_MAX_WIDTH),
+        modifier = Modifier.fillUpToPortraitSize().widthIn(max = LANDSCAPE_MAX_WIDTH),
         onDismiss = { viewModel.handleCloseDialog(MainViewDialogs.SLOW_SPEED_HELP) },
     )
   }

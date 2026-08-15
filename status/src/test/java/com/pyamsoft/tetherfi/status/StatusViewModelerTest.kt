@@ -23,15 +23,15 @@ import com.pyamsoft.tetherfi.server.ServerNetworkBand
 import com.pyamsoft.tetherfi.server.WifiPreferences
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.server.network.PreferredNetwork
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 private class FakeExpertPreferences : ExpertPreferences {
   val broadcastTypeCalls = mutableListOf<BroadcastType>()
@@ -107,7 +107,7 @@ private class FakeWifiPreferences : WifiPreferences {
 }
 
 private fun newViewModeler(
-  dispatchers: AppDispatchers,
+    dispatchers: AppDispatchers,
     state: MutableStatusViewState = MutableStatusViewState(),
     expertPreferences: ExpertPreferences = FakeExpertPreferences(),
     proxyPreferences: ProxyPreferences = FakeProxyPreferences(),
@@ -118,7 +118,7 @@ private fun newViewModeler(
         expertPreferences = expertPreferences,
         proxyPreferences = proxyPreferences,
         wifiPreferences = wifiPreferences,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
     )
 
 class StatusViewModelerTest {
@@ -127,11 +127,13 @@ class StatusViewModelerTest {
   fun `bind loads preferences and marks loading state done`() = runTest {
     val state = MutableStatusViewState()
     val proxyPreferences = FakeProxyPreferences()
-    val viewModeler = newViewModeler(
-      state = state, proxyPreferences = proxyPreferences,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            state = state,
+            proxyPreferences = proxyPreferences,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModeler.bind(this)
 
@@ -148,11 +150,12 @@ class StatusViewModelerTest {
   @Test
   fun `bind is a no-op while already loading`() = runTest {
     val proxyPreferences = FakeProxyPreferences()
-    val viewModeler = newViewModeler(
-      proxyPreferences = proxyPreferences,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            proxyPreferences = proxyPreferences,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModeler.bind(this)
     viewModeler.bind(this)
@@ -163,11 +166,12 @@ class StatusViewModelerTest {
   @Test
   fun `handleTogglePasswordVisibility flips the flag`() {
     val state = MutableStatusViewState()
-    val viewModeler = newViewModeler(
-      state = state,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            state = state,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModeler.handleTogglePasswordVisibility()
     assertTrue(state.isPasswordVisible.value)
@@ -180,11 +184,13 @@ class StatusViewModelerTest {
   fun `handleSsidChanged updates state and writes through to preferences`() {
     val state = MutableStatusViewState()
     val wifiPreferences = FakeWifiPreferences()
-    val viewModeler = newViewModeler(
-      state = state, wifiPreferences = wifiPreferences,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            state = state,
+            wifiPreferences = wifiPreferences,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModeler.handleSsidChanged("NewSsid")
 
@@ -196,11 +202,13 @@ class StatusViewModelerTest {
   fun `handlePasswordChanged updates state and writes through to preferences`() {
     val state = MutableStatusViewState()
     val wifiPreferences = FakeWifiPreferences()
-    val viewModeler = newViewModeler(
-      state = state, wifiPreferences = wifiPreferences,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            state = state,
+            wifiPreferences = wifiPreferences,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModeler.handlePasswordChanged("NewPassword")
 
@@ -212,11 +220,13 @@ class StatusViewModelerTest {
   fun `handleChangeBand updates state and writes through to preferences`() {
     val state = MutableStatusViewState()
     val wifiPreferences = FakeWifiPreferences()
-    val viewModeler = newViewModeler(
-      state = state, wifiPreferences = wifiPreferences,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            state = state,
+            wifiPreferences = wifiPreferences,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModeler.handleChangeBand(ServerNetworkBand.MODERN)
 
@@ -227,11 +237,12 @@ class StatusViewModelerTest {
   @Test
   fun `handleUpdateBroadcastType delegates to expert preferences`() {
     val expertPreferences = FakeExpertPreferences()
-    val viewModeler = newViewModeler(
-      expertPreferences = expertPreferences,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            expertPreferences = expertPreferences,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModeler.handleUpdateBroadcastType(BroadcastType.entries.last())
 
@@ -241,11 +252,12 @@ class StatusViewModelerTest {
   @Test
   fun `handleUpdatePreferredNetwork delegates to expert preferences`() {
     val expertPreferences = FakeExpertPreferences()
-    val viewModeler = newViewModeler(
-      expertPreferences = expertPreferences,
-      // TODO(Peter): Do we need test dispatchers?
-      dispatchers = AppDispatchers.create(),
-    )
+    val viewModeler =
+        newViewModeler(
+            expertPreferences = expertPreferences,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     viewModeler.handleUpdatePreferredNetwork(PreferredNetwork.entries.last())
 

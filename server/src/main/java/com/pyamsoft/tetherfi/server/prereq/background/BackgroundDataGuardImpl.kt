@@ -22,15 +22,15 @@ import androidx.core.content.getSystemService
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlinx.coroutines.withContext
 
 internal class BackgroundDataGuardImpl
 @Inject
 internal constructor(
-  private val context: Context,
-  private val dispatchers: AppDispatchers,
-  enforcer: ThreadEnforcer,
+    private val context: Context,
+    private val dispatchers: AppDispatchers,
+    enforcer: ThreadEnforcer,
 ) : BackgroundDataGuard {
 
   private val connectivityManager by lazy {
@@ -39,12 +39,12 @@ internal constructor(
   }
 
   override suspend fun canCreateNetwork(): Boolean =
-    withContext(context = dispatchers.default) {
-      val backgroundStatus = connectivityManager.restrictBackgroundStatus
+      withContext(context = dispatchers.default) {
+        val backgroundStatus = connectivityManager.restrictBackgroundStatus
 
-      // We do NOT need to be whitelisted for "always", but we just can NOT be
-      // restricted background
-      return@withContext backgroundStatus !=
-          ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED
-    }
+        // We do NOT need to be whitelisted for "always", but we just can NOT be
+        // restricted background
+        return@withContext backgroundStatus !=
+            ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED
+      }
 }

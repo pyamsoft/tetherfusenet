@@ -28,20 +28,20 @@ import com.pyamsoft.tetherfi.server.ServerNetworkBand
 import com.pyamsoft.tetherfi.server.WifiPreferences
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.server.network.PreferredNetwork
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class StatusViewModeler
 @Inject
 internal constructor(
-  override val state: MutableStatusViewState,
-  private val expertPreferences: ExpertPreferences,
-  private val proxyPreferences: ProxyPreferences,
-  private val wifiPreferences: WifiPreferences,
-  private val dispatchers: AppDispatchers,
+    override val state: MutableStatusViewState,
+    private val expertPreferences: ExpertPreferences,
+    private val proxyPreferences: ProxyPreferences,
+    private val wifiPreferences: WifiPreferences,
+    private val dispatchers: AppDispatchers,
 ) : StatusViewState by state, AbstractViewModeler<StatusViewState>(state) {
 
   private data class LoadConfig(

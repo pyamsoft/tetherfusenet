@@ -53,262 +53,262 @@ private enum class SettingsContentTypes {
 
 @Composable
 private fun DebugItem(
-  modifier: Modifier = Modifier,
-  isEnabled: Boolean = true,
-  title: String,
-  description: String,
-  checked: Boolean,
-  onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    isEnabled: Boolean = true,
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
 ) {
   Row(
-    modifier = modifier,
-    verticalAlignment = Alignment.CenterVertically,
+      modifier = modifier,
+      verticalAlignment = Alignment.CenterVertically,
   ) {
     Column(
-      modifier = Modifier.weight(1F),
+        modifier = Modifier.weight(1F),
     ) {
       Text(
-        text = title,
-        style = MaterialTheme.typography.bodyLarge,
+          text = title,
+          style = MaterialTheme.typography.bodyLarge,
       )
       Text(
-        text = description,
-        style =
-          MaterialTheme.typography.bodyMedium.copy(
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          ),
+          text = description,
+          style =
+              MaterialTheme.typography.bodyMedium.copy(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+              ),
       )
     }
     Checkbox(
-      enabled = isEnabled,
-      checked = checked,
-      onCheckedChange = onCheckedChange,
+        enabled = isEnabled,
+        checked = checked,
+        onCheckedChange = onCheckedChange,
     )
   }
 }
 
 internal fun LazyListScope.renderExperiments(
-  itemModifier: Modifier = Modifier,
+    itemModifier: Modifier = Modifier,
 ) {
   item(
-    contentType = SettingsContentTypes.EXPERIMENT_EXPLAIN,
+      contentType = SettingsContentTypes.EXPERIMENT_EXPLAIN,
   ) {
     Text(
-      modifier = itemModifier,
-      text = stringResource(R.string.experimental_flags_title),
-      style =
-        MaterialTheme.typography.bodyLarge.copy(
-          color = MaterialTheme.colorScheme.onSurface,
-        ),
+        modifier = itemModifier,
+        text = stringResource(R.string.experimental_flags_title),
+        style =
+            MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
     )
     Text(
-      modifier = itemModifier.padding(bottom = MaterialTheme.keylines.baseline),
-      text = stringResource(R.string.experimental_flags_description),
-      style =
-        MaterialTheme.typography.bodySmall.copy(
-          color =
-            MaterialTheme.colorScheme.onSurfaceVariant.copy(
-              alpha = TypographyDefaults.ALPHA_DISABLED,
+        modifier = itemModifier.padding(bottom = MaterialTheme.keylines.baseline),
+        text = stringResource(R.string.experimental_flags_description),
+        style =
+            MaterialTheme.typography.bodySmall.copy(
+                color =
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                        alpha = TypographyDefaults.ALPHA_DISABLED,
+                    ),
             ),
-        ),
     )
   }
 
   item(
-    contentType = SettingsContentTypes.BOTTOM_SPACER,
+      contentType = SettingsContentTypes.BOTTOM_SPACER,
   ) {
     Spacer(
-      modifier = Modifier.padding(MaterialTheme.keylines.content),
+        modifier = Modifier.padding(MaterialTheme.keylines.content),
     )
   }
 }
 
 @LintIgnoreLongMethod
 internal fun LazyListScope.renderExtraDebugContent(
-  itemModifier: Modifier = Modifier,
-  appEnvironment: AppDevEnvironment,
+    itemModifier: Modifier = Modifier,
+    appEnvironment: AppDevEnvironment,
 ) {
   item(
-    contentType = SettingsContentTypes.DEBUG_YOLO_ERROR,
+      contentType = SettingsContentTypes.DEBUG_YOLO_ERROR,
   ) {
     val isYoloError by
-    appEnvironment.isYoloError.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_YOLO_FAKE_ERROR_INITIAL_STATE
-    )
+        appEnvironment.isYoloError.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_YOLO_FAKE_ERROR_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.yolo_title),
-      description = stringResource(R.string.yolo_explain),
-      checked = isYoloError,
-      onCheckedChange = { appEnvironment.updateYolo(it) },
+        modifier = itemModifier,
+        title = stringResource(R.string.yolo_title),
+        description = stringResource(R.string.yolo_explain),
+        checked = isYoloError,
+        onCheckedChange = { appEnvironment.updateYolo(it) },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_BROADCAST_ERROR,
+      contentType = SettingsContentTypes.DEBUG_BROADCAST_ERROR,
   ) {
     val isBroadcastFakeError by
-    appEnvironment.isBroadcastFakeError.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_BROADCAST_FAKE_ERROR_INITIAL_STATE
-    )
+        appEnvironment.isBroadcastFakeError.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_BROADCAST_FAKE_ERROR_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.broadcast_title),
-      description = stringResource(R.string.broadcast_explain),
-      checked = isBroadcastFakeError,
-      onCheckedChange = { appEnvironment.updateBroadcast(it) },
+        modifier = itemModifier,
+        title = stringResource(R.string.broadcast_title),
+        description = stringResource(R.string.broadcast_explain),
+        checked = isBroadcastFakeError,
+        onCheckedChange = { appEnvironment.updateBroadcast(it) },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_PROXY_ERROR,
+      contentType = SettingsContentTypes.DEBUG_PROXY_ERROR,
   ) {
     val isProxyFakeError by
-    appEnvironment.isProxyFakeError.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_PROXY_FAKE_ERROR_INITIAL_STATE
-    )
+        appEnvironment.isProxyFakeError.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_PROXY_FAKE_ERROR_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.proxy_title),
-      description = stringResource(R.string.proxy_explain),
-      checked = isProxyFakeError,
-      onCheckedChange = { appEnvironment.updateProxy(it) },
+        modifier = itemModifier,
+        title = stringResource(R.string.proxy_title),
+        description = stringResource(R.string.proxy_explain),
+        checked = isProxyFakeError,
+        onCheckedChange = { appEnvironment.updateProxy(it) },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_GROUP_EMPTY,
+      contentType = SettingsContentTypes.DEBUG_GROUP_EMPTY,
   ) {
     val isGroupFakeEmpty by
-    appEnvironment.fakeGroup.isEmpty.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE
-    )
+        appEnvironment.fakeGroup.isEmpty.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.empty_group_title),
-      description = stringResource(R.string.empty_group_explain),
-      checked = isGroupFakeEmpty,
-      onCheckedChange = { appEnvironment.updateGroup(isEmpty = it) },
+        modifier = itemModifier,
+        title = stringResource(R.string.empty_group_title),
+        description = stringResource(R.string.empty_group_explain),
+        checked = isGroupFakeEmpty,
+        onCheckedChange = { appEnvironment.updateGroup(isEmpty = it) },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_GROUP_GOOD,
+      contentType = SettingsContentTypes.DEBUG_GROUP_GOOD,
   ) {
     val isGroupFakeConnected by
-    appEnvironment.fakeGroup.isConnected.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE
-    )
+        appEnvironment.fakeGroup.isConnected.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.connected_group_title),
-      description = stringResource(R.string.connected_group_explain),
-      checked = isGroupFakeConnected,
-      onCheckedChange = { appEnvironment.updateGroup(isConnected = it) },
+        modifier = itemModifier,
+        title = stringResource(R.string.connected_group_title),
+        description = stringResource(R.string.connected_group_explain),
+        checked = isGroupFakeConnected,
+        onCheckedChange = { appEnvironment.updateGroup(isConnected = it) },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_GROUP_ERROR,
+      contentType = SettingsContentTypes.DEBUG_GROUP_ERROR,
   ) {
     val isGroupFakeError by
-    appEnvironment.fakeGroup.isError.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE
-    )
+        appEnvironment.fakeGroup.isError.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.error_group_title),
-      description = stringResource(R.string.error_group_explain),
-      checked = isGroupFakeError,
-      onCheckedChange = { appEnvironment.updateGroup(isError = it) },
+        modifier = itemModifier,
+        title = stringResource(R.string.error_group_title),
+        description = stringResource(R.string.error_group_explain),
+        checked = isGroupFakeError,
+        onCheckedChange = { appEnvironment.updateGroup(isError = it) },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_CONN_EMPTY,
+      contentType = SettingsContentTypes.DEBUG_CONN_EMPTY,
   ) {
     val isConnectionFakeEmpty by
-    appEnvironment.fakeConnection.isEmpty.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE
-    )
+        appEnvironment.fakeConnection.isEmpty.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.empty_connection_title),
-      description = stringResource(R.string.empty_connection_explain),
-      checked = isConnectionFakeEmpty,
-      onCheckedChange = { appEnvironment.updateConnection(isEmpty = it) },
+        modifier = itemModifier,
+        title = stringResource(R.string.empty_connection_title),
+        description = stringResource(R.string.empty_connection_explain),
+        checked = isConnectionFakeEmpty,
+        onCheckedChange = { appEnvironment.updateConnection(isEmpty = it) },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_CONN_GOOD,
+      contentType = SettingsContentTypes.DEBUG_CONN_GOOD,
   ) {
     val isConnectionFakeConnected by
-    appEnvironment.fakeConnection.isConnected.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE
-    )
+        appEnvironment.fakeConnection.isConnected.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.connected_connection_title),
-      description = stringResource(R.string.connected_connection_explain),
-      checked = isConnectionFakeConnected,
-      onCheckedChange = { appEnvironment.updateConnection(isConnected = it) },
+        modifier = itemModifier,
+        title = stringResource(R.string.connected_connection_title),
+        description = stringResource(R.string.connected_connection_explain),
+        checked = isConnectionFakeConnected,
+        onCheckedChange = { appEnvironment.updateConnection(isConnected = it) },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_CONN_ERROR,
+      contentType = SettingsContentTypes.DEBUG_CONN_ERROR,
   ) {
     val isConnectionFakeError by
-    appEnvironment.fakeConnection.isError.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE
-    )
+        appEnvironment.fakeConnection.isError.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.error_connection_title),
-      description = stringResource(R.string.error_connection_explain),
-      checked = isConnectionFakeError,
-      onCheckedChange = { appEnvironment.updateConnection(isError = it) },
+        modifier = itemModifier,
+        title = stringResource(R.string.error_connection_title),
+        description = stringResource(R.string.error_connection_explain),
+        checked = isConnectionFakeError,
+        onCheckedChange = { appEnvironment.updateConnection(isError = it) },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_SOCKET_OOM,
+      contentType = SettingsContentTypes.DEBUG_SOCKET_OOM,
   ) {
     val isSocketOOM by
-    appEnvironment.isSocketBuilderOOMServer.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_SOCKET_FAKE_OOM_SERVER_INITIAL_STATE
-    )
+        appEnvironment.isSocketBuilderOOMServer.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_SOCKET_FAKE_OOM_SERVER_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.error_socket_oom_server_title),
-      description = stringResource(R.string.error_socket_oom_server_explain),
-      checked = isSocketOOM,
-      onCheckedChange = { appEnvironment.handleToggleSocketBuilderOOMServerEnabled() },
+        modifier = itemModifier,
+        title = stringResource(R.string.error_socket_oom_server_title),
+        description = stringResource(R.string.error_socket_oom_server_explain),
+        checked = isSocketOOM,
+        onCheckedChange = { appEnvironment.handleToggleSocketBuilderOOMServerEnabled() },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.DEBUG_SOCKET_ERROR,
+      contentType = SettingsContentTypes.DEBUG_SOCKET_ERROR,
   ) {
     val isSocketFake by
-    appEnvironment.isSocketBuilderOOMClient.collectAsStateWithLifecycle(
-      AppDevEnvironment.Defaults.IS_SOCKET_FAKE_OOM_CLIENT_INITIAL_STATE
-    )
+        appEnvironment.isSocketBuilderOOMClient.collectAsStateWithLifecycle(
+            AppDevEnvironment.Defaults.IS_SOCKET_FAKE_OOM_CLIENT_INITIAL_STATE
+        )
     DebugItem(
-      modifier = itemModifier,
-      title = stringResource(R.string.error_socket_oom_client_title),
-      description = stringResource(R.string.error_socket_oom_client_explain),
-      checked = isSocketFake,
-      onCheckedChange = { appEnvironment.handleToggleSocketBuilderOOMClientEnabled() },
+        modifier = itemModifier,
+        title = stringResource(R.string.error_socket_oom_client_title),
+        description = stringResource(R.string.error_socket_oom_client_explain),
+        checked = isSocketFake,
+        onCheckedChange = { appEnvironment.handleToggleSocketBuilderOOMClientEnabled() },
     )
   }
 
   item(
-    contentType = SettingsContentTypes.BOTTOM_SPACER,
+      contentType = SettingsContentTypes.BOTTOM_SPACER,
   ) {
     Spacer(
-      modifier = Modifier.padding(MaterialTheme.keylines.content),
+        modifier = Modifier.padding(MaterialTheme.keylines.content),
     )
   }
 }

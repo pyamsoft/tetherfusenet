@@ -25,14 +25,16 @@ import androidx.core.content.getSystemService
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.withContext
 
 @Singleton
-internal class WiFiLocker @Inject internal constructor(
-  context: Context,
-  private val dispatchers: AppDispatchers,
+internal class WiFiLocker
+@Inject
+internal constructor(
+    context: Context,
+    private val dispatchers: AppDispatchers,
 ) : AbstractLocker() {
 
   private val wifiManager by lazy {
@@ -47,20 +49,21 @@ internal class WiFiLocker @Inject internal constructor(
   }
 
   override suspend fun createLock(): Locker.Lock =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         val wifiLock = createWiFiLock()
-      return@withContext Lock(wifiLock, dispatchers, tag)
+        return@withContext Lock(wifiLock, dispatchers, tag)
       }
 
   internal class Lock(
-    private val wifiLock: WifiLock,
-    dispatchers: AppDispatchers,
-    lockTag: String
+      private val wifiLock: WifiLock,
+      dispatchers: AppDispatchers,
+      lockTag: String,
   ) :
-    AbstractLock(
-      lockType = "Wi-Fi", dispatchers = dispatchers,
-      lockTag = lockTag
-    ) {
+      AbstractLock(
+          lockType = "Wi-Fi",
+          dispatchers = dispatchers,
+          lockTag = lockTag,
+      ) {
 
     override suspend fun isHeld(): Boolean {
       return wifiLock.isHeld

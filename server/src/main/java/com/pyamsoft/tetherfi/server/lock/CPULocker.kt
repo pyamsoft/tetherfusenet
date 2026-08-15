@@ -24,14 +24,16 @@ import androidx.core.content.getSystemService
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.withContext
 
 @Singleton
-internal class CPULocker @Inject internal constructor(
-  context: Context,
-  private val dispatchers: AppDispatchers,
+internal class CPULocker
+@Inject
+internal constructor(
+    context: Context,
+    private val dispatchers: AppDispatchers,
 ) : AbstractLocker() {
 
   private val powerManager by lazy {
@@ -52,20 +54,21 @@ internal class CPULocker @Inject internal constructor(
   }
 
   override suspend fun createLock(): Locker.Lock =
-    withContext(context = dispatchers.default) {
-      val wakeLock = createWakeLock()
-      return@withContext Lock(wakeLock, dispatchers, tag)
-    }
+      withContext(context = dispatchers.default) {
+        val wakeLock = createWakeLock()
+        return@withContext Lock(wakeLock, dispatchers, tag)
+      }
 
   internal class Lock(
-    private val wakeLock: PowerManager.WakeLock,
-    dispatchers: AppDispatchers,
-    lockTag: String,
+      private val wakeLock: PowerManager.WakeLock,
+      dispatchers: AppDispatchers,
+      lockTag: String,
   ) :
-    AbstractLock(
-      dispatchers = dispatchers,
-      lockType = "CPU", lockTag = lockTag
-    ) {
+      AbstractLock(
+          dispatchers = dispatchers,
+          lockType = "CPU",
+          lockTag = lockTag,
+      ) {
 
     override suspend fun isHeld(): Boolean {
       return wakeLock.isHeld

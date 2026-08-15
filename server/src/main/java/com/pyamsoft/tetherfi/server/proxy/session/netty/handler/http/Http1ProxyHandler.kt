@@ -54,9 +54,9 @@ import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
+import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.net.InetSocketAddress
 
 // Cannot be shareable because of the local state messageQueue and outboundChannel
 internal class Http1ProxyHandler
@@ -73,7 +73,7 @@ private constructor(
         isDebug = isDebug,
         scope = scope,
         serverSocketTimeout = serverSocketTimeout,
-      dispatchers = dispatchers,
+        dispatchers = dispatchers,
     ) {
 
   private val relayHandlerFactory =
@@ -83,7 +83,7 @@ private constructor(
           allowedClients = allowedClients,
           blockedClients = blockedClients,
           serverSocketTimeout = serverSocketTimeout,
-        dispatchers = dispatchers,
+          dispatchers = dispatchers,
       )
 
   private val messageQueue = mutableListOf<Any>()
@@ -720,7 +720,7 @@ private constructor(
             blockedClients = blockedClients,
             tcpSocketCreator = tcpSocketCreator,
             serverSocketTimeout = serverSocketTimeout,
-          dispatchers = dispatchers,
+            dispatchers = dispatchers,
         )
       }
     }

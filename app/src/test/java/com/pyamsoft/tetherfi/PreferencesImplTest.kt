@@ -23,17 +23,17 @@ import androidx.datastore.preferences.core.emptyPreferences
 import com.pyamsoft.pydroid.core.createThreadEnforcer
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.ServerDefaults
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 private class FakeDataStore(
     initial: Preferences = emptyPreferences(),
@@ -99,11 +99,11 @@ class PreferencesImplTest {
       runTest {
         val dataStore = FakeDataStore(dataError = IllegalStateException())
         val prefs =
-          PreferencesImpl(
-            enforcer = createThreadEnforcer(debug = false), dataStore = dataStore,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
-
+            PreferencesImpl(
+                enforcer = createThreadEnforcer(debug = false),
+                dataStore = dataStore,
+                // TODO(Peter): Do we need test dispatchers?
+                dispatchers = AppDispatchers.create(),
             )
 
         val value = prefs.listenForSsidChanges().first()
@@ -116,11 +116,12 @@ class PreferencesImplTest {
   fun `setPreference falls back to the fallback value when the primary write throws`() {
     val dataStore = FakeDataStore()
     val prefs =
-      PreferencesImpl(
-        enforcer = createThreadEnforcer(debug = false), dataStore = dataStore,
-        // TODO(Peter): Do we need test dispatchers?
-        dispatchers = AppDispatchers.create(),
-      )
+        PreferencesImpl(
+            enforcer = createThreadEnforcer(debug = false),
+            dataStore = dataStore,
+            // TODO(Peter): Do we need test dispatchers?
+            dispatchers = AppDispatchers.create(),
+        )
 
     // Trigger the lazy "old pref migration" so that it doesn't capture the test error
     @Suppress("UnusedFlow") @SuppressLint("CheckResult") prefs.listenForSsidChanges()

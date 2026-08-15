@@ -30,30 +30,22 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuard
 import com.pyamsoft.tetherfi.status.PermissionRequests
 import com.pyamsoft.tetherfi.status.PermissionResponse
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 internal class PermissionManager private constructor() {
 
-  @Inject
-  @JvmField
-  internal var dispatchers: AppDispatchers? = null
+  @Inject @JvmField internal var dispatchers: AppDispatchers? = null
 
-  @Inject
-  @JvmField
-  internal var permissionRequestBus: EventConsumer<PermissionRequests>? = null
+  @Inject @JvmField internal var permissionRequestBus: EventConsumer<PermissionRequests>? = null
 
-  @Inject
-  @JvmField
-  internal var permissionResponseBus: EventBus<PermissionResponse>? = null
+  @Inject @JvmField internal var permissionResponseBus: EventBus<PermissionResponse>? = null
 
-  @Inject
-  @JvmField
-  internal var permissionGuard: PermissionGuard? = null
+  @Inject @JvmField internal var permissionGuard: PermissionGuard? = null
 
   private fun handleServerPermissionsGranted(
-    dispatchers: AppDispatchers,
-    activity: ComponentActivity
+      dispatchers: AppDispatchers,
+      activity: ComponentActivity,
   ) {
     activity.lifecycleScope.launch(context = dispatchers.default) {
       Timber.d { "Toggle Proxy service!" }
@@ -62,8 +54,8 @@ internal class PermissionManager private constructor() {
   }
 
   private fun handleNotificationPermissionGranted(
-    dispatchers: AppDispatchers,
-    activity: ComponentActivity
+      dispatchers: AppDispatchers,
+      activity: ComponentActivity,
   ) {
     activity.lifecycleScope.launch(context = dispatchers.default) {
       Timber.d { "Notification permission granted!" }
@@ -72,10 +64,10 @@ internal class PermissionManager private constructor() {
   }
 
   private fun registerPermissionListeners(
-    dispatchers: AppDispatchers,
-    activity: ComponentActivity,
-    serverPermissionRequester: PermissionRequester.Launcher,
-    notificationPermissionRequester: PermissionRequester.Launcher,
+      dispatchers: AppDispatchers,
+      activity: ComponentActivity,
+      serverPermissionRequester: PermissionRequester.Launcher,
+      notificationPermissionRequester: PermissionRequester.Launcher,
   ) {
     permissionRequestBus.requireNotNull().also { f ->
       activity.lifecycleScope.launch(context = dispatchers.default) {
@@ -84,7 +76,7 @@ internal class PermissionManager private constructor() {
             is PermissionRequests.Notification -> {
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 notificationPermissionRequester.launch(
-                  android.Manifest.permission.POST_NOTIFICATIONS
+                    android.Manifest.permission.POST_NOTIFICATIONS
                 )
               } else {
                 Timber.w { "Notification permission not needed old API: ${Build.VERSION.SDK_INT}" }
@@ -108,32 +100,32 @@ internal class PermissionManager private constructor() {
   }
 
   fun create(
-    activity: ComponentActivity,
-    component: MainComponent,
+      activity: ComponentActivity,
+      component: MainComponent,
   ) {
     component.inject(this)
 
     val dis = dispatchers.requireNotNull()
     val serverPermissionRequester =
-      PermissionRequester.createAndRegister(activity) {
-        if (it) {
-          handleServerPermissionsGranted(dis, activity)
+        PermissionRequester.createAndRegister(activity) {
+          if (it) {
+            handleServerPermissionsGranted(dis, activity)
+          }
         }
-      }
 
     val notificationPermissionRequester =
-      PermissionRequester.createAndRegister(activity) {
-        if (it) {
-          handleNotificationPermissionGranted(dis, activity)
+        PermissionRequester.createAndRegister(activity) {
+          if (it) {
+            handleNotificationPermissionGranted(dis, activity)
+          }
         }
-      }
 
     activity.doOnCreate {
       registerPermissionListeners(
-        dispatchers = dis,
-        activity = activity,
-        serverPermissionRequester = serverPermissionRequester,
-        notificationPermissionRequester = notificationPermissionRequester,
+          dispatchers = dis,
+          activity = activity,
+          serverPermissionRequester = serverPermissionRequester,
+          notificationPermissionRequester = notificationPermissionRequester,
       )
     }
 
@@ -145,10 +137,10 @@ internal class PermissionManager private constructor() {
     @JvmStatic
     internal fun createAndRegister(activity: ComponentActivity, component: MainComponent) {
       PermissionManager()
-        .create(
-          activity = activity,
-          component = component,
-        )
+          .create(
+              activity = activity,
+              component = component,
+          )
     }
   }
 }

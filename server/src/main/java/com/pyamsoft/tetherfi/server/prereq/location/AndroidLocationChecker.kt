@@ -26,10 +26,10 @@ import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.TweakPreferences
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 @Singleton
 internal class AndroidLocationChecker
@@ -45,7 +45,7 @@ internal constructor(
   }
 
   override suspend fun isLocationOn(): Boolean =
-    withContext(context = dispatchers.default) {
+      withContext(context = dispatchers.default) {
         if (preferences.listenForStartIgnoreLocation().first()) {
           Timber.w { "Ignore Location start blocker" }
           return@withContext true

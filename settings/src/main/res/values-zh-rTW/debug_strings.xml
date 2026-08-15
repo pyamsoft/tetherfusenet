@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?><!--
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
   ~ Copyright 2026 pyamsoft
   ~ Copyright 2026 林博仁(Buo-ren Lin)
   ~
@@ -15,22 +16,50 @@
   ~ limitations under the License.
   -->
 <resources>
-  <string name="yolo_title">強制發生 TCP 服務錯誤（用於測試頑固代理功能）</string>
-    <string name="yolo_explain">強制模擬一個 TCP 服務的 IOException 例外錯誤，確認頑固代理(Subborn Proxy)功能是否正常運作（YOLO 模式）</string>
-    <string name="broadcast_title">強制發生廣播錯誤</string>
-    <string name="broadcast_explain">強制模擬發生了一個廣播錯誤(Broadcast Error)的情境</string>
-    <string name="proxy_title">強制發生代理錯誤</string>
-    <string name="proxy_explain">強制模擬發生了一個代理錯誤(Proxy Error)的情境</string>
-    <string name="empty_group_title">空群組資訊(Group Info)</string>
-    <string name="empty_group_explain">強制 WiFi Direct 服務模擬傳回了一個空回應(empty response)的情境</string>
-    <string name="connected_group_title">已連接群組資訊(Connected Group Info)</string>
-    <string name="connected_group_explain">強制 WiFi Direct 服務模擬傳回了一個已連接回應(connected response)的情境</string>
-    <string name="error_group_title">錯誤群組資訊(Error Group Info)</string>
-    <string name="error_group_explain">強制 WiFi Direct 服務模擬傳回了一個錯誤回應(error response)的情境</string>
-    <string name="empty_connection_title">空連線資訊(Empty Connection Info)</string>
-    <string name="empty_connection_explain">強制 WiFi Direct 服務模擬傳回了一個空連線回應(empty response)的情境</string>
-    <string name="connected_connection_title">已連接連線資訊(Connected Connection Info)</string>
-    <string name="connected_connection_explain">強制 WiFi Direct 服務模擬傳回了一個已連接連線回應(connected response)的情境</string>
-    <string name="error_connection_title">錯誤連線資訊(Error Connection Info)</string>
-    <string name="error_connection_explain">強制 WiFi Direct 服務模擬傳回了一個錯誤連線回應(error response)的情境</string>
+  <string
+    name="yolo_title"
+  >強制發生 TCP 服務錯誤（用於測試頑固代理功能）</string>
+  <string
+    name="yolo_explain"
+  >強制模擬一個 TCP 服務的 IOException 例外錯誤，確認頑固代理(Subborn Proxy)功能是否正常運作（YOLO 模式）</string>
+  <string name="broadcast_title">強制發生廣播錯誤</string>
+  <string
+    name="broadcast_explain"
+  >強制模擬發生了一個廣播錯誤(Broadcast Error)的情境</string>
+  <string name="proxy_title">強制發生代理錯誤</string>
+  <string
+    name="proxy_explain"
+  >強制模擬發生了一個代理錯誤(Proxy Error)的情境</string>
+  <string name="empty_group_title">空群組資訊(Group Info)</string>
+  <string
+    name="empty_group_explain"
+  >強制 WiFi Direct 服務模擬傳回了一個空回應(empty response)的情境</string>
+  <string
+    name="connected_group_title"
+  >已連接群組資訊(Connected Group Info)</string>
+  <string
+    name="connected_group_explain"
+  >強制 WiFi Direct 服務模擬傳回了一個已連接回應(connected response)的情境</string>
+  <string name="error_group_title">錯誤群組資訊(Error Group Info)</string>
+  <string
+    name="error_group_explain"
+  >強制 WiFi Direct 服務模擬傳回了一個錯誤回應(error response)的情境</string>
+  <string
+    name="empty_connection_title"
+  >空連線資訊(Empty Connection Info)</string>
+  <string
+    name="empty_connection_explain"
+  >強制 WiFi Direct 服務模擬傳回了一個空連線回應(empty response)的情境</string>
+  <string
+    name="connected_connection_title"
+  >已連接連線資訊(Connected Connection Info)</string>
+  <string
+    name="connected_connection_explain"
+  >強制 WiFi Direct 服務模擬傳回了一個已連接連線回應(connected response)的情境</string>
+  <string
+    name="error_connection_title"
+  >錯誤連線資訊(Error Connection Info)</string>
+  <string
+    name="error_connection_explain"
+  >強制 WiFi Direct 服務模擬傳回了一個錯誤連線回應(error response)的情境</string>
 </resources>

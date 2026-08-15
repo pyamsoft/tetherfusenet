@@ -47,7 +47,7 @@ fun Application.installLogger(
 
   observeInAppDebugLogger(
       scope = scope,
-    dispatchers = dispatchers,
+      dispatchers = dispatchers,
       inAppDebugStatus = inAppDebugStatus,
   )
 }
