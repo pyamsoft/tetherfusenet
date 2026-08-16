@@ -329,6 +329,10 @@ internal constructor(
     } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
       e.ifNotCancellation {
         Timber.e(e) { "Failed to connect Wi-Fi direct group" }
+
+        // The channel was never returned to the caller, so close it here or it leaks.
+        closeSilent(channel)
+
         throw e
       }
     }
