@@ -110,11 +110,7 @@ private constructor(
     val outbound = outboundChannel
 
     if (outbound == null) {
-      // Retain the message until used
-      val retained = ReferenceCountUtil.retain(msg)
-
-      // Queue for later
-      messageQueue.add(retained)
+      messageQueue.add(msg)
     } else {
       // Use immediately and release
       outbound.writeAndFlush(msg)
@@ -130,9 +126,6 @@ private constructor(
         for (q in queued) {
           // Write here claims the original msg
           channel.write(q)
-
-          // Release here claims the ref count from the "retain" operation in queue function
-          ReferenceCountUtil.release(q)
         }
       }
     } finally {
