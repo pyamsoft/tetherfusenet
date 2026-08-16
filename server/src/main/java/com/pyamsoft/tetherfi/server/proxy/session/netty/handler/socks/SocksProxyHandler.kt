@@ -213,9 +213,6 @@ internal constructor(
       // Remove our own handler
       pipeline.dropHandler(this::class)
 
-      // Bandwidth limiter
-      pipeline.applyBandwidthLimitFor(client)
-
       // Add a relay for the internet outbound
       pipeline.addLast(relayHandlerFactory.create(Unit))
     }

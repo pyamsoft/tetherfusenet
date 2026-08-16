@@ -290,9 +290,6 @@ private constructor(
       // Remove our own handler
       pipeline.dropHandler(this::class)
 
-      // Bandwidth limiter
-      pipeline.applyBandwidthLimitFor(client)
-
       // Read from the PROXY and send to the remote
       pipeline.addLast(relayHandlerFactory.create(Unit))
 
@@ -467,9 +464,6 @@ private constructor(
       // Remove our own handler
       pipeline.dropHandler(this::class)
 
-      // Bandwidth limiter
-      pipeline.applyBandwidthLimitFor(client)
-
       // Read from the PROXY and send to REMOTE
       pipeline.addLast(relayHandlerFactory.create(Unit))
 
@@ -616,7 +610,7 @@ private constructor(
         uriWithoutSchema: String,
         defaultPortBasedOnSchema: Int,
         defaultPort: Int,
-    ): HttpHostAndPort? {
+    ): HttpHostAndPort {
       val hostAndPort = uriWithoutSchema.split(":")
       val hostAndMaybePath = hostAndPort[0]
 
