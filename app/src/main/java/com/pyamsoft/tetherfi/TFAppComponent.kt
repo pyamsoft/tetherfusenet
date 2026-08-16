@@ -70,10 +70,6 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
-// NOTE(Peter): Since our shared preferences was the DEFAULT process one, loading up
-//              a migration without specifying all keys will also migrate
-//              PYDROID SPECIFIC PREFERENCES which is what we do NOT want to do.
-//              We instead maintain ONLY a list of the known app preference keys
 private val Context.dataStore: DataStore<Preferences> by
     preferencesDataStore(
         name = "tetherfi_preferences",
@@ -84,6 +80,10 @@ private val Context.dataStore: DataStore<Preferences> by
             },
         produceMigrations = { migrationContext ->
           listOf(
+              // NOTE(Peter): Since our shared preferences was the DEFAULT process one, loading up
+              //              a migration without specifying all keys will also migrate
+              //              PYDROID SPECIFIC PREFERENCES which is what we do NOT want to do.
+              //              We instead maintain ONLY a list of the known app preference keys
               SharedPreferencesMigration(
                   keysToMigrate =
                       setOf(
