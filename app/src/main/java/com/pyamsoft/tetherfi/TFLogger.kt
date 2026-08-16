@@ -62,7 +62,7 @@ private fun Application.observeInAppDebugLogger(
   val tree =
       object : Timber.Tree() {
 
-        private val logger by lazy { self.createInAppDebugLogger() }
+        private val logger by lazy { self.createInAppDebugLogger(dispatchers) }
 
         override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
           logger.log(priority, tag, message, t)

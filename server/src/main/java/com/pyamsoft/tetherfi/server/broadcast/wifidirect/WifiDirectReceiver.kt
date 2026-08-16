@@ -29,6 +29,7 @@ import androidx.core.content.ContextCompat
 import com.pyamsoft.pydroid.bus.EventBus
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.util.AppDispatchers
+import com.pyamsoft.tetherfi.core.AppCoroutineScope
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastEvent
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastObserver
@@ -57,13 +58,8 @@ internal constructor(
     private val context: Context,
     private val shutdownBus: EventBus<ServerShutdownEvent>,
     private val dispatchers: AppDispatchers,
+    private val appScope: AppCoroutineScope,
 ) : BroadcastReceiver(), WifiDirectRegister, BroadcastObserver {
-
-  private val receiverScope by lazy {
-    CoroutineScope(
-        context = SupervisorJob() + dispatchers.default + CoroutineName(this::class.java.name),
-    )
-  }
 
   private val eventBus = EventBus.create<WidiNetworkEvent>()
   private val registered = MutableStateFlow(false)
@@ -165,7 +161,7 @@ internal constructor(
     val pending = goAsync()
 
     // Use Default here instead of ProxyDispatcher
-    receiverScope.launch(context = dispatchers.default) {
+    appScope.launch(context = dispatchers.default) {
       try {
         // In case this operation takes LONGER than 9.5 seconds,
         // (limit could be 30 according to API specifics, but we force 10 to be safe)

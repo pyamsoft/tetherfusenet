@@ -27,6 +27,7 @@ import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
+import com.pyamsoft.tetherfi.core.AppCoroutineScope
 import com.pyamsoft.tetherfi.core.InAppRatingPreferences
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ExpertPreferences
@@ -60,6 +61,7 @@ internal class PreferencesImpl
 internal constructor(
     private val enforcer: ThreadEnforcer,
     private val dispatchers: AppDispatchers,
+    private val appScope: AppCoroutineScope,
     dataStore: DataStore<Preferences>,
 ) :
     StatusPreferences,
@@ -77,14 +79,8 @@ internal constructor(
   // Keep this lazy so that the fallback password is always the same
   private val fallbackPassword by lazy { PasswordGenerator.generate() }
 
-  private val scope by lazy {
-    CoroutineScope(
-        context = SupervisorJob() + dispatchers.io + CoroutineName(this::class.java.name)
-    )
-  }
-
   private fun onClearOldPreferences(store: DataStore<Preferences>) {
-    scope.launch(context = dispatchers.io) {
+    appScope.launch(context = dispatchers.io) {
       store.edit { mutableStore ->
         for (key in OldKeys) {
           mutableStore.remove(key)
@@ -98,7 +94,7 @@ internal constructor(
       fallbackValue: T,
       crossinline value: suspend (Preferences) -> T,
   ) {
-    scope.launch(context = dispatchers.io) {
+    appScope.launch(context = dispatchers.io) {
       try {
         preferences.edit { it[key] = value(it) }
       } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
