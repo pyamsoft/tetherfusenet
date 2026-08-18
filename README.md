@@ -1,15 +1,20 @@
-## TetherFuseNet
+# TetherFuseNet
 
 Share your Android device's Internet connection with other devices without needing Root.
 
-### Get TetherFuseNet
+## Get TetherFuseNet
 
-#### Google Play (Google Play APK)
+### Google Play (Google Play APK)
+
+#### Official releases are ONLY published to the Google Play Store.
 
 [<img
 src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
 alt="Get it on Google Play"
 height="80">](https://play.google.com/store/apps/details?id=com.pyamsoft.tetherfi)
+
+### Unofficial Releases / Community Supported
+
 
 #### FDroid (FDroid APK) (IzzyOnDroid Repository)
 
@@ -30,11 +35,11 @@ height="80">](https://www.openapk.net/tetherfi/com.pyamsoft.tetherfi/)
 or get the APK from the
 [Releases Section](https://github.com/pyamsoft/tetherfusenet/releases/latest).
 
-### Screenshots
+## Screenshots
 
-#### Hotspot Status
+### Hotspot Status
 
-##### Status Overview
+#### Status Overview
 
 [<img
 src="https://raw.githubusercontent.com/pyamsoft/tetherfi/main/art/screens/phone/main-light.png"
@@ -45,9 +50,9 @@ src="https://raw.githubusercontent.com/pyamsoft/tetherfi/main/art/screens/phone/
 alt="Dark Mode: Hotspot Status"
 height="200">](https://raw.githubusercontent.com/pyamsoft/tetherfi/main/art/screens/phone/main-dark.png)
 
-#### Hotspot Behavior
+### Hotspot Behavior
 
-##### Operation Settings
+#### Operation Settings
 
 [<img
 src="https://raw.githubusercontent.com/pyamsoft/tetherfi/main/art/screens/phone/behavior-light.png"
@@ -58,9 +63,9 @@ src="https://raw.githubusercontent.com/pyamsoft/tetherfi/main/art/screens/phone/
 alt="Dark Mode: Operating Settings"
 height="200">](https://raw.githubusercontent.com/pyamsoft/tetherfi/main/art/screens/phone/behavior-dark.png)
 
-#### Hotspot Active
+### Hotspot Active
 
-##### In-App
+#### In-App
 
 [<img
 src="https://raw.githubusercontent.com/pyamsoft/tetherfi/main/art/screens/phone/running-light.png"
@@ -71,14 +76,14 @@ src="https://raw.githubusercontent.com/pyamsoft/tetherfi/main/art/screens/phone/
 alt="Dark Mode: Hotspot On"
 height="200">](https://raw.githubusercontent.com/pyamsoft/tetherfi/main/art/screens/phone/running-dark.png)
 
-### What is TetherFuseNet
+## What is TetherFuseNet
 
 TetherFuseNet works by creating a Wi-Fi Direct legacy group and an HTTP proxy server. Other
 devices can connect to the broadcasted Wi-Fi network, and connect to the Internet by
 setting the proxy server settings to the server created by TetherFuseNet. You do not need a
 Hotspot data plan to use TetherFuseNet, but the app works best with "unlimited" data plans.
 
-#### TetherFuseNet may be for you if:
+### TetherFuseNet may be for you if:
 
 - You want to share your Android's Wi-Fi or Cellular Data
 - You have an Unlimited Data and a Hotspot plan from your Carrier, but Hotspot
@@ -89,7 +94,7 @@ Hotspot data plan to use TetherFuseNet, but the app works best with "unlimited" 
 - You wish to create a LAN between devices
 - Your home router has reached the device connection limit
 
-### How
+## How
 
 TetherFuseNet uses a Foreground Service to create a long-running Wi-Fi Direct Network that
 other devices can connect to. Connected devices can exchange network data between each other.
@@ -105,14 +110,14 @@ it is dependent on the speed and availability of your Android device's internet 
 To see a list of apps that are known to not work currently, see the
 [Wiki](https://github.com/pyamsoft/tetherfusenet/wiki/Known-Not-Working)
 
-### Privacy
+## Privacy
 
 TetherFuseNet respects your privacy. TetherFuseNet is open source, and always will be. TetherFuseNet
 will never track you, or sell or share your data. TetherFuseNet offers in-app purchases,
 which you may purchase to support the developer. These purchases are never
 required to use the application or any features.
 
-### Development
+## Development
 
 TetherFuseNet is developed in the open on GitHub at:
 
@@ -127,7 +132,7 @@ proposing feature requests.
 Apache 2
 
 ```
-Copyright 2024 pyamsoft
+Copyright 2026 pyamsoft
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

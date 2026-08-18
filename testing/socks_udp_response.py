@@ -4,7 +4,7 @@
 #
 # udpchk.py - simple tool to test UDP support of SOCKS5 proxy.
 #
-# Copyright (C) 2025 pyamsoft
+# Copyright (C) 2026 pyamsoft
 # Copyright (C) 2016-2025 Zhuofei Wang <semigodking@gmail.com>
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not

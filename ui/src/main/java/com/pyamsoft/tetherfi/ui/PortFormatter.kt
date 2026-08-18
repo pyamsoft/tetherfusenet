@@ -22,7 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 
 /*
- * Copyright 2024 pyamsoft
+ * Copyright 2026 pyamsoft
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
