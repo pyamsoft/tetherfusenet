@@ -28,14 +28,14 @@ import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ExpertPreferences
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.seconds
 
 // https://github.com/pyamsoft/tetherfusenet/issues/154
 // https://github.com/pyamsoft/tetherfusenet/issues/331
@@ -145,18 +145,17 @@ internal constructor(
   }
 
   private data class PreferredNetworkBinder(
-    private val preferredNetwork: StateFlow<Network?>,
-  ) :
-      SocketBinder.NetworkBinder {
+      private val preferredNetwork: StateFlow<Network?>,
+  ) : SocketBinder.NetworkBinder {
 
     override suspend fun resolvePreferredNetwork(): Network? {
       // Wait for a network to populate, otherwise if there is none, just timeout and continue
       val network =
-        withTimeoutOrNull(NETWORK_RESOLVE_TIMEOUT) {
-          // We MUST filterNotNull otherwise this function returns before our registered listener
-          // can receive a callback so fuck me I guess right?
-          preferredNetwork.filterNotNull().first()
-        }
+          withTimeoutOrNull(NETWORK_RESOLVE_TIMEOUT) {
+            // We MUST filterNotNull otherwise this function returns before our registered listener
+            // can receive a callback so fuck me I guess right?
+            preferredNetwork.filterNotNull().first()
+          }
       if (network == null) {
         Timber.w { "Timed out waiting for preferred network to resolve, using default network" }
       }
@@ -167,6 +166,5 @@ internal constructor(
   companion object {
 
     private val NETWORK_RESOLVE_TIMEOUT = 5.seconds
-
   }
 }

@@ -31,7 +31,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.pyamsoft.pydroid.arch.SaveStateDisposableEffect
 import com.pyamsoft.pydroid.bus.EventBus
-import com.pyamsoft.pydroid.core.LintIgnoreMaxLineLength
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.ui.app.PYDroidActivityDelegate
@@ -86,7 +85,9 @@ class MainActivity : ComponentActivity() {
                     // Off.")
                     feature("The new engine (Netty based) is now the default.")
                     bugfix("Fixed some places in the code which could cause memory leaks.")
-                    bugfix("Fixed binding to Cellular Data not working reliably with the New Engine")
+                    bugfix(
+                        "Fixed binding to Cellular Data not working reliably with the New Engine"
+                    )
                   }
                 },
         )
