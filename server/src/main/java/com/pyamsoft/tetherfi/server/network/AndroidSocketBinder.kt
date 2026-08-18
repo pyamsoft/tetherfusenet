@@ -24,18 +24,18 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import androidx.annotation.CheckResult
 import androidx.core.content.getSystemService
-import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ExpertPreferences
-import java.net.DatagramSocket
-import java.net.Socket
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 // https://github.com/pyamsoft/tetherfusenet/issues/154
 // https://github.com/pyamsoft/tetherfusenet/issues/331
@@ -144,56 +144,29 @@ internal constructor(
     }
   }
 
-  private data class PreferredNetworkBinder(private val preferredNetwork: StateFlow<Network?>) :
+  private data class PreferredNetworkBinder(
+    private val preferredNetwork: StateFlow<Network?>,
+  ) :
       SocketBinder.NetworkBinder {
 
-    override suspend fun getNetwork(): Network? {
-      return preferredNetwork.first()
-    }
-
-    override suspend fun bindToNetwork(socket: Socket) {
-      val network = preferredNetwork.first()
-      if (network != null) {
-        bindToNetwork(socket, network)
-      } else {
-        Timber.w { "Cannot attempt bindSocket - Socket is not selectable: $socket" }
+    override suspend fun resolvePreferredNetwork(): Network? {
+      // Wait for a network to populate, otherwise if there is none, just timeout and continue
+      val network =
+        withTimeoutOrNull(NETWORK_RESOLVE_TIMEOUT) {
+          // We MUST filterNotNull otherwise this function returns before our registered listener
+          // can receive a callback so fuck me I guess right?
+          preferredNetwork.filterNotNull().first()
+        }
+      if (network == null) {
+        Timber.w { "Timed out waiting for preferred network to resolve, using default network" }
       }
-    }
-
-    override suspend fun bindToNetwork(datagramSocket: DatagramSocket) {
-      val network = preferredNetwork.first()
-      if (network != null) {
-        bindToNetwork(datagramSocket, network)
-      }
+      return network
     }
   }
 
   companion object {
 
-    @JvmStatic
-    private fun bindToNetwork(datagram: DatagramSocket, network: Network) {
-      try {
-        // IF you are connected to a VPN, binding to a socket may not work unless you "whitelist"
-        // TetherFuseNet in your VPN settings
-        network.bindSocket(datagram)
-      } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-        Timber.w {
-          "Error binding datagram socket to network $network, continue anyway!: ${e.message.orEmpty()}"
-        }
-      }
-    }
+    private val NETWORK_RESOLVE_TIMEOUT = 5.seconds
 
-    @JvmStatic
-    private fun bindToNetwork(socket: Socket, network: Network) {
-      try {
-        // IF you are connected to a VPN, binding to a socket may not work unless you "whitelist"
-        // TetherFuseNet in your VPN settings
-        network.bindSocket(socket)
-      } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-        Timber.w {
-          "Error binding socket to network $network, continue anyway!: ${e.message.orEmpty()}"
-        }
-      }
-    }
   }
 }

@@ -17,6 +17,7 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.factory
 
 import android.net.Network
+import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import io.netty.channel.ChannelFactory
 import io.netty.channel.socket.SocketChannel

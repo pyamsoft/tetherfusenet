@@ -45,7 +45,7 @@ protected constructor(
 
     try {
       socketBinder.withMobileDataNetworkActive { binder ->
-        val network = binder.getNetwork()
+        val network = binder.resolvePreferredNetwork()
 
         coroutineScope {
           val server =

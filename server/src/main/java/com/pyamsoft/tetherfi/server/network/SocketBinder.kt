@@ -18,8 +18,6 @@ package com.pyamsoft.tetherfi.server.network
 
 import android.net.Network
 import androidx.annotation.CheckResult
-import java.net.DatagramSocket
-import java.net.Socket
 
 fun interface SocketBinder {
 
@@ -27,10 +25,6 @@ fun interface SocketBinder {
 
   interface NetworkBinder {
 
-    @CheckResult suspend fun getNetwork(): Network?
-
-    suspend fun bindToNetwork(socket: Socket)
-
-    suspend fun bindToNetwork(datagramSocket: DatagramSocket)
+    @CheckResult suspend fun resolvePreferredNetwork(): Network?
   }
 }

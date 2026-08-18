@@ -39,16 +39,8 @@ internal class PassthroughSocketBinder @Inject internal constructor() : SocketBi
     private val NOOP_BOUND =
         object : SocketBinder.NetworkBinder {
 
-          override suspend fun getNetwork(): Network? {
+          override suspend fun resolvePreferredNetwork(): Network? {
             return null
-          }
-
-          override suspend fun bindToNetwork(socket: Socket) {
-            // Do nothing
-          }
-
-          override suspend fun bindToNetwork(datagramSocket: DatagramSocket) {
-            // Do nothing
           }
         }
   }
