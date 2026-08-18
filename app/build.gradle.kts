@@ -36,7 +36,7 @@ android {
     applicationId = "com.pyamsoft.tetherfi"
 
     versionCode = 69
-    versionName = "20260621-1"
+    versionName = "20260817-1"
 
     minSdk = libs.versions.minSdk.get().toInt()
     targetSdk = libs.versions.targetSdk.get().toInt()
