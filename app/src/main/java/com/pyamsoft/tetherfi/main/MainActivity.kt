@@ -84,15 +84,8 @@ class MainActivity : ComponentActivity() {
                   override val changelog = buildChangeLog {
                     //                    feature("Add unique Activities to turn the hotspot On or
                     // Off.")
-                    @LintIgnoreMaxLineLength
-                    feature(
-                        "New Netty based engine for HTTP proxy. The new engine is ON by default, and will become the ONLY engine in the next version."
-                    )
-
-                    @LintIgnoreMaxLineLength
-                    feature(
-                        "New Netty based engine for SOCKS proxy. The new engine is ON by default, and will become the ONLY engine in the next version."
-                    )
+                    feature("The new Netty based engine is now the default.")
+                    bugfix("Fixed some places in the code which could cause memory leaks.")
                   }
                 },
         )
