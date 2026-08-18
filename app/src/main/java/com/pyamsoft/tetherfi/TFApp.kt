@@ -47,6 +47,7 @@ class TFApp : Application() {
             version = BuildConfig.VERSION_CODE,
             logger = createLogger(),
             dispatchers = dispatchers,
+            billing = { provideBillingModule(it) },
         ),
     )
   }

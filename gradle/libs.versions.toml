@@ -13,7 +13,7 @@ kotlin = "2.4.10"
 coroutines = "1.11.0"
 
 # Us
-pydroid = "29.6.0"
+pydroid = "30.0.0"
 
 # Square
 leakCanary = "2.14"
@@ -106,6 +106,8 @@ pydroid-bus = { group = "com.github.pyamsoft.pydroid", name = "bus", version.ref
 pydroid-notify = { group = "com.github.pyamsoft.pydroid", name = "notify", version.ref = "pydroid" }
 pydroid-ui = { group = "com.github.pyamsoft.pydroid", name = "ui", version.ref = "pydroid" }
 pydroid-util = { group = "com.github.pyamsoft.pydroid", name = "util", version.ref = "pydroid" }
+pydroid-billing-noop = { group = "com.github.pyamsoft.pydroid", name = "billing-noop", version.ref = "pydroid" }
+pydroid-billing-play = { group = "com.github.pyamsoft.pydroid", name = "billing-play", version.ref = "pydroid" }
 
 qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin-android", version.ref = "qrCode" }
 

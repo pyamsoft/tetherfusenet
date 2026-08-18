@@ -22,6 +22,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import com.pyamsoft.pydroid.core.createThreadEnforcer
 import com.pyamsoft.pydroid.util.AppDispatchers
+import com.pyamsoft.tetherfi.core.AppCoroutineScope
 import com.pyamsoft.tetherfi.server.ServerDefaults
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -100,6 +101,7 @@ class PreferencesImplTest {
         val dataStore = FakeDataStore(dataError = IllegalStateException())
         val prefs =
             PreferencesImpl(
+                appScope = AppCoroutineScope(this),
                 enforcer = createThreadEnforcer(debug = false),
                 dataStore = dataStore,
                 // TODO(Peter): Do we need test dispatchers?
@@ -113,10 +115,11 @@ class PreferencesImplTest {
       }
 
   @Test
-  fun `setPreference falls back to the fallback value when the primary write throws`() {
+  fun `setPreference falls back to the fallback value when the primary write throws`() = runTest {
     val dataStore = FakeDataStore()
     val prefs =
         PreferencesImpl(
+            appScope = AppCoroutineScope(this),
             enforcer = createThreadEnforcer(debug = false),
             dataStore = dataStore,
             // TODO(Peter): Do we need test dispatchers?

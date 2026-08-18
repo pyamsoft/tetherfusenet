@@ -35,8 +35,8 @@ android {
   defaultConfig {
     applicationId = "com.pyamsoft.tetherfi"
 
-    versionCode = 70
-    versionName = "20260817-2"
+    versionCode = 71
+    versionName = "20260818-1"
 
     minSdk = libs.versions.minSdk.get().toInt()
     targetSdk = libs.versions.targetSdk.get().toInt()
@@ -76,16 +76,6 @@ android {
   flavorDimensions += listOf("store")
 
   productFlavors {
-    create("fdroid") {
-      dimension = "store"
-
-      // https://github.com/pyamsoft/tetherfusenet/issues/307
-      dependenciesInfo {
-        includeInApk = false
-        includeInBundle = false
-      }
-    }
-
     create("google") {
       dimension = "store"
 
@@ -93,6 +83,16 @@ android {
       dependenciesInfo {
         includeInApk = true
         includeInBundle = true
+      }
+    }
+
+    create("fdroid") {
+      dimension = "store"
+
+      // https://github.com/pyamsoft/tetherfusenet/issues/307
+      dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
       }
     }
   }
@@ -172,6 +172,8 @@ dependencies {
   // PYDroid
   implementation(libs.pydroid.notify)
   implementation(libs.pydroid.ui)
+  add("fdroidImplementation", libs.pydroid.billing.noop)
+  add("googleImplementation", libs.pydroid.billing.play)
 
   implementation(project(":behavior"))
   implementation(project(":connections"))
