@@ -172,8 +172,13 @@ dependencies {
   // PYDroid
   implementation(libs.pydroid.notify)
   implementation(libs.pydroid.ui)
+
+  // For PYDroid we split between Google Play builds and fully FOSS
   add("fdroidImplementation", libs.pydroid.billing.noop)
+  add("fdroidImplementation", libs.pydroid.bootstrap.noop)
+
   add("googleImplementation", libs.pydroid.billing.play)
+  add("googleImplementation", libs.pydroid.bootstrap.play)
 
   implementation(project(":behavior"))
   implementation(project(":connections"))

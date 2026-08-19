@@ -19,8 +19,22 @@ package com.pyamsoft.tetherfi
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.billing.BillingModule
 import com.pyamsoft.pydroid.billing.noop.NoopBillingModule
+import com.pyamsoft.pydroid.bootstrap.noop.rating.NoopRatingModule
+import com.pyamsoft.pydroid.bootstrap.noop.version.NoopVersionModule
+import com.pyamsoft.pydroid.bootstrap.rating.RatingModule
+import com.pyamsoft.pydroid.bootstrap.version.VersionModule
 
 @CheckResult
 internal fun provideBillingModule(params: BillingModule.Parameters): BillingModule {
   return NoopBillingModule(params)
+}
+
+@CheckResult
+internal fun provideRatingModule(params: RatingModule.Parameters): RatingModule {
+  return NoopRatingModule(params)
+}
+
+@CheckResult
+internal fun provideVersionModule(params: VersionModule.Parameters): VersionModule {
+  return NoopVersionModule(params)
 }

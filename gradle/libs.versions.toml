@@ -108,6 +108,8 @@ pydroid-ui = { group = "com.github.pyamsoft.pydroid", name = "ui", version.ref =
 pydroid-util = { group = "com.github.pyamsoft.pydroid", name = "util", version.ref = "pydroid" }
 pydroid-billing-noop = { group = "com.github.pyamsoft.pydroid", name = "billing-noop", version.ref = "pydroid" }
 pydroid-billing-play = { group = "com.github.pyamsoft.pydroid", name = "billing-play", version.ref = "pydroid" }
+pydroid-bootstrap-noop = { group = "com.github.pyamsoft.pydroid", name = "bootstrap-noop", version.ref = "pydroid" }
+pydroid-bootstrap-play = { group = "com.github.pyamsoft.pydroid", name = "bootstrap-play", version.ref = "pydroid" }
 
 qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin-android", version.ref = "qrCode" }
 

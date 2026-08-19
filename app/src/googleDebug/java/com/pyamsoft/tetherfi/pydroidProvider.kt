@@ -19,8 +19,22 @@ package com.pyamsoft.tetherfi
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.billing.BillingModule
 import com.pyamsoft.pydroid.billing.store.PlayBillingModule
+import com.pyamsoft.pydroid.bootstrap.play.rating.PlayRatingModule
+import com.pyamsoft.pydroid.bootstrap.play.version.PlayVersionModule
+import com.pyamsoft.pydroid.bootstrap.rating.RatingModule
+import com.pyamsoft.pydroid.bootstrap.version.VersionModule
 
 @CheckResult
 internal fun provideBillingModule(params: BillingModule.Parameters): BillingModule {
   return PlayBillingModule(params)
+}
+
+@CheckResult
+internal fun provideRatingModule(params: RatingModule.Parameters): RatingModule {
+  return PlayRatingModule(params)
+}
+
+@CheckResult
+internal fun provideVersionModule(params: VersionModule.Parameters): VersionModule {
+  return PlayVersionModule(params)
 }

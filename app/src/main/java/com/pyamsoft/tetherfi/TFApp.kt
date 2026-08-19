@@ -48,6 +48,8 @@ class TFApp : Application() {
             logger = createLogger(),
             dispatchers = dispatchers,
             billing = { provideBillingModule(it) },
+            rating = { provideRatingModule(it) },
+            versionCheck = { provideVersionModule(it) },
         ),
     )
   }
