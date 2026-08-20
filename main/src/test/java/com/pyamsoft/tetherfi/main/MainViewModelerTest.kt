@@ -46,6 +46,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -222,12 +224,12 @@ class MainViewModelerTest {
             networkStatus = networkStatus,
             requirements = FakeHotspotRequirements(blockers = emptySet()),
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handleToggleProxy()
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     assertTrue(state.startBlockers.value.isEmpty())
     val started = shadowOf(RuntimeEnvironment.getApplication()).peekNextStartedService()
@@ -246,12 +248,12 @@ class MainViewModelerTest {
             requirements =
                 FakeHotspotRequirements(blockers = setOf(HotspotStartBlocker.PERMISSION)),
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handleToggleProxy()
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     assertEquals(setOf(HotspotStartBlocker.PERMISSION), state.startBlockers.value)
     val stopped = shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService
@@ -268,12 +270,12 @@ class MainViewModelerTest {
             state = state,
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handleToggleProxy()
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     val stopped = shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService
     assertEquals(TestForegroundService::class.java.name, stopped?.component?.className)
@@ -303,12 +305,12 @@ class MainViewModelerTest {
             networkStatus = networkStatus,
             serviceLauncher = serviceLauncher,
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handleToggleProxy()
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     val stopped = shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService
     assertEquals(TestForegroundService::class.java.name, stopped?.component?.className)
@@ -326,12 +328,12 @@ class MainViewModelerTest {
             state = state,
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handleToggleProxy()
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     val application = shadowOf(RuntimeEnvironment.getApplication())
     assertEquals(null, application.peekNextStartedService())
@@ -339,14 +341,13 @@ class MainViewModelerTest {
   }
 
   @Test
-  fun `handleDismissBlocker removes only the dismissed blocker from state`() {
+  fun `handleDismissBlocker removes only the dismissed blocker from state`() = runTest {
     val state = MutableMainViewState()
     state.startBlockers.value = setOf(HotspotStartBlocker.PERMISSION, HotspotStartBlocker.VPN)
     val viewModeler =
         newViewModeler(
             state = state,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handleDismissBlocker(HotspotStartBlocker.VPN)
@@ -356,15 +357,14 @@ class MainViewModelerTest {
   }
 
   @Test
-  fun `handlePortChanged updates state and writes preferences`() {
+  fun `handlePortChanged updates state and writes preferences`() = runTest {
     val state = MutableMainViewState()
     val proxyPreferences = FakeProxyPreferences()
     val viewModeler =
         newViewModeler(
             state = state,
             proxyPreferences = proxyPreferences,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handlePortChanged(9999)
@@ -374,15 +374,14 @@ class MainViewModelerTest {
   }
 
   @Test
-  fun `handleEnabledChanged HTTP flips only the http flag and writes prefs`() {
+  fun `handleEnabledChanged HTTP flips only the http flag and writes prefs`() = runTest {
     val state = MutableMainViewState()
     val proxyPreferences = FakeProxyPreferences()
     val viewModeler =
         newViewModeler(
             state = state,
             proxyPreferences = proxyPreferences,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handleEnabledChanged(enabled = true, type = ServerPortTypes.HTTP)
@@ -393,15 +392,14 @@ class MainViewModelerTest {
   }
 
   @Test
-  fun `handleEnabledChanged SOCKS flips only the socks flag and writes prefs`() {
+  fun `handleEnabledChanged SOCKS flips only the socks flag and writes prefs`() = runTest {
     val state = MutableMainViewState()
     val proxyPreferences = FakeProxyPreferences()
     val viewModeler =
         newViewModeler(
             state = state,
             proxyPreferences = proxyPreferences,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handleEnabledChanged(enabled = true, type = ServerPortTypes.SOCKS)
@@ -412,30 +410,30 @@ class MainViewModelerTest {
   }
 
   @Test
-  fun `handleOpenDialog QR_CODE shows dialog only when hotspot data is valid and running`() {
-    val state = MutableMainViewState()
-    state.group.value =
-        BroadcastNetworkStatus.GroupInfo.Connected(
-            ssid = "ssid",
-            password = "password",
-            clients = emptyList(),
-        )
-    val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.Running)
-    val viewModeler =
-        newViewModeler(
-            state = state,
-            networkStatus = networkStatus,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
-        )
+  fun `handleOpenDialog QR_CODE shows dialog only when hotspot data is valid and running`() =
+      runTest {
+        val state = MutableMainViewState()
+        state.group.value =
+            BroadcastNetworkStatus.GroupInfo.Connected(
+                ssid = "ssid",
+                password = "password",
+                clients = emptyList(),
+            )
+        val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.Running)
+        val viewModeler =
+            newViewModeler(
+                state = state,
+                networkStatus = networkStatus,
+                dispatchers = testAppDispatchers(),
+            )
 
-    viewModeler.handleOpenDialog(MainViewDialogs.QR_CODE)
+        viewModeler.handleOpenDialog(MainViewDialogs.QR_CODE)
 
-    assertTrue(state.isShowingQRCodeDialog.value)
-  }
+        assertTrue(state.isShowingQRCodeDialog.value)
+      }
 
   @Test
-  fun `handleOpenDialog QR_CODE does not show dialog when not running`() {
+  fun `handleOpenDialog QR_CODE does not show dialog when not running`() = runTest {
     val state = MutableMainViewState()
     state.group.value =
         BroadcastNetworkStatus.GroupInfo.Connected(
@@ -448,8 +446,7 @@ class MainViewModelerTest {
         newViewModeler(
             state = state,
             networkStatus = networkStatus,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     viewModeler.handleOpenDialog(MainViewDialogs.QR_CODE)
@@ -458,17 +455,16 @@ class MainViewModelerTest {
   }
 
   @Test
-  fun `handleOpenDialog and handleCloseDialog toggle the simple dialog flags`() {
+  fun `handleOpenDialog and handleCloseDialog toggle the simple dialog flags`() = runTest {
     val state = MutableMainViewState()
     val viewModeler =
         newViewModeler(
             state = state,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     val simpleDialogs =
-        mapOf<MainViewDialogs, () -> Boolean>(
+        mapOf(
             MainViewDialogs.SLOW_SPEED_HELP to { state.isShowingSlowSpeedHelp.value },
             MainViewDialogs.SETUP_ERROR to { state.isShowingSetupError.value },
             MainViewDialogs.NETWORK_ERROR to { state.isShowingNetworkError.value },
@@ -497,8 +493,7 @@ class MainViewModelerTest {
             state = state,
             networkStatus = networkStatus,
             networkUpdater = networkUpdater,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     val bindScope = CoroutineScope(Job())
@@ -525,8 +520,7 @@ class MainViewModelerTest {
                 state = state,
                 networkStatus = networkStatus,
                 networkUpdater = networkUpdater,
-                // TODO(Peter): Do we need test dispatchers?
-                dispatchers = AppDispatchers.create(),
+                dispatchers = testAppDispatchers(),
             )
 
         val bindScope = CoroutineScope(Job())
@@ -551,8 +545,7 @@ class MainViewModelerTest {
             state = state,
             networkStatus = networkStatus,
             proxy = proxy,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     val bindScope = CoroutineScope(Job())

@@ -165,8 +165,7 @@ class ProxyTileViewModelerTest {
 
     viewModeler.handleToggleProxy { noActionCalled = true }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    advanceUntilIdle()
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     assertFalse(noActionCalled)
     val started = shadowOf(RuntimeEnvironment.getApplication()).peekNextStartedService()
@@ -187,8 +186,7 @@ class ProxyTileViewModelerTest {
 
     viewModeler.handleToggleProxy { noActionCalled = true }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    advanceUntilIdle()
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     assertFalse(noActionCalled)
     val stopped = shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService
@@ -209,8 +207,7 @@ class ProxyTileViewModelerTest {
 
     viewModeler.handleToggleProxy { noActionCalled = true }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    advanceUntilIdle()
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     assertTrue(noActionCalled)
     assertEquals(null, shadowOf(RuntimeEnvironment.getApplication()).peekNextStartedService())
@@ -230,8 +227,7 @@ class ProxyTileViewModelerTest {
 
     viewModeler.handleStartProxy { noActionCalled = true }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    advanceUntilIdle()
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     assertTrue(noActionCalled)
     assertEquals(null, shadowOf(RuntimeEnvironment.getApplication()).peekNextStartedService())
@@ -252,8 +248,7 @@ class ProxyTileViewModelerTest {
 
     viewModeler.handleStopProxy { noActionCalled = true }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    advanceUntilIdle()
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     assertTrue(noActionCalled)
     assertEquals(null, shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService)
@@ -275,8 +270,7 @@ class ProxyTileViewModelerTest {
 
     viewModeler.handleStartProxy { noActionCalled = true }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    advanceUntilIdle()
+    @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
     assertFalse(noActionCalled)
     val status = state.status.value
@@ -335,22 +329,19 @@ class ProxyTileViewModelerTest {
 
       networkStatus.statusFlow.value = RunningStatus.Running
 
-      @OptIn(ExperimentalCoroutinesApi::class)
-      advanceUntilIdle()
+      @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
       assertEquals(RunningStatus.Running, state.status.value)
 
       networkStatus.statusFlow.value = RunningStatus.Stopping
 
-      @OptIn(ExperimentalCoroutinesApi::class)
-      advanceUntilIdle()
+      @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
       assertEquals(RunningStatus.Stopping, state.status.value)
 
       networkStatus.statusFlow.value = RunningStatus.NotRunning
 
-      @OptIn(ExperimentalCoroutinesApi::class)
-      advanceUntilIdle()
+      @OptIn(ExperimentalCoroutinesApi::class) advanceUntilIdle()
 
       assertEquals(RunningStatus.NotRunning, state.status.value)
     } finally {
