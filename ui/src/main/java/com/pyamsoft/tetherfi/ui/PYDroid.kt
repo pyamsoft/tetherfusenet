@@ -42,7 +42,7 @@ fun InstallPYDroidExtras(
     appName: String,
 ) {
   ShowDataPolicyDialog(
-      dialogModifier = modifier,
+      modifier = modifier,
   )
 
   ExternalUriPortal(
