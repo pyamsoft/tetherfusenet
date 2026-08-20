@@ -16,13 +16,17 @@
 
 package com.pyamsoft.tetherfi.tile
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
+import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.util.AppDispatchers
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 
-/**
- * We can't cancel the scope and we can't just "join" on the job, so we reach in to the "next work"
- * and join on that
- */
-internal suspend fun awaitImmediateNextJobCompletion(scope: CoroutineScope) {
-  scope.coroutineContext.job.children.first().join()
+@CheckResult
+internal fun TestScope.testAppDispatchers(): AppDispatchers {
+  val dispatcher = StandardTestDispatcher(testScheduler)
+  return object : AppDispatchers {
+    override val default = dispatcher
+    override val main = dispatcher
+    override val io = dispatcher
+  }
 }

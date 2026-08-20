@@ -16,10 +16,12 @@
 
 package com.pyamsoft.tetherfi.tile
 
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.createThreadEnforcer
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.AppCoroutineScope
@@ -37,11 +39,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -89,6 +93,7 @@ private class FakeHotspotRequirements(
   override suspend fun blockers(): Collection<HotspotStartBlocker> = blockers
 }
 
+@CheckResult
 private fun newServiceLauncher(): ServiceLauncher =
     ServiceLauncher(
         context = RuntimeEnvironment.getApplication(),
@@ -97,6 +102,7 @@ private fun newServiceLauncher(): ServiceLauncher =
         proxyStatus = ProxyStatus(),
     )
 
+@CheckResult
 private fun newViewModeler(
     dispatchers: AppDispatchers,
     state: MutableProxyTileViewState = MutableProxyTileViewState(),
@@ -133,10 +139,11 @@ class ProxyTileViewModelerTest {
   fun `init reads the overall status from the handler`() {
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.Running)
     val state = MutableProxyTileViewState()
+
+    @SuppressLint("CheckResult")
     newViewModeler(
         state = state,
         networkStatus = networkStatus,
-        // TODO(Peter): Do we need test dispatchers?
         dispatchers = AppDispatchers.create(),
     )
 
@@ -152,13 +159,14 @@ class ProxyTileViewModelerTest {
             networkStatus = networkStatus,
             requirements = FakeHotspotRequirements(blockers = emptySet()),
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
     var noActionCalled = false
 
     viewModeler.handleToggleProxy { noActionCalled = true }
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    advanceUntilIdle()
 
     assertFalse(noActionCalled)
     val started = shadowOf(RuntimeEnvironment.getApplication()).peekNextStartedService()
@@ -173,13 +181,14 @@ class ProxyTileViewModelerTest {
         newViewModeler(
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
     var noActionCalled = false
 
     viewModeler.handleToggleProxy { noActionCalled = true }
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    advanceUntilIdle()
 
     assertFalse(noActionCalled)
     val stopped = shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService
@@ -194,13 +203,14 @@ class ProxyTileViewModelerTest {
         newViewModeler(
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
     var noActionCalled = false
 
     viewModeler.handleToggleProxy { noActionCalled = true }
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    advanceUntilIdle()
 
     assertTrue(noActionCalled)
     assertEquals(null, shadowOf(RuntimeEnvironment.getApplication()).peekNextStartedService())
@@ -214,13 +224,14 @@ class ProxyTileViewModelerTest {
         newViewModeler(
             networkStatus = networkStatus,
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
     var noActionCalled = false
 
     viewModeler.handleStartProxy { noActionCalled = true }
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    advanceUntilIdle()
 
     assertTrue(noActionCalled)
     assertEquals(null, shadowOf(RuntimeEnvironment.getApplication()).peekNextStartedService())
@@ -235,19 +246,20 @@ class ProxyTileViewModelerTest {
             networkStatus = networkStatus,
             requirements = FakeHotspotRequirements(blockers = emptySet()),
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
     var noActionCalled = false
 
     viewModeler.handleStopProxy { noActionCalled = true }
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    advanceUntilIdle()
 
     assertTrue(noActionCalled)
     assertEquals(null, shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService)
   }
 
-  private suspend fun blockerTest(blocker: HotspotStartBlocker, message: String) {
+  private fun TestScope.blockerTest(blocker: HotspotStartBlocker, message: String) {
     val networkStatus = FakeBroadcastNetworkStatus(initialStatus = RunningStatus.NotRunning)
     val state = MutableProxyTileViewState()
     val backingScope = CoroutineScope(Job())
@@ -257,13 +269,14 @@ class ProxyTileViewModelerTest {
             networkStatus = networkStatus,
             requirements = FakeHotspotRequirements(blockers = setOf(blocker)),
             appScope = AppCoroutineScope(appScope = backingScope),
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
     var noActionCalled = false
 
     viewModeler.handleStartProxy { noActionCalled = true }
-    awaitImmediateNextJobCompletion(backingScope)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    advanceUntilIdle()
 
     assertFalse(noActionCalled)
     val status = state.status.value
@@ -295,7 +308,6 @@ class ProxyTileViewModelerTest {
     val viewModeler =
         newViewModeler(
             state = state,
-            // TODO(Peter): Do we need test dispatchers?
             dispatchers = AppDispatchers.create(),
         )
 
@@ -314,8 +326,7 @@ class ProxyTileViewModelerTest {
             state = state,
             networkStatus = networkStatus,
             proxy = proxy,
-            // TODO(Peter): Do we need test dispatchers?
-            dispatchers = AppDispatchers.create(),
+            dispatchers = testAppDispatchers(),
         )
 
     val bindScope = CoroutineScope(Job())
@@ -323,13 +334,25 @@ class ProxyTileViewModelerTest {
       viewModeler.bind(bindScope)
 
       networkStatus.statusFlow.value = RunningStatus.Running
-      state.status.first { it == RunningStatus.Running }
+
+      @OptIn(ExperimentalCoroutinesApi::class)
+      advanceUntilIdle()
+
+      assertEquals(RunningStatus.Running, state.status.value)
 
       networkStatus.statusFlow.value = RunningStatus.Stopping
-      state.status.first { it == RunningStatus.Stopping }
+
+      @OptIn(ExperimentalCoroutinesApi::class)
+      advanceUntilIdle()
+
+      assertEquals(RunningStatus.Stopping, state.status.value)
 
       networkStatus.statusFlow.value = RunningStatus.NotRunning
-      state.status.first { it == RunningStatus.NotRunning }
+
+      @OptIn(ExperimentalCoroutinesApi::class)
+      advanceUntilIdle()
+
+      assertEquals(RunningStatus.NotRunning, state.status.value)
     } finally {
       bindScope.cancel()
     }
