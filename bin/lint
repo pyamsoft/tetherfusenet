@@ -128,6 +128,11 @@ _run_detekt() {
   done
   unset _path
 
+  # If no inputs, assume ROOT
+  if [ -z "${_inputs}" ]; then
+    _inputs="${ROOT}"
+  fi
+
   exec "${BINDIR}/.detekt-cli/${_detekt_version}/bin/detekt-cli" \
     --build-upon-default-config \
     --config "${_config}" \
@@ -135,17 +140,12 @@ _run_detekt() {
     --jvm-target "$(_resolve_jvm_target_version)" \
     --fail-on-severity "Warning" \
     --parallel \
-    --excludes '**/build/**' \
-    -i "${_inputs}"
+    --excludes '**/node_modules/**,**/build/**,**/gradle/**' \
+    --input "${_inputs}"
   return 0
 }
 
 main() {
-  if [ -z "$1" ]; then
-    printf -- 'Must pass at least 1 target path to detekt.\n'
-    return 1
-  fi
-
   _run_detekt "$@" || return 1
   return 0
 }
