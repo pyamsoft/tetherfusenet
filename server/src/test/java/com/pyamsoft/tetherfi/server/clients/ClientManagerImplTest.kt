@@ -299,7 +299,7 @@ class ClientManagerImplTest {
   }
 
   @Test
-  fun `block clears after time expires`() = runTest {
+  fun `block survives purge even after client goes idle`() = runTest {
     val clock = MutableClock(Instant.EPOCH)
     val manager =
         newManager(
@@ -320,11 +320,18 @@ class ClientManagerImplTest {
     assertEquals(1, manager.listenForClients().first().size)
     assertEquals(1, manager.listenForBlocked().first().size)
 
-    // Age the client out
+    // A blocked client can never generate activity, so it will always look "idle" -- the purge
+    // must not un-block it just because time passed
     clock.advance(10.minutes)
     manager.purgeOldClients(clock.nowLocalDateTime().minusMinutes(5))
-    assertEquals(0, manager.listenForClients().first().size)
+    assertEquals(1, manager.listenForClients().first().size)
+    assertEquals(1, manager.listenForBlocked().first().size)
+
+    // Still only goes away via an explicit unblock
+    manager.unblock(client)
     assertEquals(0, manager.listenForBlocked().first().size)
+    manager.purgeOldClients(clock.nowLocalDateTime().minusMinutes(5))
+    assertEquals(0, manager.listenForClients().first().size)
   }
 
   @Test
