@@ -115,9 +115,18 @@ internal constructor(
     Timber.d { "Attempt to purge old clients before $cutoffTime" }
 
     // "Live" client must have activity within 2 minutes
-    val newClients = allowedClients.updateAndGet { list ->
+    //
+    // A client which is "blocked" MUST ALWAYS SURVIVE
+    // otherwise it will be removed and the block will be "forgotten"
+    allowedClients.updateAndGet { list ->
       list.filter { entry ->
         val client = entry.value
+        // NEVER purge a blocked client out of the list
+        if (isBlockedClient(client)) {
+          Timber.d { "Client is current blocked. Keep it around to avoid unblocking: $client" }
+          return@filter true
+        }
+
         val newEnough = client.mostRecentlySeen >= cutoffTime
         if (!newEnough) {
           Timber.d { "Client is too old: $client. Last seen ${client.mostRecentlySeen}" }
@@ -125,14 +134,9 @@ internal constructor(
         return@filter newEnough
       }
     }
-    blockedClients.update { blocked ->
-      blocked.filter { entry ->
-        // If this blocked client is still found in the "new client" list, keep it,
-        // otherwise filter it out
-        val stillAlive = newClients.get(entry.key)
-        return@filter stillAlive != null
-      }
-    }
+
+    // NOTE(Peter): We NEVER filter out block clients by timer otherwise it causes clients to
+    // "unblock"
 
     // Don't call shutdownWithNoClients here, we want to call it only on its own schedule
   }
