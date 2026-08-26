@@ -16,6 +16,8 @@
 
 import com.deezer.caupain.plugin.DependenciesUpdateTask
 import com.deezer.caupain.policies.StabilityLevelPolicy
+import com.diffplug.gradle.spotless.SpotlessExtension
+import dev.detekt.gradle.extensions.DetektExtension
 import dev.detekt.gradle.extensions.FailOnSeverity
 
 plugins {
@@ -53,15 +55,10 @@ allprojects {
   // or we get an error about duplicate plugins
   //
   // and we can't just apply this toplevel or it won't run on all the subprojects
-  apply(plugin: libs.plugins.spotless.get().pluginId)
+  apply(plugin = rootProject.libs.plugins.spotless.get().pluginId)
 
   // Apply Detekt Plugin here
-  apply(plugin: libs.plugins.detekt.get().pluginId)
-
-  // Need to bump test heap for Robolectric
-  tasks.withType(Test).configureEach {
-    maxHeapSize = "4g"
-  }
+  apply(plugin = rootProject.libs.plugins.detekt.get().pluginId)
 
   repositories {
     mavenLocal()
@@ -81,7 +78,7 @@ allprojects {
   }
 
   // Spotless plugin
-  spotless {
+  configure<SpotlessExtension> {
     java {
       target("src/**/*.java")
 
@@ -92,7 +89,7 @@ allprojects {
     }
     kotlin {
       target("src/**/*.kt")
-      ktfmt(libs.versions.ktfmt.get())
+      ktfmt(rootProject.libs.versions.ktfmt.get())
 
       trimTrailingWhitespace()
       endWithNewline()
@@ -100,15 +97,7 @@ allprojects {
     }
     kotlinGradle {
       target("*.gradle.kts")
-      ktfmt(libs.versions.ktfmt.get())
-
-      trimTrailingWhitespace()
-      endWithNewline()
-      leadingTabsToSpaces(2)
-    }
-    groovyGradle {
-      target("*.gradle")
-      greclipse(libs.versions.greclipse.get())
+      ktfmt(rootProject.libs.versions.ktfmt.get())
 
       trimTrailingWhitespace()
       endWithNewline()
@@ -117,7 +106,7 @@ allprojects {
   }
 
   // Detekt
-  detekt {
+  configure<DetektExtension> {
     debug = true
     buildUponDefaultConfig = true
     parallel = true
@@ -126,34 +115,32 @@ allprojects {
   }
 
   // Caupain Version Strategy
-  tasks.withType(DependenciesUpdateTask).configureEach {
-    selectIf(StabilityLevelPolicy.INSTANCE)
-  }
+  tasks.withType<DependenciesUpdateTask>().configureEach { selectIf(StabilityLevelPolicy) }
 }
 
 subprojects {
   // Java compilation
-  tasks.withType(JavaCompile).configureEach {
+  tasks.withType<JavaCompile>().configureEach {
     // More lint warnings surface
     options.compilerArgs.add("-Xlint:unchecked")
     options.compilerArgs.add("-Xlint:deprecation")
-    options.deprecation = true
+    options.isDeprecation = true
 
     // Fork for faster performance
     // https://docs.gradle.org/current/userguide/performance.html#run_compiler_as_separate_process
-    options.fork = true
+    options.isFork = true
   }
 
   // Optimize tests
-  tasks.withType(Test).configureEach {
+  tasks.withType<Test>().configureEach {
     // Run tests in parallel
     // https://docs.gradle.org/current/userguide/performance.html#run_tests_in_parallel
-    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    maxParallelForks = Runtime.getRuntime().availableProcessors() / 2
 
     // Disable report generation, we don't care
     // https://docs.gradle.org/current/userguide/performance.html#disable_test_reports
-    reports.html.required = false
-    reports.junitXml.required = false
+    reports.html.required.set(false)
+    reports.junitXml.required.set(false)
 
     // More heap for faster tests
     maxHeapSize = "4g"
