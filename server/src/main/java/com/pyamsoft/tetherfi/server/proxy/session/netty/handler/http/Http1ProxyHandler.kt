@@ -741,7 +741,7 @@ private constructor(
 
       // Some requests (like "GET /path HTTP/1.1") have no additional info
       // read the actual host header and try to resolve from that
-      if (hostAndPort.resolvedHostName == "/") {
+      if (hostAndPort.resolvedHostName.isBlank()) {
         return parseOriginFormFromHostHeader(
             resolveHostHeader = resolveHostHeader,
             path = uriWithoutSchema,

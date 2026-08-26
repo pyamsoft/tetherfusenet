@@ -98,4 +98,46 @@ class Http1HandlerTest {
       assertNotNull(tcpConnection)
     }
   }
+
+  @Test
+  fun `test HTTP1 handler fallback to Host header`(): Unit =
+      runBlockingWithDelays {
+        withLogging {
+          var tcpConnection: Channel? = null
+          val context =
+              TestSetup.withHandler(
+                  isHttpEnabled = true,
+                  isSocksEnabled = false,
+                  onTcpChannelCreated = { tcpConnection = it },
+                  factory = { http1HandlerFactory(it) },
+                  // TODO(Peter): Do we need test dispatchers?
+                  dispatchers = AppDispatchers.create(),
+              )
+          val channel = context.channel
+
+          Http1ProxyHandler.applyChannelAttributes(
+              channel = channel,
+              client = context.resolver.ensure(context.channel.remoteAddress().address),
+          )
+
+          // No host in the URL will resolve via the host header
+          val req =
+              DefaultFullHttpRequest(
+                      HttpVersion.HTTP_1_1,
+                      HttpMethod.GET,
+                      "/",
+                      Unpooled.EMPTY_BUFFER,
+                  )
+                  .apply { headers().apply { set(HttpHeaderNames.HOST, "192.168.2.1") } }
+
+          channel.apply {
+            writeInbound(req)
+            flushInbound()
+            runPendingTasks()
+          }
+
+          // A TCP outbound has been created
+          assertNotNull(tcpConnection)
+        }
+      }
 }
