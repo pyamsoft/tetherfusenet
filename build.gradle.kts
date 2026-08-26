@@ -96,10 +96,10 @@ allprojects {
     failOnSeverity = FailOnSeverity.Warning
     config.setFrom(rootProject.projectDir.absolutePath + "/tools/detekt/config.yml")
   }
-
-  // Caupain Version Strategy
-  tasks.withType<DependenciesUpdateTask>().configureEach { selectIf(StabilityLevelPolicy) }
 }
+
+// Caupain Version Strategy
+tasks.withType<DependenciesUpdateTask>().configureEach { selectIf(StabilityLevelPolicy) }
 
 subprojects {
   // Java compilation
