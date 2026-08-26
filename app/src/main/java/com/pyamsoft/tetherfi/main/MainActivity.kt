@@ -83,11 +83,8 @@ class MainActivity : ComponentActivity() {
                   override val changelog = buildChangeLog {
                     //                    feature("Add unique Activities to turn the hotspot On or
                     // Off.")
-                    feature("The new engine (Netty based) is now the default.")
-                    bugfix("Fixed some places in the code which could cause memory leaks.")
-                    bugfix(
-                        "Fixed binding to Cellular Data not working reliably with the New Engine"
-                    )
+                    bugfix("Fixed a bug preventing HTTP connections to LAN addresses.")
+                    bugfix("Fixed a bug where previously blocked devices would temporarily become unblocked.")
                   }
                 },
         )

@@ -113,7 +113,7 @@ class Http1HandlerTest {
                   // TODO(Peter): Do we need test dispatchers?
                   dispatchers = AppDispatchers.create(),
               )
-          
+
           val channel = context.channel
           Http1ProxyHandler.applyChannelAttributes(
               channel = channel,
