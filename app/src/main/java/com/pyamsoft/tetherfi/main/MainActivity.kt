@@ -84,7 +84,9 @@ class MainActivity : ComponentActivity() {
                     //                    feature("Add unique Activities to turn the hotspot On or
                     // Off.")
                     bugfix("Fixed a bug preventing HTTP connections to LAN addresses.")
-                    bugfix("Fixed a bug where previously blocked devices would temporarily become unblocked.")
+                    bugfix(
+                        "Fixed a bug where previously blocked devices would temporarily become unblocked."
+                    )
                   }
                 },
         )

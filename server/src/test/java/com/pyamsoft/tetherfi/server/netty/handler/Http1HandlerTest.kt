@@ -100,44 +100,43 @@ class Http1HandlerTest {
   }
 
   @Test
-  fun `test HTTP1 handler fallback to Host header`(): Unit =
-      runBlockingWithDelays {
-        withLogging {
-          var tcpConnection: Channel? = null
-          val context =
-              TestSetup.withHandler(
-                  isHttpEnabled = true,
-                  isSocksEnabled = false,
-                  onTcpChannelCreated = { tcpConnection = it },
-                  factory = { http1HandlerFactory(it) },
-                  // TODO(Peter): Do we need test dispatchers?
-                  dispatchers = AppDispatchers.create(),
-              )
-
-          val channel = context.channel
-          Http1ProxyHandler.applyChannelAttributes(
-              channel = channel,
-              client = context.resolver.ensure(channel.remoteAddress().address),
+  fun `test HTTP1 handler fallback to Host header`(): Unit = runBlockingWithDelays {
+    withLogging {
+      var tcpConnection: Channel? = null
+      val context =
+          TestSetup.withHandler(
+              isHttpEnabled = true,
+              isSocksEnabled = false,
+              onTcpChannelCreated = { tcpConnection = it },
+              factory = { http1HandlerFactory(it) },
+              // TODO(Peter): Do we need test dispatchers?
+              dispatchers = AppDispatchers.create(),
           )
 
-          // No host in the URL will resolve via the host header
-          val req =
-              DefaultFullHttpRequest(
-                      HttpVersion.HTTP_1_1,
-                      HttpMethod.GET,
-                      "/",
-                      Unpooled.EMPTY_BUFFER,
-                  )
-                  .apply { headers().apply { set(HttpHeaderNames.HOST, "192.168.2.1") } }
+      val channel = context.channel
+      Http1ProxyHandler.applyChannelAttributes(
+          channel = channel,
+          client = context.resolver.ensure(channel.remoteAddress().address),
+      )
 
-          channel.apply {
-            writeInbound(req)
-            flushInbound()
-            runPendingTasks()
-          }
+      // No host in the URL will resolve via the host header
+      val req =
+          DefaultFullHttpRequest(
+                  HttpVersion.HTTP_1_1,
+                  HttpMethod.GET,
+                  "/",
+                  Unpooled.EMPTY_BUFFER,
+              )
+              .apply { headers().apply { set(HttpHeaderNames.HOST, "192.168.2.1") } }
 
-          // A TCP outbound has been created
-          assertNotNull(tcpConnection)
-        }
+      channel.apply {
+        writeInbound(req)
+        flushInbound()
+        runPendingTasks()
       }
+
+      // A TCP outbound has been created
+      assertNotNull(tcpConnection)
+    }
+  }
 }
