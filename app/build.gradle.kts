@@ -62,8 +62,7 @@ android {
       // https://stackoverflow.com/questions/21999829/how-do-i-read-properties-defined-in-local-properties-in-build-gradle
       //
       // Be sure to close the file after!
-      val properties =
-          rootProject.file("local.properties").reader().use { r -> Properties().apply { load(r) } }
+      val properties = file(isolated.rootProject.projectDirectory.asFile.absolutePath +"/local.properties").reader().use { r -> Properties().apply { load(r) } }
 
       storeFile = file(properties.getProperty("BUNDLE_STORE_FILE") ?: "CANNOT BUILD")
       keyAlias = properties.getProperty("BUNDLE_KEY_ALIAS") ?: "CANNOT BUILD"

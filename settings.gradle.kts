@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.withType
+
 /*
  * Copyright 2026 pyamsoft
  *
@@ -41,6 +43,34 @@ dependencyResolutionManagement {
         includeGroup("com.github.pyamsoft")
       }
     }
+  }
+}
+
+gradle.lifecycle.beforeProject {
+  tasks.withType<JavaCompile>().configureEach {
+    // More lint warnings surface
+    options.compilerArgs.add("-Xlint:unchecked")
+    options.compilerArgs.add("-Xlint:deprecation")
+    options.isDeprecation = true
+
+    // Fork for faster performance
+    // https://docs.gradle.org/current/userguide/performance.html#run_compiler_as_separate_process
+    options.isFork = true
+  }
+
+  // Optimize tests
+  tasks.withType<Test>().configureEach {
+    // Run tests in parallel
+    // https://docs.gradle.org/current/userguide/performance.html#run_tests_in_parallel
+    maxParallelForks = Runtime.getRuntime().availableProcessors() / 2
+
+    // Disable report generation, we don't care
+    // https://docs.gradle.org/current/userguide/performance.html#disable_test_reports
+    reports.html.required.set(false)
+    reports.junitXml.required.set(false)
+
+    // More heap for faster tests
+    maxHeapSize = "4g"
   }
 }
 
