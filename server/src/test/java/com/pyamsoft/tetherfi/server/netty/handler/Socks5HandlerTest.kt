@@ -68,11 +68,11 @@ class Socks5HandlerTest {
               // TODO(Peter): Do we need test dispatchers?
               dispatchers = AppDispatchers.create(),
           )
-      val channel = context.channel
 
+      val channel = context.channel
       Socks5ProxyHandler.applyChannelAttributes(
           channel = channel,
-          client = context.resolver.ensure(context.channel.remoteAddress().address),
+          client = context.resolver.ensure(channel.remoteAddress().address),
       )
 
       val req =

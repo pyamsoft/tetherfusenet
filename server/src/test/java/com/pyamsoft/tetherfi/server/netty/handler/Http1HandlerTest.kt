@@ -66,11 +66,11 @@ class Http1HandlerTest {
               // TODO(Peter): Do we need test dispatchers?
               dispatchers = AppDispatchers.create(),
           )
-      val channel = context.channel
 
+      val channel = context.channel
       Http1ProxyHandler.applyChannelAttributes(
           channel = channel,
-          client = context.resolver.ensure(context.channel.remoteAddress().address),
+          client = context.resolver.ensure(channel.remoteAddress().address),
       )
 
       val content = Unpooled.copiedBuffer("OK", Charsets.UTF_8)
@@ -113,11 +113,11 @@ class Http1HandlerTest {
                   // TODO(Peter): Do we need test dispatchers?
                   dispatchers = AppDispatchers.create(),
               )
+          
           val channel = context.channel
-
           Http1ProxyHandler.applyChannelAttributes(
               channel = channel,
-              client = context.resolver.ensure(context.channel.remoteAddress().address),
+              client = context.resolver.ensure(channel.remoteAddress().address),
           )
 
           // No host in the URL will resolve via the host header
