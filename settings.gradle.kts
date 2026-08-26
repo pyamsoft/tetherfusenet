@@ -16,9 +16,31 @@
 
 pluginManagement {
   repositories {
-    gradlePluginPortal()
+    mavenLocal()
     google()
     mavenCentral()
+    gradlePluginPortal()
+  }
+}
+
+dependencyResolutionManagement {
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+
+  repositories {
+    mavenLocal()
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+
+    // Jitpack
+    maven {
+      setUrl("https://jitpack.io")
+      content {
+        includeGroup("com.github.pyamsoft.cachify")
+        includeGroup("com.github.pyamsoft.pydroid")
+        includeGroup("com.github.pyamsoft")
+      }
+    }
   }
 }
 

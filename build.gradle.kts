@@ -60,23 +60,6 @@ allprojects {
   // Apply Detekt Plugin here
   apply(plugin = rootProject.libs.plugins.detekt.get().pluginId)
 
-  repositories {
-    mavenLocal()
-    google()
-    mavenCentral()
-    gradlePluginPortal()
-
-    // Jitpack
-    maven {
-      setUrl("https://jitpack.io")
-      content {
-        includeGroup("com.github.pyamsoft.cachify")
-        includeGroup("com.github.pyamsoft.pydroid")
-        includeGroup("com.github.pyamsoft")
-      }
-    }
-  }
-
   // Spotless plugin
   configure<SpotlessExtension> {
     java {
