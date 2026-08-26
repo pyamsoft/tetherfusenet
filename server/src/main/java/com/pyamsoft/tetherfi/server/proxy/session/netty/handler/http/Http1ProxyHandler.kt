@@ -154,7 +154,12 @@ private constructor(
   ) {
     val tag = "HTTPS-CONNECT"
 
-    val parsed = parseUriAndPort(msg.uri(), 443)
+    val parsed =
+        parseUriAndPort(
+            uri = msg.uri(),
+            defaultPort = 443,
+            resolveHostHeader = { msg.headers().get(HttpHeaderNames.HOST) },
+        )
     if (parsed == null) {
       sendErrorAndClose(ctx, msg)
       return
@@ -321,7 +326,12 @@ private constructor(
   ) {
     val tag = "HTTP-FORWARD"
 
-    val parsed = parseUriAndPort(msg.uri(), 80)
+    val parsed =
+        parseUriAndPort(
+            uri = msg.uri(),
+            defaultPort = 80,
+            resolveHostHeader = { msg.headers().get(HttpHeaderNames.HOST) },
+        )
     if (parsed == null) {
       sendErrorAndClose(ctx, msg)
       return
@@ -636,7 +646,48 @@ private constructor(
     }
 
     @CheckResult
-    private fun parseUriAndPort(uri: String, defaultPort: Int): HttpHostAndPort? {
+    private fun parseOriginFormFromHostHeader(
+        resolveHostHeader: (() -> String)?,
+        path: String,
+        defaultPort: Int,
+    ): HttpHostAndPort? {
+      if (resolveHostHeader == null) {
+        Timber.w { "No resolveHostHeader function provided." }
+        return null
+      }
+
+      val hostHeader = resolveHostHeader()
+      if (hostHeader.isBlank()) {
+        Timber.w { "Origin-form request has no Host header to resolve destination: $path" }
+        return null
+      }
+
+      val parsed =
+          if (hostHeader.startsWith("[")) {
+            // Could just be straight IPv6
+            parseIpv6Literal(
+                uri = hostHeader,
+                uriWithoutSchema = hostHeader,
+                defaultPortBasedOnSchema = PORT_UNKNOWN,
+                defaultPort = defaultPort,
+            )
+          } else {
+            parseHostAndPort(
+                uriWithoutSchema = hostHeader,
+                defaultPortBasedOnSchema = PORT_UNKNOWN,
+                defaultPort = defaultPort,
+            )
+          }
+
+      return parsed?.copy(proxyCorrectedFilePath = path)
+    }
+
+    @CheckResult
+    private fun parseUriAndPort(
+        uri: String,
+        defaultPort: Int,
+        resolveHostHeader: (() -> String)?,
+    ): HttpHostAndPort? {
       if (uri.isBlank()) {
         Timber.w { "No URI without schema from: $uri" }
         return null
@@ -681,11 +732,25 @@ private constructor(
         )
       }
 
-      return parseHostAndPort(
-          uriWithoutSchema = uriWithoutSchema,
-          defaultPortBasedOnSchema = defaultPortBasedOnSchema,
-          defaultPort = defaultPort,
-      )
+      val hostAndPort =
+          parseHostAndPort(
+              uriWithoutSchema = uriWithoutSchema,
+              defaultPortBasedOnSchema = defaultPortBasedOnSchema,
+              defaultPort = defaultPort,
+          )
+
+      // Some requests (like "GET /path HTTP/1.1") have no additional info
+      // read the actual host header and try to resolve from that
+      if (hostAndPort.resolvedHostName == "/") {
+        return parseOriginFormFromHostHeader(
+            resolveHostHeader = resolveHostHeader,
+            path = uriWithoutSchema,
+            defaultPort = defaultPort,
+        )
+      }
+
+      // Otherwise we probably found something?
+      return hostAndPort
     }
 
     @JvmStatic
