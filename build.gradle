@@ -154,5 +154,8 @@ subprojects {
     // https://docs.gradle.org/current/userguide/performance.html#disable_test_reports
     reports.html.required = false
     reports.junitXml.required = false
+
+    // More heap for faster tests
+    maxHeapSize = "4g"
   }
 }
