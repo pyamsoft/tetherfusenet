@@ -108,8 +108,22 @@ internal constructor(
   }
 
   private fun handleSocks5InitialRequest(ctx: ChannelHandlerContext, msg: Socks5InitialRequest) {
-    // We do not care about auth
-    ctx.writeAndFlush(DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH))
+    // According to SOCKS spec, the client must claim it supports NO_AUTH
+    // if it does not, we must fail
+    if (!msg.authMethods().contains(Socks5AuthMethod.NO_AUTH)) {
+      Timber.w { "SOCKS5 client did not offer NO_AUTH, methods=${msg.authMethods()}" }
+
+      // Write the response and then close channel once we are done
+      val resp = DefaultSocks5InitialResponse(Socks5AuthMethod.UNACCEPTED)
+      ctx.writeAndFlush(resp).addListener { closeChannels(ctx) }
+
+      // Mark the message as done
+      ReferenceCountUtil.release(msg)
+      return
+    }
+
+    val doorsOpen = DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH)
+    ctx.writeAndFlush(doorsOpen)
 
     // Now that the initial decoder has self-removed, add the command decoder
     ctx.pipeline().addBefore(ctx.name(), null, Socks5CommandRequestDecoder())
