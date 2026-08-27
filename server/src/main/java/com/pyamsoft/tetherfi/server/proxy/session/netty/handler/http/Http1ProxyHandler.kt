@@ -55,9 +55,9 @@ import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
-import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.net.InetSocketAddress
 
 // Cannot be shareable because of the local state messageQueue and outboundChannel
 internal class Http1ProxyHandler
@@ -186,13 +186,15 @@ private constructor(
     // if the host header is provided (most of the time it is)
     val hostHeader = msg.headers().get(HttpHeaderNames.HOST)
     if (!hostHeader.isNullOrBlank()) {
-      val targetAuthority = "${parsed.resolvedHostName}:${parsed.resolvedPort}"
-      val hostMatches =
-          hostHeader.equals(targetAuthority, ignoreCase = true) ||
-              hostHeader.equals(parsed.resolvedHostName, ignoreCase = true)
-      if (!hostMatches) {
+      val resolvedFromHeader = resolveDestinationFromHostHeader(hostHeader)
+      val hostNameMatches = resolvedFromHeader.hostName.equals(parsed.resolvedHostName, ignoreCase = true)
+      val resolvedHeaderPort = resolvedFromHeader.port
+      val portMatches = resolvedHeaderPort == null || resolvedHeaderPort == parsed.resolvedPort
+
+      if (!hostNameMatches || !portMatches) {
+        val target = "${parsed.resolvedHostName}:${parsed.resolvedPort}"
         Timber.w {
-          "($channelId) DROP: $tag Host '$hostHeader' != CONNECT target '$targetAuthority'"
+          "($channelId) DROP: $tag Host '$hostHeader' != CONNECT target '$target'"
         }
         sendErrorAndClose(ctx, msg)
         return
@@ -573,6 +575,11 @@ private constructor(
     }
   }
 
+  private data class DestinationFromHostHeader(
+    val hostName: String,
+    val port: Int?,
+  )
+
   companion object {
 
     private const val PORT_HTTP = 80
@@ -581,6 +588,47 @@ private constructor(
 
     private const val HTTP_PREFIX = "http://"
     private const val HTTPS_PREFIX = "https://"
+
+    @JvmStatic
+    @CheckResult
+    private fun resolveDestinationFromHostHeader(hostHeader: String): DestinationFromHostHeader {
+      // IPv6 literal
+      if (hostHeader.startsWith("[")) {
+        val bracketEnd = hostHeader.indexOf("]")
+        if (bracketEnd < 0) {
+          // Malformed bracketed literal, treat the whole thing as the host
+          return DestinationFromHostHeader(
+            hostName = hostHeader,
+            port = null,
+          )
+        }
+
+        val host = hostHeader.substring(1, bracketEnd)
+        val afterBracket = hostHeader.substring(bracketEnd + 1)
+        val port = if (afterBracket.startsWith(":")) {
+          afterBracket.substring(1)
+        } else {
+          null
+        }
+        return DestinationFromHostHeader(
+          hostName = host,
+          port = port?.toIntOrNull(),
+        )
+      }
+
+      val colonIndex = hostHeader.lastIndexOf(":")
+      return if (colonIndex < 0) {
+        DestinationFromHostHeader(
+          hostName = hostHeader,
+          port = null,
+        )
+      } else {
+        DestinationFromHostHeader(
+          hostName = hostHeader.substring(0, colonIndex),
+          port = hostHeader.substring(colonIndex + 1).toIntOrNull(),
+        )
+      }
+    }
 
     @CheckResult
     private fun parseIpv6Literal(
