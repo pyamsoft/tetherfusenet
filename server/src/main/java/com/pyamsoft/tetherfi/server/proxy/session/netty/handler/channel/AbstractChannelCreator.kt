@@ -25,9 +25,9 @@ import io.netty.channel.ChannelFactory
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
+import java.net.UnknownHostException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.net.UnknownHostException
 
 internal abstract class AbstractChannelCreator<T : Channel>
 internal constructor(
@@ -78,11 +78,12 @@ internal constructor(
         // Branch off to IO
         scope.launch(context = dispatchers.io) {
           // Resolve in the IO branch (blocking)
-          val resolved = bootstrapChannel.resolveDnsAddress(
-            dispatchers = dispatchers,
-            hostName = hostName,
-            port = port,
-          )
+          val resolved =
+              bootstrapChannel.resolveDnsAddress(
+                  dispatchers = dispatchers,
+                  hostName = hostName,
+                  port = port,
+              )
 
           // Hop back onto the channel's event loop before touching the channel
           val eventLoop = bootstrapChannel.eventLoop()

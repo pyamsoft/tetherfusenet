@@ -32,7 +32,6 @@ import io.netty.buffer.ByteBufAllocator
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
 import io.netty.handler.codec.socksx.v5.Socks5AddressType
-import io.netty.resolver.DefaultAddressResolverGroup
 import io.netty.util.ReferenceCountUtil
 import io.netty.util.ReferenceCounted
 import java.net.Inet4Address
@@ -66,7 +65,9 @@ object UDP {
           buf.readBytes(bytes)
           val addr = Inet4Address.getByAddress(bytes)
           if (addr == null) {
-            Timber.w { "(${channelId}) Unable to construct IPv4 from byte array ${bytes.contentToString()}" }
+            Timber.w {
+              "(${channelId}) Unable to construct IPv4 from byte array ${bytes.contentToString()}"
+            }
             return ""
           }
 
@@ -84,7 +85,9 @@ object UDP {
           buf.readBytes(bytes)
           val addr = Inet6Address.getByAddress(bytes)
           if (addr == null) {
-            Timber.w { "(${channelId}) Unable to construct IPv6 from byte array ${bytes.contentToString()}" }
+            Timber.w {
+              "(${channelId}) Unable to construct IPv6 from byte array ${bytes.contentToString()}"
+            }
             return ""
           }
 
@@ -204,11 +207,12 @@ object UDP {
     // Branch off to IO
     scope.launch(context = dispatchers.io) {
       // Resolve in the IO branch (blocking)
-      val resolved = ctx.resolveDnsAddress(
-        dispatchers = dispatchers,
-        hostName = destinationAddr,
-        port = destinationPort,
-      )
+      val resolved =
+          ctx.resolveDnsAddress(
+              dispatchers = dispatchers,
+              hostName = destinationAddr,
+              port = destinationPort,
+          )
 
       // Hop back onto the channel's event loop before touching the channel
       ctx.executor().execute {

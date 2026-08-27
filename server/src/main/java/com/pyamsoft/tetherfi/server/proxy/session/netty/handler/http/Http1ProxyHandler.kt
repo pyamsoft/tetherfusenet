@@ -55,9 +55,9 @@ import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
+import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.net.InetSocketAddress
 
 // Cannot be shareable because of the local state messageQueue and outboundChannel
 internal class Http1ProxyHandler
@@ -187,7 +187,8 @@ private constructor(
     val hostHeader = msg.headers().get(HttpHeaderNames.HOST)
     if (!hostHeader.isNullOrBlank()) {
       val resolvedFromHeader = resolveDestinationFromHostHeader(hostHeader)
-      val hostNameMatches = resolvedFromHeader.hostName.equals(parsed.resolvedHostName, ignoreCase = true)
+      val hostNameMatches =
+          resolvedFromHeader.hostName.equals(parsed.resolvedHostName, ignoreCase = true)
       val resolvedHeaderPort = resolvedFromHeader.port
       val portMatches = resolvedHeaderPort == null || resolvedHeaderPort == parsed.resolvedPort
 
@@ -437,7 +438,8 @@ private constructor(
       headers.remove(HttpHeaderNames.UPGRADE)
 
       // Also, we only support a single host-port connection per proxy
-      // Force the connection closed to avoid connection re-use having data sent off to the wrong host.
+      // Force the connection closed to avoid connection re-use having data sent off to the wrong
+      // host.
       headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE)
     }
 
@@ -576,8 +578,8 @@ private constructor(
   }
 
   private data class DestinationFromHostHeader(
-    val hostName: String,
-    val port: Int?,
+      val hostName: String,
+      val port: Int?,
   )
 
   companion object {
@@ -598,34 +600,35 @@ private constructor(
         if (bracketEnd < 0) {
           // Malformed bracketed literal, treat the whole thing as the host
           return DestinationFromHostHeader(
-            hostName = hostHeader,
-            port = null,
+              hostName = hostHeader,
+              port = null,
           )
         }
 
         val host = hostHeader.substring(1, bracketEnd)
         val afterBracket = hostHeader.substring(bracketEnd + 1)
-        val port = if (afterBracket.startsWith(":")) {
-          afterBracket.substring(1)
-        } else {
-          null
-        }
+        val port =
+            if (afterBracket.startsWith(":")) {
+              afterBracket.substring(1)
+            } else {
+              null
+            }
         return DestinationFromHostHeader(
-          hostName = host,
-          port = port?.toIntOrNull(),
+            hostName = host,
+            port = port?.toIntOrNull(),
         )
       }
 
       val colonIndex = hostHeader.lastIndexOf(":")
       return if (colonIndex < 0) {
         DestinationFromHostHeader(
-          hostName = hostHeader,
-          port = null,
+            hostName = hostHeader,
+            port = null,
         )
       } else {
         DestinationFromHostHeader(
-          hostName = hostHeader.substring(0, colonIndex),
-          port = hostHeader.substring(colonIndex + 1).toIntOrNull(),
+            hostName = hostHeader.substring(0, colonIndex),
+            port = hostHeader.substring(colonIndex + 1).toIntOrNull(),
         )
       }
     }
