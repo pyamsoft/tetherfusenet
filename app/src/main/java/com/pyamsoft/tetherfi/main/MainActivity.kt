@@ -87,6 +87,11 @@ class MainActivity : ComponentActivity() {
                     bugfix(
                         "Fixed a bug where previously blocked devices would temporarily become unblocked."
                     )
+                    bugfix("Fix bad HTTP handler blocking legitimate websocket connections")
+                    bugfix("Fix bad HTTP handler re-using incorrect single connections")
+                    bugfix("Fix bad HTTP blocking legitimate IPv6 literal addresses")
+                    bugfix("Fix slow DNS bogging down the rest of the proxy")
+                    bugfix("Fix some edge cases where idle timeouts were not applied")
                   }
                 },
         )
