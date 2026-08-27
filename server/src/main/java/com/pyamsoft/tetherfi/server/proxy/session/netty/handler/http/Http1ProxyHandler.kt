@@ -45,6 +45,7 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse
 import io.netty.handler.codec.http.HttpClientCodec
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponse
@@ -428,9 +429,14 @@ private constructor(
 
     @Suppress("DEPRECATION") headers.remove(HttpHeaderNames.KEEP_ALIVE)
 
+    // If this is a websocket upgrade, we keep the UPGRADE header
     if (!isWebSocketUpgrade) {
-      headers.remove(HttpHeaderNames.CONNECTION)
+      // Otherwise drop the header
       headers.remove(HttpHeaderNames.UPGRADE)
+
+      // Also, we only support a single host-port connection per proxy
+      // Force the connection closed to avoid connection re-use having data sent off to the wrong host.
+      headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE)
     }
 
     headers.remove(HttpHeaderNames.TRANSFER_ENCODING)
