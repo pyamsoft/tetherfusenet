@@ -32,6 +32,7 @@ import io.netty.util.AttributeKey
 import io.netty.util.NetUtil
 import java.io.IOException
 import java.net.InetAddress
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 
 internal abstract class ProxyHandler
@@ -43,6 +44,17 @@ internal constructor(
 ) : ChannelInboundHandlerAdapter() {
 
   @Volatile private var channelId = ""
+
+  // We only want to attach the idle state handler one time
+  private val attached = AtomicBoolean(false)
+
+  private fun ensureActivated(ctx: ChannelHandlerContext) {
+    if (attached.compareAndSet(false, true)) {
+      ctx.attachIdleStateHandler(serverSocketTimeout)
+    }
+
+    onChannelActive(ctx)
+  }
 
   protected inline fun applyChannelId(block: () -> String) {
     if (channelId.isBlank()) {
@@ -71,10 +83,20 @@ internal constructor(
     channel.flushAndClose()
   }
 
+  final override fun handlerAdded(ctx: ChannelHandlerContext) {
+    try {
+      // We were added to an already active pipeline
+      if (ctx.channel().isActive) {
+        ensureActivated(ctx)
+      }
+    } finally {
+      super.handlerAdded(ctx)
+    }
+  }
+
   final override fun channelActive(ctx: ChannelHandlerContext) {
     try {
-      onChannelActive(ctx)
-      ctx.attachIdleStateHandler(serverSocketTimeout)
+      ensureActivated(ctx)
     } finally {
       super.channelActive(ctx)
     }
