@@ -17,6 +17,9 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
+import com.pyamsoft.pydroid.util.AppDispatchers
+import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import io.netty.buffer.Unpooled
@@ -30,6 +33,10 @@ import io.netty.handler.timeout.IdleState
 import io.netty.handler.timeout.IdleStateEvent
 import io.netty.handler.timeout.IdleStateHandler
 import io.netty.handler.traffic.ChannelTrafficShapingHandler
+import io.netty.resolver.DefaultAddressResolverGroup
+import io.netty.util.concurrent.EventExecutor
+import kotlinx.coroutines.withContext
+import java.net.InetSocketAddress
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 
@@ -39,9 +46,12 @@ internal fun ChannelHandlerContext.attachIdleStateHandler(
   val self = this
   val timeout = serverSocketTimeout.timeoutDuration
   if (!timeout.isInfinite()) {
-    self
-        .pipeline()
-        .addFirst(IdleStateHandler(0, 0, timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS))
+    val pipeline = self.pipeline()
+
+    // Since a single channel can have multiple handlers, we don't want to attach duplicates
+    if (pipeline.get(IdleStateHandler::class.java) == null) {
+      pipeline.addFirst(IdleStateHandler(0, 0, timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS))
+    }
   }
 }
 
@@ -109,4 +119,46 @@ internal fun ChannelPipeline.applyBandwidthLimitFor(client: TetherClient) {
         ),
     )
   }
+}
+
+@CheckResult
+private suspend fun resolveDnsAddress(
+  dispatchers: AppDispatchers,
+  executor: EventExecutor,
+  hostName: String, port: Int,
+): InetSocketAddress? = withContext(context = dispatchers.io) {
+  try {
+    // Must be unresolved or else this would ALSO trigger a DNS blocking request
+    val destination = InetSocketAddress.createUnresolved(hostName, port)
+    val resolver = DefaultAddressResolverGroup.INSTANCE.getResolver(executor)
+    return@withContext resolver.resolve(destination).get()
+  } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
+    Timber.e(e) { "Failed to resolve address for connect: $hostName:$port" }
+    return@withContext null
+  }
+}
+
+@CheckResult
+internal suspend fun ChannelHandlerContext.resolveDnsAddress(
+  dispatchers: AppDispatchers,
+  hostName: String, port: Int,
+): InetSocketAddress? = resolveDnsAddress(
+  dispatchers = dispatchers,
+  executor = executor(),
+  hostName = hostName,
+  port = port,
+)
+
+@CheckResult
+internal suspend fun Channel.resolveDnsAddress(
+  dispatchers: AppDispatchers,
+  hostName: String, port: Int,
+): InetSocketAddress? {
+  val self = this
+  return resolveDnsAddress(
+    dispatchers = dispatchers,
+    executor = self.eventLoop(),
+    hostName = hostName,
+    port = port,
+  )
 }

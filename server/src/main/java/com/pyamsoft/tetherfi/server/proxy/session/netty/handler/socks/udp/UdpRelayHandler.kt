@@ -103,6 +103,8 @@ private constructor(
   ) {
     UDP.unwrap(
         channelId = channelId,
+        scope = scope,
+        dispatchers = dispatchers,
         ctx = ctx,
         msg = msg,
         onError = { sendErrorAndClose(ctx, it) },

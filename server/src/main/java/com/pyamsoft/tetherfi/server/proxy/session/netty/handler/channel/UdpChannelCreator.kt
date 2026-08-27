@@ -17,19 +17,25 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel
 
 import android.net.Network
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
 import com.pyamsoft.tetherfi.server.proxy.session.netty.factory.NetworkBoundDatagramChannelFactory
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.DatagramChannel
+import kotlinx.coroutines.CoroutineScope
 
 internal class UdpChannelCreator
 internal constructor(
     eventLoop: EventLoopGroup,
+    scope: CoroutineScope,
+    dispatchers: AppDispatchers,
     socketTagger: SocketTagger,
     androidPreferredNetwork: Network?,
 ) :
     AbstractChannelCreator<DatagramChannel>(
         eventLoop = eventLoop,
+        scope = scope,
+        dispatchers = dispatchers,
         channelFactoryCreator = {
           NetworkBoundDatagramChannelFactory(
               socketTagger = socketTagger,

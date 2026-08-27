@@ -17,16 +17,23 @@
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel
 
 import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.util.AppDispatchers
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.resolveDnsAddress
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFactory
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import java.net.UnknownHostException
 
 internal abstract class AbstractChannelCreator<T : Channel>
 internal constructor(
     private val eventLoop: EventLoopGroup,
+    private val scope: CoroutineScope,
+    private val dispatchers: AppDispatchers,
     private val channelFactoryCreator: () -> ChannelFactory<T>,
 ) : ChannelCreator {
 
@@ -55,6 +62,48 @@ internal constructor(
       port: Int,
       onChannelInitialized: (Channel) -> Unit,
   ): ChannelFuture {
-    return bootstrap(onChannelInitialized).connect(hostName, port)
+    // We must bootstrap first and then manually field a DNS request
+    // otherwise netty's default resolver group runs on the current thread and blocks
+    val registerFuture = bootstrap(onChannelInitialized).register()
+    val bootstrapChannel = registerFuture.channel()
+
+    return bootstrapChannel.newPromise().also { promise ->
+      registerFuture.addListener {
+        if (!registerFuture.isSuccess) {
+          promise.setFailure(registerFuture.cause())
+          bootstrapChannel.close()
+          return@addListener
+        }
+
+        // Branch off to IO
+        scope.launch(context = dispatchers.io) {
+          // Resolve in the IO branch (blocking)
+          val resolved = bootstrapChannel.resolveDnsAddress(
+            dispatchers = dispatchers,
+            hostName = hostName,
+            port = port,
+          )
+
+          // Hop back onto the channel's event loop before touching the channel
+          val eventLoop = bootstrapChannel.eventLoop()
+          eventLoop.execute {
+            if (resolved == null) {
+              promise.setFailure(UnknownHostException(hostName))
+              bootstrapChannel.close()
+              return@execute
+            }
+
+            bootstrapChannel.connect(resolved).addListener { connectFuture ->
+              if (connectFuture.isSuccess) {
+                promise.setSuccess()
+              } else {
+                promise.setFailure(connectFuture.cause())
+                bootstrapChannel.close()
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

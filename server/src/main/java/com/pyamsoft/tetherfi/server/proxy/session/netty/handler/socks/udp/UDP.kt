@@ -19,8 +19,9 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.udp
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreLongMethod
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
-import com.pyamsoft.pydroid.core.cast
+import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.resolveDnsAddress
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.FRAGMENT_ZERO
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.FRAGMENT_ZERO_INT
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.RESERVED_BYTE
@@ -37,6 +38,8 @@ import io.netty.util.ReferenceCounted
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetSocketAddress
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 object UDP {
 
@@ -63,7 +66,7 @@ object UDP {
           buf.readBytes(bytes)
           val addr = Inet4Address.getByAddress(bytes)
           if (addr == null) {
-            Timber.w { "(${channelId}) Unable to construct IPv4 from byte array $bytes" }
+            Timber.w { "(${channelId}) Unable to construct IPv4 from byte array ${bytes.contentToString()}" }
             return ""
           }
 
@@ -81,7 +84,7 @@ object UDP {
           buf.readBytes(bytes)
           val addr = Inet6Address.getByAddress(bytes)
           if (addr == null) {
-            Timber.w { "(${channelId}) Unable to construct IPv6 from byte array $bytes" }
+            Timber.w { "(${channelId}) Unable to construct IPv6 from byte array ${bytes.contentToString()}" }
             return ""
           }
 
@@ -125,6 +128,8 @@ object UDP {
   @LintIgnoreLongMethod
   fun unwrap(
       channelId: String,
+      scope: CoroutineScope,
+      dispatchers: AppDispatchers,
       ctx: ChannelHandlerContext,
       msg: DatagramPacket,
       onUnwrapped: (ByteBuf, InetSocketAddress) -> Unit,
@@ -196,35 +201,23 @@ object UDP {
       }
     }
 
-    // Build the destination, unresolved so we do not block using the system DNS
-    val destination = InetSocketAddress.createUnresolved(destinationAddr, destinationPort)
+    // Branch off to IO
+    scope.launch(context = dispatchers.io) {
+      // Resolve in the IO branch (blocking)
+      val resolved = ctx.resolveDnsAddress(
+        dispatchers = dispatchers,
+        hostName = destinationAddr,
+        port = destinationPort,
+      )
 
-    // Resolve the destination with netty DNS
-    val resolver = DefaultAddressResolverGroup.INSTANCE.getResolver(ctx.executor())
-    if (resolver.isSupported(destination)) {
-      resolver.resolve(destination).addListener { future ->
-        if (!future.isSuccess) {
-          Timber.e(future.cause()) {
-            "Failed to resolve address for UDP unwrap: ${destinationAddr}:${destinationPort}"
-          }
-          onError(retainedData)
-          return@addListener
-        }
-
-        val resolved = future.now.cast<InetSocketAddress>()
+      // Hop back onto the channel's event loop before touching the channel
+      ctx.executor().execute {
         if (resolved == null) {
-          Timber.w {
-            "Resolved future returned NULL for udp unwrap: ${destinationAddr}:${destinationPort}"
-          }
           onError(retainedData)
-          return@addListener
+        } else {
+          handleUdpUnwrapped(resolved)
         }
-
-        handleUdpUnwrapped(resolved)
       }
-    } else {
-      // Resolution is not supported, yolo continue?
-      handleUdpUnwrapped(destination)
     }
   }
 

@@ -91,6 +91,8 @@ internal constructor(
       udpSocketCreator =
           UdpChannelCreator(
               eventLoop = workerGroup,
+              scope = scope,
+              dispatchers = dispatchers,
               socketTagger = socketTagger,
               androidPreferredNetwork = androidPreferredNetwork,
           )
@@ -99,6 +101,8 @@ internal constructor(
     tcpSocketCreator =
         TcpChannelCreator(
             eventLoop = workerGroup,
+            scope = scope,
+            dispatchers = dispatchers,
             socketTagger = socketTagger,
             androidPreferredNetwork = androidPreferredNetwork,
         )

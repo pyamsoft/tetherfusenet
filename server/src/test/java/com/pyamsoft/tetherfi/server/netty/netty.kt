@@ -147,6 +147,7 @@ internal object TestSetup {
   )
 
   internal fun withHandler(
+      scope: CoroutineScope,
       dispatchers: AppDispatchers,
       isHttpEnabled: Boolean,
       isSocksEnabled: Boolean,
@@ -199,6 +200,8 @@ internal object TestSetup {
     val tcpSocketCreator =
         TcpChannelCreator(
             eventLoop = workerGroup,
+            scope = scope,
+            dispatchers = dispatchers,
             socketTagger = socketTagger,
             androidPreferredNetwork = null,
         )
@@ -206,6 +209,8 @@ internal object TestSetup {
     val udpSocketCreator =
         UdpChannelCreator(
             eventLoop = workerGroup,
+            scope = scope,
+            dispatchers = dispatchers,
             socketTagger = socketTagger,
             androidPreferredNetwork = null,
         )
