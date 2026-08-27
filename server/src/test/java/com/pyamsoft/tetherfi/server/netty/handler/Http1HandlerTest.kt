@@ -59,6 +59,7 @@ class Http1HandlerTest {
       var tcpConnection: Channel? = null
       val context =
           TestSetup.withHandler(
+              scope = this,
               isHttpEnabled = true,
               isSocksEnabled = false,
               onTcpChannelCreated = { tcpConnection = it },
@@ -105,6 +106,7 @@ class Http1HandlerTest {
       var tcpConnection: Channel? = null
       val context =
           TestSetup.withHandler(
+              scope = this,
               isHttpEnabled = true,
               isSocksEnabled = false,
               onTcpChannelCreated = { tcpConnection = it },

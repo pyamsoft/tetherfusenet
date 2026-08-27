@@ -73,6 +73,7 @@ class DelegatingHandlerTest {
         withLogging {
           val context =
               TestSetup.withHandler(
+                  scope = this,
                   isHttpEnabled = false,
                   isSocksEnabled = false,
                   factory = { delegatingHandlerFactory(it) },
@@ -113,6 +114,7 @@ class DelegatingHandlerTest {
     withLogging {
       val context =
           TestSetup.withHandler(
+              scope = this,
               isHttpEnabled = true,
               isSocksEnabled = false,
               factory = { delegatingHandlerFactory(it) },
@@ -144,6 +146,7 @@ class DelegatingHandlerTest {
     withLogging {
       val context =
           TestSetup.withHandler(
+              scope = this,
               isHttpEnabled = false,
               isSocksEnabled = true,
               factory = { delegatingHandlerFactory(it) },
@@ -174,6 +177,7 @@ class DelegatingHandlerTest {
     withLogging {
       val context =
           TestSetup.withHandler(
+              scope = this,
               isHttpEnabled = false,
               isSocksEnabled = true,
               factory = { delegatingHandlerFactory(it) },
