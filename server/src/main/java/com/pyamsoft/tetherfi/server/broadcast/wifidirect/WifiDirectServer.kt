@@ -399,11 +399,10 @@ internal constructor(
   ): BroadcastNetworkStatus.ConnectionInfo {
     enforcer.assertOffMainThread()
 
-    return mutex.withLock {
       val info = wiFiP2PManager.requestConnectionInfo(source)
       val host = info?.groupOwnerAddress
 
-      return@withLock if (host == null) {
+    return if (host == null) {
         BroadcastNetworkStatus.ConnectionInfo.Error(
             error = IllegalStateException("WiFi Direct did not return Connection Info"),
         )
@@ -412,7 +411,6 @@ internal constructor(
             hostName = host.hostAddress.orEmpty(),
         )
       }
-    }
   }
 
   /** This is only available in Android 35+ */
@@ -430,10 +428,9 @@ internal constructor(
 
   override suspend fun resolveCurrentGroupInfo(source: Channel): BroadcastNetworkStatus.GroupInfo {
     enforcer.assertOffMainThread()
-    return mutex.withLock {
       val group = wiFiP2PManager.requestGroupInfo(channel = source)
 
-      return@withLock if (group == null) {
+    return if (group == null) {
         BroadcastNetworkStatus.GroupInfo.Error(
             error = IllegalStateException("WiFi Direct did not return Group Info"),
         )
@@ -452,7 +449,6 @@ internal constructor(
                   )
                 },
         )
-      }
     }
   }
 

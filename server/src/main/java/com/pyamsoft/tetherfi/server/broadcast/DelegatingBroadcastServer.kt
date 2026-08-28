@@ -145,10 +145,10 @@ internal constructor(
         mutex.withLock {
           try {
             Timber.d { "Starting broadcast network" }
-            val source = withLockStartBroadcast { source ->
+            val source = withLockStartBroadcast { s ->
               // We MAY be able to re-use the existing connection, but EVERYTHING MUST BE VALID
               withLockUpdateNetworkInfo(
-                  source = source,
+                  source = s,
                   // We only reuse connection if everything has valid data
                   strategy = NetworkUpdateStrategy.UPDATE_ONLY_IF_ALL_CONNECTED,
               )
