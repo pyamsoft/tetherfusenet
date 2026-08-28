@@ -18,27 +18,16 @@
 
 package com.pyamsoft.tetherfi.server.broadcast.wifidirect
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
-import android.net.wifi.p2p.WifiP2pGroup
-import android.net.wifi.p2p.WifiP2pInfo
-import android.net.wifi.p2p.WifiP2pManager
 import android.net.wifi.p2p.WifiP2pManager.Channel
 import android.os.Build
-import android.os.Looper
 import androidx.annotation.CheckResult
-import androidx.core.content.getSystemService
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.ThreadEnforcer
-import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
-import com.pyamsoft.tetherfi.core.AppDevEnvironment
 import com.pyamsoft.tetherfi.core.Timber
-import com.pyamsoft.tetherfi.server.ServerDefaults
 import com.pyamsoft.tetherfi.server.ServerInternalApi
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastServerImplementation
@@ -47,16 +36,14 @@ import com.pyamsoft.tetherfi.server.lock.Locker
 import java.net.InetAddress
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 @Singleton
 internal class WifiDirectServer
@@ -64,211 +51,244 @@ internal class WifiDirectServer
 internal constructor(
     @param:ServerInternalApi private val config: WiDiConfig,
     @param:ServerInternalApi private val register: WifiDirectRegister,
-    private val appContext: Context,
-    private val appEnvironment: AppDevEnvironment,
+    private val wiFiP2PManager: SuspendingWiFiP2PManager,
     private val enforcer: ThreadEnforcer,
     private val dispatchers: AppDispatchers,
 ) : BroadcastServerImplementation<Channel> {
 
-  private val wifiP2PManager by lazy {
-    appContext.getSystemService<WifiP2pManager>().requireNotNull()
-  }
+  private val mutex = Mutex()
 
-  @SuppressLint("MissingPermission")
-  private fun createGroupQ(
+  private data class WiFiDirectInternalTeardownResult(
+      val errorReasons: List<WiFiDirectError.Reason>,
+      val success: Boolean,
+      val attempts: Int,
+  )
+
+  private data class WiFiDirectSubsystemTeardownResult(
+      val success: Boolean,
+      val internalAttempts: Int,
+      val disconnectAttempts: Int,
+  )
+
+  private data class WiFiDirectOverallTeardownResult(
+      val success: Boolean,
+      val group: WiFiDirectSubsystemTeardownResult,
+      val connection: WiFiDirectSubsystemTeardownResult,
+  )
+
+  @CheckResult
+  private suspend inline fun doInternalTeardown(
       channel: Channel,
-      config: WifiP2pConfig,
-      listener: WifiP2pManager.ActionListener,
-  ) {
-    if (ServerDefaults.canUseCustomConfig()) {
-      wifiP2PManager.createGroup(
-          channel,
-          config,
-          listener,
-      )
-    } else {
-      throw IllegalStateException("Called createGroupQ but not Q: ${Build.VERSION.SDK_INT}")
+      onCleanup: (Channel) -> WiFiDirectError.Reason?,
+      onLog: (Boolean, Int, List<WiFiDirectError.Reason>) -> Unit,
+  ): WiFiDirectInternalTeardownResult {
+    enforcer.assertOffMainThread()
+    var backoffTime = BUSY_RETRY_DELAY
+    val reasons = mutableListOf<WiFiDirectError.Reason>()
+    for (i in 1..MAX_BUSY_RETRIES) {
+      val result = onCleanup(channel)
+      if (result == null) {
+        // We have canceled!
+        onLog(true, i, reasons)
+        return WiFiDirectInternalTeardownResult(
+            errorReasons = reasons,
+            attempts = i,
+            success = true,
+        )
+      }
+
+      // Otherwise we failed to cleanup
+      reasons.add(result)
+
+      // Wait before trying again
+      delay(backoffTime)
+
+      // Double backoff
+      backoffTime *= 2
     }
-  }
 
-  private fun doCleanupGroup(channel: Channel, onCleanupComplete: () -> Unit) {
-    wifiP2PManager.cancelConnect(
-        channel,
-        object : WifiP2pManager.ActionListener {
-
-          private fun doRemoveGroup() {
-            wifiP2PManager.removeGroup(
-                channel,
-                object : WifiP2pManager.ActionListener {
-                  override fun onSuccess() {
-                    Timber.d { "Wifi P2P Channel is removed" }
-                    onCleanupComplete()
-                  }
-
-                  override fun onFailure(reason: Int) {
-                    val r = WiFiDirectError.Reason.parseReason(reason)
-                    Timber.w { "Failed to stop network: ${r.displayReason}" }
-                    onCleanupComplete()
-                  }
-                },
-            )
-          }
-
-          override fun onSuccess() {
-            Timber.d { "Wifi P2P connection canceled" }
-            doRemoveGroup()
-          }
-
-          override fun onFailure(reason: Int) {
-            val r = WiFiDirectError.Reason.parseReason(reason)
-            Timber.w { "Failed to cancel Wifi P2P connections ${r.displayReason}" }
-            doRemoveGroup()
-          }
-        },
+    // Ultimately failed
+    onLog(false, MAX_BUSY_RETRIES, reasons)
+    return WiFiDirectInternalTeardownResult(
+        errorReasons = reasons,
+        attempts = MAX_BUSY_RETRIES,
+        success = false,
     )
   }
 
   @CheckResult
-  private suspend fun removeGroup(channel: Channel) {
-    enforcer.assertOffMainThread()
-
-    Timber.d { "Stop existing WiFi Group" }
-    return suspendCancellableCoroutine { cont -> doCleanupGroup(channel) { cont.resume(Unit) } }
-  }
-
-  @CheckResult
-  @SuppressLint("MissingPermission")
-  private suspend fun resolveCurrentGroup(channel: Channel): WifiP2pGroup? {
-    enforcer.assertOffMainThread()
-
-    return suspendCancellableCoroutine { cont ->
-      try {
-        wifiP2PManager.requestGroupInfo(channel) {
-          // We are still on the Main Thread here, so don't unpack anything yet.
-          cont.resume(it)
-        }
-      } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-        Timber.e(e) { "Error getting WiFi Direct Group Info" }
-        cont.resumeWithException(e)
-      }
-    }
-  }
-
-  @CheckResult
-  private suspend fun resolveConnectionInfo(channel: Channel): WifiP2pInfo? {
-    enforcer.assertOffMainThread()
-
-    return suspendCancellableCoroutine { cont ->
-      try {
-        wifiP2PManager.requestConnectionInfo(channel) {
-          // We are still on the Main Thread here, so don't unpack anything yet.
-          cont.resume(it)
-        }
-      } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-        Timber.e(e) { "Error getting WiFi Direct Connection Info" }
-        cont.resumeWithException(e)
-      }
-    }
-  }
-
-  @CheckResult
-  private fun createChannel(): Channel? {
-    enforcer.assertOffMainThread()
-
-    Timber.d { "Creating WifiP2PManager Channel" }
-
-    // This can return null if initialization fails
-    return wifiP2PManager.initialize(
-        appContext,
-        Looper.getMainLooper(),
-    ) {
-      // Before we used to kill the Network
-      //
-      // But now we do nothing - if you Swipe Away the app from recents,
-      // the p2p manager will die, but when it comes back we want everything to
-      // attempt to run again so we leave this around.
-      //
-      // Any other unexpected death like Airplane mode or Wifi off should be covered by the receiver
-      // so we should never unintentionally leak the service
-      Timber.d { "WifiP2PManager Channel died! Do nothing :D" }
-    }
-  }
-
-  @SuppressLint("MissingPermission")
-  private suspend fun tryConnectChannel(channel: Channel) {
-    enforcer.assertOffMainThread()
-
-    Timber.d { "Creating new wifi p2p group" }
-    val conf = config.getConfiguration()
-
-    val fakeError = appEnvironment.isBroadcastFakeError
-    val isFakeError = fakeError.first()
-
-    return suspendCancellableCoroutine { cont ->
-      val listener =
-          object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-              Timber.d { "New network created" }
-
-              if (isFakeError) {
-                Timber.w { "DEBUG forcing Fake Broadcast Error" }
-                cont.resumeWithException(RuntimeException("DEBUG: Force Fake Broadcast Error"))
-              } else {
-                cont.resume(Unit)
+  private suspend fun removeGroup(channel: Channel): WiFiDirectInternalTeardownResult =
+      doInternalTeardown(
+          channel = channel,
+          onCleanup = { wiFiP2PManager.removeGroup(it) },
+          onLog = { success, attempts, reasons ->
+            if (success) {
+              Timber.d {
+                "Wi-Fi direct group was removed after $attempts attempts reasons=$reasons"
+              }
+            } else {
+              Timber.w {
+                "Wi-Fi direct group was not removed after $attempts attempts. reasons=$reasons"
               }
             }
+          },
+      )
 
-            override fun onFailure(reason: Int) {
-              val r = WiFiDirectError.Reason.parseReason(reason)
-              val e =
-                  if (r is WiFiDirectError.Reason.Busy) {
-                    WifiP2PBusyTryAgainException()
-                  } else {
-                    RuntimeException("Broadcast Error: ${r.displayReason}")
-                  }
-              Timber.e(e) { "Unable to create Wifi Direct Group" }
-              cont.resumeWithException(e)
+  @CheckResult
+  private suspend fun cancelConnect(channel: Channel): WiFiDirectInternalTeardownResult =
+      doInternalTeardown(
+          channel = channel,
+          onCleanup = { wiFiP2PManager.cancelConnect(it) },
+          onLog = { success, attempts, reasons ->
+            if (success) {
+              Timber.d {
+                "Wi-Fi direct connection was removed after $attempts attempts reasons=$reasons"
+              }
+            } else {
+              Timber.w {
+                "Wi-Fi direct connection was not removed after $attempts attempts. reasons=$reasons"
+              }
             }
-          }
+          },
+      )
 
-      if (conf != null) {
-        createGroupQ(channel, conf, listener)
-      } else {
-        wifiP2PManager.createGroup(
-            channel,
-            listener,
+  @CheckResult
+  private suspend inline fun <reified T : Any> doSubsystemTeardown(
+      channel: Channel,
+      onRemoveSubsystem: (Channel) -> WiFiDirectInternalTeardownResult,
+      onResolveSubsystemCurrent: (Channel) -> T?,
+  ): WiFiDirectSubsystemTeardownResult {
+    enforcer.assertOffMainThread()
+
+    val subsystemTag = "WiFi Direct ${T::class.java.simpleName}"
+    // First we remove the subsystem
+    val cleanupResult = onRemoveSubsystem(channel)
+
+    // If we failed to actually remove the group, that's its own problem
+    if (!cleanupResult.success) {
+      Timber.w {
+        "$subsystemTag failed to fully internally tear down. internal=${cleanupResult.attempts}"
+      }
+      return WiFiDirectSubsystemTeardownResult(
+          success = false,
+          internalAttempts = cleanupResult.attempts,
+          // We never got to the disconnect check loop
+          disconnectAttempts = 0,
+      )
+    }
+
+    // According to Android source code, the listener for group removal may have given back SUCCESS
+    // but the subsystem isn't actually dead until the group info reports null
+    var backoffTime = BUSY_RETRY_DELAY
+    for (attempt in 1..MAX_BUSY_RETRIES) {
+      val subsystem = onResolveSubsystemCurrent(channel)
+      if (subsystem == null) {
+        // Subsystem is gone, we are, according to the subsystem, fully torn down
+        Timber.d {
+          "$subsystemTag is fully torn down. internal=${cleanupResult.attempts} overall=$attempt"
+        }
+        return WiFiDirectSubsystemTeardownResult(
+            success = true,
+            internalAttempts = cleanupResult.attempts,
+            disconnectAttempts = attempt,
         )
       }
+
+      // Wait before trying again
+      delay(backoffTime)
+
+      // Double backoff
+      backoffTime *= 2
     }
+
+    // Failed to fully teardown after so many attempts
+    Timber.w {
+      "$subsystemTag failed to fully tear down. internal=${cleanupResult.attempts} overall=$MAX_BUSY_RETRIES"
+    }
+    return WiFiDirectSubsystemTeardownResult(
+        success = false,
+        internalAttempts = cleanupResult.attempts,
+        disconnectAttempts = MAX_BUSY_RETRIES,
+    )
   }
 
-  private suspend fun connectChannel(channel: Channel) {
-    var lastException: Throwable? = null
+  @CheckResult
+  private suspend fun doGroupSubsystemTeardown(
+      channel: Channel
+  ): WiFiDirectSubsystemTeardownResult =
+      doSubsystemTeardown(
+          channel = channel,
+          onRemoveSubsystem = { removeGroup(it) },
+          onResolveSubsystemCurrent = { wiFiP2PManager.requestGroupInfo(it) },
+      )
 
+  @CheckResult
+  private suspend fun doConnectionSubsystemTeardown(
+      channel: Channel
+  ): WiFiDirectSubsystemTeardownResult =
+      doSubsystemTeardown(
+          channel = channel,
+          onRemoveSubsystem = { cancelConnect(it) },
+          onResolveSubsystemCurrent = { wiFiP2PManager.requestConnectionInfo(it) },
+      )
+
+  @CheckResult
+  private suspend fun doFullWifiP2PTeardown(channel: Channel): WiFiDirectOverallTeardownResult {
+    // First drop the connection
+    val connection = doConnectionSubsystemTeardown(channel)
+
+    // And then the group
+    val group = doGroupSubsystemTeardown(channel)
+
+    return WiFiDirectOverallTeardownResult(
+        success = connection.success && group.success,
+        connection = connection,
+        group = group,
+    )
+  }
+
+  private suspend fun createGroup(channel: Channel) {
     // Try to connect the channel a few times
     //
     // If we fail because we are "busy" try again
     // otherwise, fail out with the error
+    var backoffTime = BUSY_RETRY_DELAY
+    val reasons = mutableListOf<Exception>()
     for (attempt in 1..MAX_BUSY_RETRIES) {
       try {
-        return tryConnectChannel(channel)
-      } catch (e: WifiP2PBusyTryAgainException) {
-        lastException = e
-        if (attempt < MAX_BUSY_RETRIES) {
-          Timber.w(e) { "Wi-Fi Direct busy (attempt ${attempt}/${MAX_BUSY_RETRIES}), retrying" }
-          delay(BUSY_RETRY_DELAY)
-        }
+        return wiFiP2PManager.createGroup(channel)
       } catch (e: CancellationException) {
         // Create was canceled, clean up anything and rethrow
-        removeGroup(channel)
+        val result = doFullWifiP2PTeardown(channel)
+        if (!result.success) {
+          Timber.w {
+            "Failed to fully teardown Wi-Fi direct upon connectChannel() coroutine cancel. result=$result"
+          }
+        }
 
         // Re-throw the cancellation exception
         throw e
+      } catch (@LintIgnoreTooGenericExceptionCaught e: Exception) {
+        reasons.add(e)
+        // Anything else that could go wrong
+        if (attempt < MAX_BUSY_RETRIES) {
+          Timber.w(e) { "Wi-Fi Direct error (attempt ${attempt}/${MAX_BUSY_RETRIES}), retrying" }
+
+          // Wait before trying again
+          delay(backoffTime)
+
+          // Double backoff
+          backoffTime *= 2
+        }
       }
     }
 
-    // Throw exception IF held, otherwise exception will be thrown after cleanup is done
-    lastException?.also { throw it }
+    // Throw exception IF held
+    // otherwise there is either NO exception
+    // or a CancellationException which is already re-thrown above
+    if (reasons.isNotEmpty()) {
+      throw WifiP2PExceptionCollection(reasons)
+    }
   }
 
   @CheckResult
@@ -290,7 +310,7 @@ internal constructor(
 
     // Verify the existing group matches current user preferences (SSID/password).
     // If they differ, tear down the stale group so a new one is created.
-    val group = resolveCurrentGroup(channel)
+    val group = wiFiP2PManager.requestGroupInfo(channel)
     if (group != null && !config.matchesGroup(group.networkName, group.passphrase)) {
       Timber.w { "Existing group does not match current preferences, forcing recreation" }
       return false
@@ -302,67 +322,92 @@ internal constructor(
   override suspend fun withLockStartBroadcast(
       updateNetworkInfo: suspend (Channel) -> DelegatingBroadcastServer.UpdateResult
   ): Channel {
-    val channel = createChannel()
-    if (channel == null) {
-      Timber.w { "Failed to create a Wi-Fi direct channel" }
-      throw WifiDirectChannelCreationException()
-    }
+    enforcer.assertOffMainThread()
 
-    try {
-      Timber.d { "Attempt open connection with channel" }
-      if (
-          attemptReUseConnection(
-              channel = channel,
-              updateNetworkInfo = updateNetworkInfo,
-          )
-      ) {
-        Timber.d { "Existing Wi-Fi group connection was re-used!" }
-      } else {
-        Timber.d { "Cannot re-use Wi-Fi group connection, make new one" }
-
-        // Kill old channel
-        removeGroup(channel)
-
-        connectChannel(channel)
-        Timber.d { "New Wi-Fi group connection created!" }
+    // Claim an internal mutex so we don't field duplicate or parallel requests
+    return mutex.withLock {
+      val channel = wiFiP2PManager.createChannel()
+      if (channel == null) {
+        Timber.w { "Failed to create a Wi-Fi direct channel" }
+        throw WifiDirectChannelCreationException()
       }
-    } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-      e.ifNotCancellation {
-        Timber.e(e) { "Failed to connect Wi-Fi direct group" }
 
-        // The channel was never returned to the caller, so close it here or it leaks.
-        closeSilent(channel)
+      try {
+        Timber.d { "Attempt open connection with channel" }
+        if (
+            attemptReUseConnection(
+                channel = channel,
+                updateNetworkInfo = updateNetworkInfo,
+            )
+        ) {
+          Timber.d { "Existing Wi-Fi group connection was re-used!" }
+        } else {
+          Timber.d { "Cannot re-use Wi-Fi group connection, make new one" }
 
-        throw e
+          // Kill old channel
+          val fullTeardownResult = doFullWifiP2PTeardown(channel)
+          if (!fullTeardownResult.success) {
+            Timber.w {
+              "Failed to fully teardown old Wi-Fi direct connection. Can not start new connection. result=$fullTeardownResult"
+            }
+            throw WifiDirectChannelCreationException()
+          }
+
+          createGroup(channel)
+          Timber.d { "New Wi-Fi group connection created!" }
+        }
+      } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
+        e.ifNotCancellation {
+          Timber.e(e) { "Failed to connect Wi-Fi direct group" }
+
+          // The channel was never returned to the caller, so close it here or it leaks.
+          closeSilent(channel)
+
+          throw e
+        }
       }
-    }
 
-    return channel
+      return@withLock channel
+    }
   }
 
   override suspend fun withLockStopBroadcast(source: Channel) {
-    // This may fail if WiFi is off, but that's fine since if WiFi is off,
-    // the system has already cleaned us up.
-    removeGroup(source)
+    enforcer.assertOffMainThread()
 
-    // Close the wifi channel now that we are done with it
-    Timber.d { "Close WiFiP2PManager channel" }
-    closeSilent(source)
+    return mutex.withLock {
+      // This may fail if WiFi is off, but that's fine since if WiFi is off,
+      // the system has already cleaned us up.
+      val fullTeardownResult = doFullWifiP2PTeardown(channel = source)
+      if (!fullTeardownResult.success) {
+        Timber.w {
+          "Failed to fully teardown Wi-Fi direct connection when stopping broadcast. result=$fullTeardownResult"
+        }
+      }
+
+      // Close the wifi channel now that we are done with it
+      Timber.d { "Close WiFiP2PManager channel" }
+      closeSilent(source)
+    }
   }
 
   override suspend fun resolveCurrentConnectionInfo(
       source: Channel
   ): BroadcastNetworkStatus.ConnectionInfo {
-    val info = resolveConnectionInfo(source)
-    val host = info?.groupOwnerAddress
-    return if (host == null) {
-      BroadcastNetworkStatus.ConnectionInfo.Error(
-          error = IllegalStateException("WiFi Direct did not return Connection Info"),
-      )
-    } else {
-      BroadcastNetworkStatus.ConnectionInfo.Connected(
-          hostName = host.hostAddress.orEmpty(),
-      )
+    enforcer.assertOffMainThread()
+
+    return mutex.withLock {
+      val info = wiFiP2PManager.requestConnectionInfo(source)
+      val host = info?.groupOwnerAddress
+
+      return@withLock if (host == null) {
+        BroadcastNetworkStatus.ConnectionInfo.Error(
+            error = IllegalStateException("WiFi Direct did not return Connection Info"),
+        )
+      } else {
+        BroadcastNetworkStatus.ConnectionInfo.Connected(
+            hostName = host.hostAddress.orEmpty(),
+        )
+      }
     }
   }
 
@@ -380,26 +425,30 @@ internal constructor(
   }
 
   override suspend fun resolveCurrentGroupInfo(source: Channel): BroadcastNetworkStatus.GroupInfo {
-    val group = resolveCurrentGroup(source)
-    return if (group == null) {
-      BroadcastNetworkStatus.GroupInfo.Error(
-          error = IllegalStateException("WiFi Direct did not return Group Info"),
-      )
-    } else {
-      BroadcastNetworkStatus.GroupInfo.Connected(
-          ssid = group.networkName,
-          password = group.passphrase,
-          clients =
-              group.clientList.orEmpty().mapNotNull { client ->
-                val ipAddressInStringFormat =
-                    resolveP2PDeviceIpAddress(client)?.hostAddress ?: return@mapNotNull null
+    enforcer.assertOffMainThread()
+    return mutex.withLock {
+      val group = wiFiP2PManager.requestGroupInfo(channel = source)
 
-                BroadcastNetworkStatus.GroupInfo.Connected.Device(
-                    name = client.deviceName,
-                    ipAddress = ipAddressInStringFormat,
-                )
-              },
-      )
+      return@withLock if (group == null) {
+        BroadcastNetworkStatus.GroupInfo.Error(
+            error = IllegalStateException("WiFi Direct did not return Group Info"),
+        )
+      } else {
+        BroadcastNetworkStatus.GroupInfo.Connected(
+            ssid = group.networkName,
+            password = group.passphrase,
+            clients =
+                group.clientList.orEmpty().mapNotNull { client ->
+                  val ipAddressInStringFormat =
+                      resolveP2PDeviceIpAddress(client)?.hostAddress ?: return@mapNotNull null
+
+                  BroadcastNetworkStatus.GroupInfo.Connected.Device(
+                      name = client.deviceName,
+                      ipAddress = ipAddressInStringFormat,
+                  )
+                },
+        )
+      }
     }
   }
 
@@ -414,8 +463,8 @@ internal constructor(
   class WifiDirectChannelCreationException :
       RuntimeException("Unable to create Wi-Fi Direct Channel")
 
-  /** Continue trying to reconnect to Wi-Fi P2P if we receive a busy signal */
-  private class WifiP2PBusyTryAgainException : RuntimeException("Wi-Fi Direct is Busy")
+  class WifiP2PExceptionCollection(reasons: Collection<Exception>) :
+      RuntimeException("Unable to start Wi-Fi Direct reasons=$reasons")
 
   companion object {
 
