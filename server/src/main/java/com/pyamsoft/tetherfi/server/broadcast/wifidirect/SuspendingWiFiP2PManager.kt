@@ -37,12 +37,14 @@ import com.pyamsoft.tetherfi.core.AppDevEnvironment
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerDefaults
 import com.pyamsoft.tetherfi.server.ServerInternalApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
  * A simple abstraction over callback based WiFiP2PManager functions
@@ -61,6 +63,8 @@ internal constructor(
     private val appEnvironment: AppDevEnvironment,
     private val enforcer: ThreadEnforcer,
 ) {
+
+  private val mutex = Mutex()
 
   private val wifiP2PManager by lazy {
     appContext.getSystemService<WifiP2pManager>().requireNotNull()
@@ -93,8 +97,9 @@ internal constructor(
   suspend fun removeGroup(channel: Channel): WiFiDirectError.Reason? {
     enforcer.assertOffMainThread()
 
-    return suspendCancellableCoroutine { cont ->
-      wifiP2PManager.removeGroup(
+    return mutex.withLock {
+      return@withLock suspendCancellableCoroutine { cont ->
+        wifiP2PManager.removeGroup(
           channel,
           object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
@@ -108,7 +113,8 @@ internal constructor(
               cont.resume(r)
             }
           },
-      )
+        )
+      }
     }
   }
 
@@ -160,39 +166,43 @@ internal constructor(
   }
 
   @CheckResult
-  fun createChannel(): Channel? {
+  suspend fun createChannel(): Channel? {
     enforcer.assertOffMainThread()
 
-    Timber.d { "Creating WifiP2PManager Channel" }
+    return mutex.withLock {
+      Timber.d { "Creating WifiP2PManager Channel" }
 
-    // This can return null if initialization fails
-    return wifiP2PManager.initialize(
+      // This can return null if initialization fails
+      return@withLock wifiP2PManager.initialize(
         appContext,
         Looper.getMainLooper(),
-    ) {
-      // Before we used to kill the Network
-      //
-      // But now we do nothing - if you Swipe Away the app from recents,
-      // the p2p manager will die, but when it comes back we want everything to
-      // attempt to run again so we leave this around.
-      //
-      // Any other unexpected death like Airplane mode or Wifi off should be covered by the receiver
-      // so we should never unintentionally leak the service
-      Timber.d { "WifiP2PManager Channel died! Do nothing :D" }
+      ) {
+        // Before we used to kill the Network
+        //
+        // But now we do nothing - if you Swipe Away the app from recents,
+        // the p2p manager will die, but when it comes back we want everything to
+        // attempt to run again so we leave this around.
+        //
+        // Any other unexpected death like Airplane mode or Wifi off should be covered by the receiver
+        // so we should never unintentionally leak the service
+        Timber.d { "WifiP2PManager Channel died! Do nothing :D" }
+      }
     }
+
   }
 
   suspend fun createGroup(channel: Channel) {
     enforcer.assertOffMainThread()
 
-    Timber.d { "Creating new wifi p2p group" }
-    val conf = config.getConfiguration()
+    return mutex.withLock {
+      Timber.d { "Creating new wifi p2p group" }
+      val conf = config.getConfiguration()
 
-    val fakeError = appEnvironment.isBroadcastFakeError
-    val isFakeError = fakeError.first()
+      val fakeError = appEnvironment.isBroadcastFakeError
+      val isFakeError = fakeError.first()
 
-    return suspendCancellableCoroutine { cont ->
-      val listener =
+      return@withLock suspendCancellableCoroutine { cont ->
+        val listener =
           object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
               Timber.d { "New network created. Group created (custom config = $conf)" }
@@ -213,14 +223,15 @@ internal constructor(
             }
           }
 
-      if (conf != null) {
-        createGroupQ(channel, conf, listener)
-      } else {
-        @SuppressLint("MissingPermission")
-        wifiP2PManager.createGroup(
+        if (conf != null) {
+          createGroupQ(channel, conf, listener)
+        } else {
+          @SuppressLint("MissingPermission")
+          wifiP2PManager.createGroup(
             channel,
             listener,
-        )
+          )
+        }
       }
     }
   }
