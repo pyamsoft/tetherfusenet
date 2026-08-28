@@ -35,10 +35,6 @@ import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastServerImplementation
 import com.pyamsoft.tetherfi.server.broadcast.DelegatingBroadcastServer
 import com.pyamsoft.tetherfi.server.lock.Locker
-import java.net.InetAddress
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -46,6 +42,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.net.InetAddress
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 internal class WifiDirectServer
@@ -75,20 +75,21 @@ internal constructor(
   private data class WiFiDirectOverallTeardownResult(
       val success: Boolean,
       val group: WiFiDirectSubsystemTeardownResult,
-      val connection: WiFiDirectSubsystemTeardownResult,
   )
 
   @CheckResult
   private suspend inline fun doInternalTeardown(
-      channel: Channel,
-      onCleanup: (Channel) -> WiFiDirectError.Reason?,
-      onLog: (Boolean, Int, List<WiFiDirectError.Reason>) -> Unit,
+    channel: Channel,
+    subsystemName: String,
+    onTeardown: (Channel) -> WiFiDirectError.Reason?,
+    onLog: (Boolean, Int, List<WiFiDirectError.Reason>) -> Unit,
   ): WiFiDirectInternalTeardownResult {
     enforcer.assertOffMainThread()
     var backoffTime = BUSY_RETRY_DELAY
     val reasons = mutableListOf<WiFiDirectError.Reason>()
     for (i in 1..MAX_BUSY_RETRIES) {
-      val result = onCleanup(channel)
+      Timber.d { "Attempt $i for internal teardown: $subsystemName" }
+      val result = onTeardown(channel)
       if (result == null) {
         // We have canceled!
         onLog(true, i, reasons)
@@ -122,7 +123,8 @@ internal constructor(
   private suspend fun removeGroup(channel: Channel): WiFiDirectInternalTeardownResult =
       doInternalTeardown(
           channel = channel,
-          onCleanup = { wiFiP2PManager.removeGroup(it) },
+        subsystemName = "WiFiP2PManager.Group",
+        onTeardown = { wiFiP2PManager.removeGroup(it) },
           onLog = { success, attempts, reasons ->
             if (success) {
               Timber.d {
@@ -137,33 +139,33 @@ internal constructor(
       )
 
   @CheckResult
-  private suspend fun cancelConnect(channel: Channel): WiFiDirectInternalTeardownResult =
-      doInternalTeardown(
-          channel = channel,
-          onCleanup = { wiFiP2PManager.cancelConnect(it) },
-          onLog = { success, attempts, reasons ->
-            if (success) {
-              Timber.d {
-                "Wi-Fi direct connection was removed after $attempts attempts reasons=$reasons"
-              }
-            } else {
-              Timber.w {
-                "Wi-Fi direct connection was not removed after $attempts attempts. reasons=$reasons"
-              }
-            }
-          },
-      )
-
-  @CheckResult
   private suspend inline fun <reified T : Any> doSubsystemTeardown(
       channel: Channel,
+      force: Boolean,
       onRemoveSubsystem: (Channel) -> WiFiDirectInternalTeardownResult,
       onResolveSubsystemCurrent: (Channel) -> T?,
   ): WiFiDirectSubsystemTeardownResult {
     enforcer.assertOffMainThread()
 
     val subsystemTag = "WiFi Direct ${T::class.java.simpleName}"
+
+    // IF we are not forced to attempt a runthrough check
+    // we can fast path this by just looking if we have an existing subsystem connection
+    if (!force) {
+      val existingSubsystem = onResolveSubsystemCurrent(channel)
+      if (existingSubsystem == null) {
+        // No existing connection, we never stood up
+        Timber.d { "$subsystemTag did not have a live subsystem connection. Ignore teardown request." }
+        return WiFiDirectSubsystemTeardownResult(
+          success = true,
+          internalAttempts = 0,
+          disconnectAttempts = 0,
+        )
+      }
+    }
+
     // First we remove the subsystem
+    Timber.d { "$subsystemTag Attempt teardown" }
     val cleanupResult = onRemoveSubsystem(channel)
 
     // If we failed to actually remove the group, that's its own problem
@@ -178,6 +180,8 @@ internal constructor(
           disconnectAttempts = 0,
       )
     }
+
+    Timber.d { "$subsystemTag Teardown reports success, await full closure..." }
 
     // According to Android source code, the listener for group removal may have given back SUCCESS
     // but the subsystem isn't actually dead until the group info reports null
@@ -216,35 +220,25 @@ internal constructor(
 
   @CheckResult
   private suspend fun doGroupSubsystemTeardown(
-      channel: Channel
+    channel: Channel,
+    force: Boolean,
   ): WiFiDirectSubsystemTeardownResult =
       doSubsystemTeardown(
           channel = channel,
+        force = force,
           onRemoveSubsystem = { removeGroup(it) },
           onResolveSubsystemCurrent = { wiFiP2PManager.requestGroupInfo(it) },
       )
 
   @CheckResult
-  private suspend fun doConnectionSubsystemTeardown(
-      channel: Channel
-  ): WiFiDirectSubsystemTeardownResult =
-      doSubsystemTeardown(
-          channel = channel,
-          onRemoveSubsystem = { cancelConnect(it) },
-          onResolveSubsystemCurrent = { wiFiP2PManager.requestConnectionInfo(it) },
-      )
-
-  @CheckResult
-  private suspend fun doFullWifiP2PTeardown(channel: Channel): WiFiDirectOverallTeardownResult {
-    // First drop the connection
-    val connection = doConnectionSubsystemTeardown(channel)
-
-    // And then the group
-    val group = doGroupSubsystemTeardown(channel)
+  private suspend fun doFullWifiP2PTeardown(
+    channel: Channel,
+    force: Boolean
+  ): WiFiDirectOverallTeardownResult {
+    val group = doGroupSubsystemTeardown(channel, force)
 
     return WiFiDirectOverallTeardownResult(
-        success = connection.success && group.success,
-        connection = connection,
+      success = group.success,
         group = group,
     )
   }
@@ -261,7 +255,8 @@ internal constructor(
         return wiFiP2PManager.createGroup(channel)
       } catch (e: CancellationException) {
         // Create was canceled, clean up anything and rethrow
-        val result = doFullWifiP2PTeardown(channel)
+        // Force attempt a subsystem teardown
+        val result = doFullWifiP2PTeardown(channel, force = true)
         if (!result.success) {
           Timber.w {
             "Failed to fully teardown Wi-Fi direct upon connectChannel() coroutine cancel. result=$result"
@@ -271,8 +266,9 @@ internal constructor(
         // Re-throw the cancellation exception
         throw e
       } catch (@LintIgnoreTooGenericExceptionCaught e: Exception) {
-        reasons.add(e)
         // Anything else that could go wrong
+        reasons.add(e)
+
         if (attempt < MAX_BUSY_RETRIES) {
           Timber.w(e) { "Wi-Fi Direct error (attempt ${attempt}/${MAX_BUSY_RETRIES}), retrying" }
 
@@ -348,13 +344,18 @@ internal constructor(
           Timber.d { "Cannot re-use Wi-Fi group connection, make new one" }
 
           // Kill old channel
-          val fullTeardownResult = doFullWifiP2PTeardown(channel)
+          // If no old channel exists, we can ignore this teardown attempt
+          val fullTeardownResult = doFullWifiP2PTeardown(channel, force = false)
           if (!fullTeardownResult.success) {
             Timber.w {
               @LintIgnoreMaxLineLength
-              "Failed to fully teardown old Wi-Fi direct connection. Can not start new connection. result=$fullTeardownResult"
+              "Failed to fully teardown old Wi-Fi direct connection, YOLO result=$fullTeardownResult"
             }
-            throw WifiDirectChannelCreationException()
+
+            // Do not throw here since it seems like if there is no previous group actually hanging around
+            // then this is "expected" that the subsystem keeps returning Busy
+            //
+            // in the event this is a real subsystem error, the createGroup line would fail anyway
           }
 
           createGroup(channel)
@@ -381,7 +382,9 @@ internal constructor(
     return mutex.withLock {
       // This may fail if WiFi is off, but that's fine since if WiFi is off,
       // the system has already cleaned us up.
-      val fullTeardownResult = doFullWifiP2PTeardown(channel = source)
+      //
+      // We must attempt a subsystem teardown
+      val fullTeardownResult = doFullWifiP2PTeardown(channel = source, force = true)
       if (!fullTeardownResult.success) {
         Timber.w {
           "Failed to fully teardown Wi-Fi direct connection when stopping broadcast. result=$fullTeardownResult"

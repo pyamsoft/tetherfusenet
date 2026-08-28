@@ -115,36 +115,6 @@ internal constructor(
   /**
    * BE VERY CAREFUL
    *
-   * According to Android source code, after getting the callback we are NOT actually disconnected
-   * until a request for connectionInfo returns null info
-   */
-  @CheckResult
-  suspend fun cancelConnect(channel: Channel): WiFiDirectError.Reason? {
-    enforcer.assertOffMainThread()
-
-    return suspendCancellableCoroutine { cont ->
-      wifiP2PManager.cancelConnect(
-          channel,
-          object : WifiP2pManager.ActionListener {
-
-            override fun onSuccess() {
-              Timber.d { "Wifi P2P connection canceled" }
-              cont.resume(null)
-            }
-
-            override fun onFailure(reason: Int) {
-              val r = WiFiDirectError.Reason.parseReason(reason)
-              Timber.w { "Failed to cancel Wifi P2P connections ${r.displayReason}" }
-              cont.resume(r)
-            }
-          },
-      )
-    }
-  }
-
-  /**
-   * BE VERY CAREFUL
-   *
    * If this function returns NULL, regardless of what our other WP2P callbacks say, we have no
    * group
    */
