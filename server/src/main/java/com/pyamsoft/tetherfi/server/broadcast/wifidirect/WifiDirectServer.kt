@@ -22,11 +22,13 @@ import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager.Channel
 import android.os.Build
 import androidx.annotation.CheckResult
+import com.pyamsoft.pydroid.core.LintIgnoreMaxLineLength
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
+import com.pyamsoft.tetherfi.core.LintIgnoreThrowsCount
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerInternalApi
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
@@ -319,6 +321,7 @@ internal constructor(
     return true
   }
 
+  @LintIgnoreThrowsCount
   override suspend fun withLockStartBroadcast(
       updateNetworkInfo: suspend (Channel) -> DelegatingBroadcastServer.UpdateResult
   ): Channel {
@@ -348,6 +351,7 @@ internal constructor(
           val fullTeardownResult = doFullWifiP2PTeardown(channel)
           if (!fullTeardownResult.success) {
             Timber.w {
+              @LintIgnoreMaxLineLength
               "Failed to fully teardown old Wi-Fi direct connection. Can not start new connection. result=$fullTeardownResult"
             }
             throw WifiDirectChannelCreationException()
