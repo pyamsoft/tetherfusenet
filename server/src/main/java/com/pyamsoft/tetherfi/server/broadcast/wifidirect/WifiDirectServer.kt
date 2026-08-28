@@ -35,6 +35,10 @@ import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastServerImplementation
 import com.pyamsoft.tetherfi.server.broadcast.DelegatingBroadcastServer
 import com.pyamsoft.tetherfi.server.lock.Locker
+import java.net.InetAddress
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -42,10 +46,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.net.InetAddress
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 internal class WifiDirectServer
@@ -79,10 +79,10 @@ internal constructor(
 
   @CheckResult
   private suspend inline fun doInternalTeardown(
-    channel: Channel,
-    subsystemName: String,
-    onTeardown: (Channel) -> WiFiDirectError.Reason?,
-    onLog: (Boolean, Int, List<WiFiDirectError.Reason>) -> Unit,
+      channel: Channel,
+      subsystemName: String,
+      onTeardown: (Channel) -> WiFiDirectError.Reason?,
+      onLog: (Boolean, Int, List<WiFiDirectError.Reason>) -> Unit,
   ): WiFiDirectInternalTeardownResult {
     enforcer.assertOffMainThread()
     var backoffTime = BUSY_RETRY_DELAY
@@ -123,8 +123,8 @@ internal constructor(
   private suspend fun removeGroup(channel: Channel): WiFiDirectInternalTeardownResult =
       doInternalTeardown(
           channel = channel,
-        subsystemName = "WiFiP2PManager.Group",
-        onTeardown = { wiFiP2PManager.removeGroup(it) },
+          subsystemName = "WiFiP2PManager.Group",
+          onTeardown = { wiFiP2PManager.removeGroup(it) },
           onLog = { success, attempts, reasons ->
             if (success) {
               Timber.d {
@@ -155,11 +155,13 @@ internal constructor(
       val existingSubsystem = onResolveSubsystemCurrent(channel)
       if (existingSubsystem == null) {
         // No existing connection, we never stood up
-        Timber.d { "$subsystemTag did not have a live subsystem connection. Ignore teardown request." }
+        Timber.d {
+          "$subsystemTag did not have a live subsystem connection. Ignore teardown request."
+        }
         return WiFiDirectSubsystemTeardownResult(
-          success = true,
-          internalAttempts = 0,
-          disconnectAttempts = 0,
+            success = true,
+            internalAttempts = 0,
+            disconnectAttempts = 0,
         )
       }
     }
@@ -220,25 +222,25 @@ internal constructor(
 
   @CheckResult
   private suspend fun doGroupSubsystemTeardown(
-    channel: Channel,
-    force: Boolean,
+      channel: Channel,
+      force: Boolean,
   ): WiFiDirectSubsystemTeardownResult =
       doSubsystemTeardown(
           channel = channel,
-        force = force,
+          force = force,
           onRemoveSubsystem = { removeGroup(it) },
           onResolveSubsystemCurrent = { wiFiP2PManager.requestGroupInfo(it) },
       )
 
   @CheckResult
   private suspend fun doFullWifiP2PTeardown(
-    channel: Channel,
-    force: Boolean
+      channel: Channel,
+      force: Boolean,
   ): WiFiDirectOverallTeardownResult {
     val group = doGroupSubsystemTeardown(channel, force)
 
     return WiFiDirectOverallTeardownResult(
-      success = group.success,
+        success = group.success,
         group = group,
     )
   }
@@ -352,7 +354,8 @@ internal constructor(
               "Failed to fully teardown old Wi-Fi direct connection, YOLO result=$fullTeardownResult"
             }
 
-            // Do not throw here since it seems like if there is no previous group actually hanging around
+            // Do not throw here since it seems like if there is no previous group actually hanging
+            // around
             // then this is "expected" that the subsystem keeps returning Busy
             //
             // in the event this is a real subsystem error, the createGroup line would fail anyway
@@ -402,18 +405,18 @@ internal constructor(
   ): BroadcastNetworkStatus.ConnectionInfo {
     enforcer.assertOffMainThread()
 
-      val info = wiFiP2PManager.requestConnectionInfo(source)
-      val host = info?.groupOwnerAddress
+    val info = wiFiP2PManager.requestConnectionInfo(source)
+    val host = info?.groupOwnerAddress
 
     return if (host == null) {
-        BroadcastNetworkStatus.ConnectionInfo.Error(
-            error = IllegalStateException("WiFi Direct did not return Connection Info"),
-        )
-      } else {
-        BroadcastNetworkStatus.ConnectionInfo.Connected(
-            hostName = host.hostAddress.orEmpty(),
-        )
-      }
+      BroadcastNetworkStatus.ConnectionInfo.Error(
+          error = IllegalStateException("WiFi Direct did not return Connection Info"),
+      )
+    } else {
+      BroadcastNetworkStatus.ConnectionInfo.Connected(
+          hostName = host.hostAddress.orEmpty(),
+      )
+    }
   }
 
   /** This is only available in Android 35+ */
@@ -431,27 +434,27 @@ internal constructor(
 
   override suspend fun resolveCurrentGroupInfo(source: Channel): BroadcastNetworkStatus.GroupInfo {
     enforcer.assertOffMainThread()
-      val group = wiFiP2PManager.requestGroupInfo(channel = source)
+    val group = wiFiP2PManager.requestGroupInfo(channel = source)
 
     return if (group == null) {
-        BroadcastNetworkStatus.GroupInfo.Error(
-            error = IllegalStateException("WiFi Direct did not return Group Info"),
-        )
-      } else {
-        BroadcastNetworkStatus.GroupInfo.Connected(
-            ssid = group.networkName,
-            password = group.passphrase,
-            clients =
-                group.clientList.orEmpty().mapNotNull { client ->
-                  val ipAddressInStringFormat =
-                      resolveP2PDeviceIpAddress(client)?.hostAddress ?: return@mapNotNull null
+      BroadcastNetworkStatus.GroupInfo.Error(
+          error = IllegalStateException("WiFi Direct did not return Group Info"),
+      )
+    } else {
+      BroadcastNetworkStatus.GroupInfo.Connected(
+          ssid = group.networkName,
+          password = group.passphrase,
+          clients =
+              group.clientList.orEmpty().mapNotNull { client ->
+                val ipAddressInStringFormat =
+                    resolveP2PDeviceIpAddress(client)?.hostAddress ?: return@mapNotNull null
 
-                  BroadcastNetworkStatus.GroupInfo.Connected.Device(
-                      name = client.deviceName,
-                      ipAddress = ipAddressInStringFormat,
-                  )
-                },
-        )
+                BroadcastNetworkStatus.GroupInfo.Connected.Device(
+                    name = client.deviceName,
+                    ipAddress = ipAddressInStringFormat,
+                )
+              },
+      )
     }
   }
 

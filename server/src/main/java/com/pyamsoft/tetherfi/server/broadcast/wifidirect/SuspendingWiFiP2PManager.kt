@@ -37,14 +37,14 @@ import com.pyamsoft.tetherfi.core.AppDevEnvironment
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.ServerDefaults
 import com.pyamsoft.tetherfi.server.ServerInternalApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * A simple abstraction over callback based WiFiP2PManager functions
@@ -100,19 +100,19 @@ internal constructor(
     return mutex.withLock {
       return@withLock suspendCancellableCoroutine { cont ->
         wifiP2PManager.removeGroup(
-          channel,
-          object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-              Timber.d { "Wifi P2P Channel is removed" }
-              cont.resume(null)
-            }
+            channel,
+            object : WifiP2pManager.ActionListener {
+              override fun onSuccess() {
+                Timber.d { "Wifi P2P Channel is removed" }
+                cont.resume(null)
+              }
 
-            override fun onFailure(reason: Int) {
-              val r = WiFiDirectError.Reason.parseReason(reason)
-              Timber.w { "Failed to stop network: ${r.displayReason}" }
-              cont.resume(r)
-            }
-          },
+              override fun onFailure(reason: Int) {
+                val r = WiFiDirectError.Reason.parseReason(reason)
+                Timber.w { "Failed to stop network: ${r.displayReason}" }
+                cont.resume(r)
+              }
+            },
         )
       }
     }
@@ -174,8 +174,8 @@ internal constructor(
 
       // This can return null if initialization fails
       return@withLock wifiP2PManager.initialize(
-        appContext,
-        Looper.getMainLooper(),
+          appContext,
+          Looper.getMainLooper(),
       ) {
         // Before we used to kill the Network
         //
@@ -183,12 +183,11 @@ internal constructor(
         // the p2p manager will die, but when it comes back we want everything to
         // attempt to run again so we leave this around.
         //
-        // Any other unexpected death like Airplane mode or Wifi off should be covered by the receiver
-        // so we should never unintentionally leak the service
+        // Any other unexpected death like Airplane mode or Wifi off should be covered by the
+        // receiver so we should never unintentionally leak the service
         Timber.d { "WifiP2PManager Channel died! Do nothing :D" }
       }
     }
-
   }
 
   suspend fun createGroup(channel: Channel) {
@@ -203,33 +202,33 @@ internal constructor(
 
       return@withLock suspendCancellableCoroutine { cont ->
         val listener =
-          object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-              Timber.d { "New network created. Group created (custom config = $conf)" }
+            object : WifiP2pManager.ActionListener {
+              override fun onSuccess() {
+                Timber.d { "New network created. Group created (custom config = $conf)" }
 
-              if (isFakeError) {
-                Timber.w { "DEBUG forcing Fake Broadcast Error" }
-                cont.resumeWithException(RuntimeException("DEBUG: Force Fake Broadcast Error"))
-              } else {
-                cont.resume(Unit)
+                if (isFakeError) {
+                  Timber.w { "DEBUG forcing Fake Broadcast Error" }
+                  cont.resumeWithException(RuntimeException("DEBUG: Force Fake Broadcast Error"))
+                } else {
+                  cont.resume(Unit)
+                }
+              }
+
+              override fun onFailure(reason: Int) {
+                val r = WiFiDirectError.Reason.parseReason(reason)
+                val e = RuntimeException("Broadcast Error: ${r.displayReason}")
+                Timber.e(e) { "Unable to create Wifi Direct Group" }
+                cont.resumeWithException(e)
               }
             }
-
-            override fun onFailure(reason: Int) {
-              val r = WiFiDirectError.Reason.parseReason(reason)
-              val e = RuntimeException("Broadcast Error: ${r.displayReason}")
-              Timber.e(e) { "Unable to create Wifi Direct Group" }
-              cont.resumeWithException(e)
-            }
-          }
 
         if (conf != null) {
           createGroupQ(channel, conf, listener)
         } else {
           @SuppressLint("MissingPermission")
           wifiP2PManager.createGroup(
-            channel,
-            listener,
+              channel,
+              listener,
           )
         }
       }
