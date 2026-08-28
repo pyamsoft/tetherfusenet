@@ -165,6 +165,11 @@ internal constructor(
     }
   }
 
+  /**
+   * BE VERY CAREFUL
+   *
+   * Please only create one of these :)
+   */
   @CheckResult
   suspend fun createChannel(): Channel? {
     enforcer.assertOffMainThread()
@@ -190,6 +195,12 @@ internal constructor(
     }
   }
 
+  /**
+   * BE VERY CAREFUL
+   *
+   * According to Android source code, after getting the callback we are NOT actually connected
+   * until a request for groupInfo returns non-null group
+   */
   suspend fun createGroup(channel: Channel) {
     enforcer.assertOffMainThread()
 
