@@ -45,7 +45,7 @@ coil = "3.5.0"
 
 # Developer Tools
 ktfmt = "0.64"
-spotless = "8.10.0"
+spotless = "8.10.1"
 jdkDesugar = "2.1.5"
 caupain = "1.10.1"
 detekt = "2.0.0-alpha.6"
