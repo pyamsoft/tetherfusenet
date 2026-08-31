@@ -41,7 +41,7 @@ composeMaterial3 = "1.4.0"
 ksp = "2.3.11"
 
 # Images
-coil = "3.5.0"
+coil = "3.6.0"
 
 # Developer Tools
 ktfmt = "0.64"
