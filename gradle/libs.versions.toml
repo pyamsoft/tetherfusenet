@@ -52,7 +52,7 @@ detekt = "2.0.0-alpha.6"
 
 # Testing
 junit = "4.13.2"
-robolectric = "4.16.1"
+robolectric = "4.17"
 
 
 [plugins]
