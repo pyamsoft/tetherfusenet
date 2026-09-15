@@ -21,7 +21,7 @@ timber = "5.0.1"
 
 qrCode = "4.5.0"
 dagger = "2.60.1"
-netty = "4.2.17.Final"
+netty = "4.2.18.Final"
 # Silence SLF4J logging warnings
 slf4j = "2.0.19"
 
@@ -34,11 +34,11 @@ preference = "1.2.1"
 testRunner = "1.7.0"
 
 # Compose
-compose = "1.12.0"
+compose = "1.12.1"
 composeMaterial3 = "1.4.0"
 
 # Google
-ksp = "2.3.11"
+ksp = "2.3.12"
 
 # Images
 coil = "3.6.2"
@@ -52,7 +52,7 @@ detekt = "2.0.0-alpha.6"
 
 # Testing
 junit = "4.13.2"
-robolectric = "4.16.1"
+robolectric = "4.17"
 
 
 [plugins]

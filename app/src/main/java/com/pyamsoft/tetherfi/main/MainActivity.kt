@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
                   override val changelog = buildChangeLog {
                     //                    feature("Add unique Activities to turn the hotspot On or
                     // Off.")
-                    bugfix("Fixed a bug preventing HTTP connections to LAN addresses.")
+                    bugfix("Fixed a bug preventing HTTP connections to Private IP addresses.")
                     bugfix(
                         "Fixed a bug where previously blocked devices would temporarily become unblocked."
                     )
