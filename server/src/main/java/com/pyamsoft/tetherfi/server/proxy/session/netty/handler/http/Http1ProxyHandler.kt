@@ -513,7 +513,6 @@ private constructor(
   override fun channelWritabilityChanged(ctx: ChannelHandlerContext) {
     try {
       val isWritable = ctx.channel().isWritable
-      Timber.d { "Owner write changed: $ctx $isWritable" }
       setOutboundAutoRead(isWritable)
     } finally {
       super.channelWritabilityChanged(ctx)
@@ -690,7 +689,9 @@ private constructor(
           // There is a port number and a path after the port
           val maybeJustPortNumber = portAndMaybePath.substring(0, pathStartIndex)
           port = if (maybeJustPortNumber.isBlank()) fallbackPort else maybeJustPortNumber.toIntOrNull() ?: fallbackPort
-          path = portAndMaybePath.substring(pathStartIndex).ifBlank { "/" }
+          if (path.isBlank()) {
+            path = portAndMaybePath.substring(pathStartIndex).ifBlank { "/" }
+          }
         }
       } else {
         // No port, fallback

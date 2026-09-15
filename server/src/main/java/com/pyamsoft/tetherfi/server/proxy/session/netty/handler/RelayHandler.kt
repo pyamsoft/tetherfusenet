@@ -217,7 +217,6 @@ private constructor(
       }
 
       val isWritable = ctx.channel().isWritable
-      Timber.d { "($channelId) Relay write changed: $ctx $isWritable" }
       writeToChannel.config().isAutoRead = isWritable
     } finally {
       super.channelWritabilityChanged(ctx)
