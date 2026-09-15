@@ -70,7 +70,8 @@ gradle.lifecycle.beforeProject {
     reports.junitXml.required.set(false)
 
     // More heap for faster tests
-    maxHeapSize = "4g"
+    // Otherwise we will randomly OOM and fail
+    maxHeapSize = "6g"
 
     // Required by Robolectric 4.17+ on JDK 17+ for ApplicationSharedMemory emulation
     // which reflects into jdk.internal.access.SharedSecrets (see robolectric/robolectric#11434).
