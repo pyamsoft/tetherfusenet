@@ -20,7 +20,6 @@ import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.billing.BillingModule
 import com.pyamsoft.pydroid.billing.store.PlayBillingModule
 import com.pyamsoft.pydroid.bootstrap.libraries.OssLibraries
-import com.pyamsoft.pydroid.bootstrap.libraries.OssLicenses
 import com.pyamsoft.pydroid.bootstrap.play.rating.PlayRatingModule
 import com.pyamsoft.pydroid.bootstrap.play.version.PlayVersionModule
 import com.pyamsoft.pydroid.bootstrap.rating.RatingModule
