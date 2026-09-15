@@ -86,6 +86,7 @@ class Socks4HandlerTest {
         writeInbound(req)
         flushInbound()
         runPendingTasks()
+        checkException()
       }
 
       // Wait for tasks to finish

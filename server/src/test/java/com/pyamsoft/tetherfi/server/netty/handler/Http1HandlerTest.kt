@@ -18,18 +18,22 @@ package com.pyamsoft.tetherfi.server.netty.handler
 
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.util.AppDispatchers
+import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.netty.TestSetup
 import com.pyamsoft.tetherfi.server.netty.withLogging
 import com.pyamsoft.tetherfi.server.proxy.session.address
+import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelCreator
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.http.Http1ProxyHandler
 import com.pyamsoft.tetherfi.server.runBlockingWithDelays
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelInboundHandler
 import io.netty.handler.codec.http.DefaultFullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpVersion
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Test
@@ -38,8 +42,25 @@ class Http1HandlerTest {
 
   @CheckResult
   private fun CoroutineScope.http1HandlerFactory(
-      factory: TestSetup.FactoryParams
+      factory: TestSetup.FactoryParams,
+      onConnectAttempt: (host: String, port: Int) -> Unit = { _, _ -> },
   ): ChannelInboundHandler {
+    val realTcpSocketCreator = factory.provideTcpChannelCreator()
+    val capturingTcpSocketCreator =
+        object : ChannelCreator {
+          override fun bind(onChannelInitialized: (Channel) -> Unit): ChannelFuture =
+              realTcpSocketCreator.bind(onChannelInitialized)
+
+          override fun connect(
+              hostName: String,
+              port: Int,
+              onChannelInitialized: (Channel) -> Unit,
+          ): ChannelFuture {
+            onConnectAttempt(hostName, port)
+            return realTcpSocketCreator.connect(hostName, port, onChannelInitialized)
+          }
+        }
+
     val factory =
         Http1ProxyHandler.factory(
             scope = this,
@@ -48,9 +69,66 @@ class Http1HandlerTest {
             allowedClients = factory.allowed,
             blockedClients = factory.blocked,
             dispatchers = factory.dispatchers,
-            tcpSocketCreator = factory.provideTcpChannelCreator(),
+            tcpSocketCreator = capturingTcpSocketCreator,
         )
     return factory.create(Unit)
+  }
+
+  private suspend fun CoroutineScope.assertForwardedTo(
+      uri: String,
+      expectedHost: String,
+      expectedPort: Int,
+      expectedPath: String,
+  ) {
+    withLogging {
+      var capturedHost: String? = null
+      var capturedPort: Int? = null
+
+      val context =
+          TestSetup.withHandler(
+              scope = this,
+              isHttpEnabled = true,
+              isSocksEnabled = false,
+              factory = {
+                http1HandlerFactory(
+                    factory = it,
+                    onConnectAttempt = { host, port ->
+                      capturedHost = host
+                      capturedPort = port
+                    },
+                )
+              },
+              // TODO(Peter): Do we need test dispatchers?
+              dispatchers = AppDispatchers.create(),
+          )
+
+      val channel = context.channel
+      Http1ProxyHandler.applyChannelAttributes(
+          channel = channel,
+          client = context.resolver.ensure(channel.remoteAddress().address),
+      )
+
+      val req =
+          DefaultFullHttpRequest(
+              HttpVersion.HTTP_1_1,
+              HttpMethod.GET,
+              uri,
+              Unpooled.EMPTY_BUFFER,
+          )
+
+      channel.apply {
+        writeInbound(req)
+        flushInbound()
+        runPendingTasks()
+        checkException()
+      }
+
+      // The outbound TCP connect was attempted against the resolved host/port
+      assertNotNull(capturedHost)
+      assertEquals(expectedHost, capturedHost)
+      assertEquals(expectedPort, capturedPort)
+      assertEquals(expectedPath, req.uri())
+    }
   }
 
   @Test
@@ -93,6 +171,7 @@ class Http1HandlerTest {
         writeInbound(req)
         flushInbound()
         runPendingTasks()
+        checkException()
       }
 
       // A TCP outbound has been created
@@ -135,10 +214,65 @@ class Http1HandlerTest {
         writeInbound(req)
         flushInbound()
         runPendingTasks()
+        checkException()
       }
 
       // A TCP outbound has been created
       assertNotNull(tcpConnection)
     }
+  }
+
+  @Test
+  fun `test HTTP1 forward resolves default port 80 with root path`(): Unit =
+      runBlockingWithDelays {
+        assertForwardedTo(
+            uri = "http://192.168.10.123/",
+            expectedHost = "192.168.10.123",
+            expectedPort = 80,
+            expectedPath = "/",
+        )
+      }
+
+  @Test
+  fun `test HTTP1S forward resolves default port 443 with root path`(): Unit =
+      runBlockingWithDelays {
+        assertForwardedTo(
+            uri = "https://192.168.1.456",
+            expectedHost = "192.168.1.456",
+            expectedPort = 443,
+            expectedPath = "/",
+        )
+      }
+
+  @Test
+  fun `test HTTP1 forward resolves default port 80 with sub path`(): Unit = runBlockingWithDelays {
+    assertForwardedTo(
+        uri = "http://192.168.4.567/hello",
+        expectedHost = "192.168.4.567",
+        expectedPort = 80,
+        expectedPath = "/hello",
+    )
+  }
+
+  @Test
+  fun `test HTTP1 forward resolves explicit port with sub path, not a fallback default port`():
+      Unit = runBlockingWithDelays {
+    assertForwardedTo(
+        uri = "http://192.168.1.321:8096/hello/config.json",
+        expectedHost = "192.168.1.321",
+        expectedPort = 8096,
+        expectedPath = "/hello/config.json",
+    )
+  }
+
+  @Test
+  fun `test HTTP1S forward resolves explicit port with sub path, not a fallback default port`():
+      Unit = runBlockingWithDelays {
+    assertForwardedTo(
+        uri = "https://192.168.5.67:8123/this/here.json?query=string",
+        expectedHost = "192.168.5.67",
+        expectedPort = 8123,
+        expectedPath = "/this/here.json?query=string",
+    )
   }
 }

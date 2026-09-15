@@ -94,6 +94,7 @@ class DelegatingHandlerTest {
             val closed = assertFails { flushInbound() }
             assertTrue(closed is ClosedChannelException)
             runPendingTasks()
+            checkException()
           }
 
           // This has NOT been read by a delegated handler, the buffer is still here
@@ -130,6 +131,7 @@ class DelegatingHandlerTest {
         writeInbound(buf)
         flushInbound()
         runPendingTasks()
+        checkException()
       }
 
       // This has been read by the handler
@@ -161,6 +163,7 @@ class DelegatingHandlerTest {
         writeInbound(buf)
         flushInbound()
         runPendingTasks()
+        checkException()
       }
 
       // This has been read by the handler
@@ -192,6 +195,7 @@ class DelegatingHandlerTest {
         writeInbound(buf)
         flushInbound()
         runPendingTasks()
+        checkException()
       }
 
       // This has been read by the handler
