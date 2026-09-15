@@ -677,22 +677,43 @@ private constructor(
       val fallbackPort = if (defaultPortBasedOnSchema > 0) defaultPortBasedOnSchema else defaultPort
 
       // Port must look like a port
-      val portString = hostAndPort.getOrNull(1)
-      val port =
-          if (portString.isNullOrBlank()) fallbackPort else portString.toIntOrNull() ?: fallbackPort
+      // Could be "nothing", could be "80" could be "8096/"
+      val port: Int
+      var path = ""
+      val portAndMaybePath = hostAndPort.getOrNull(1).orEmpty()
+      if (portAndMaybePath.isNotBlank()) {
+        val pathStartIndex = portAndMaybePath.indexOf("/")
+        if (pathStartIndex < 0) {
+          // There is no path after the port OR there is no port
+          port = if (portAndMaybePath.isBlank()) fallbackPort else portAndMaybePath.toIntOrNull() ?: fallbackPort
+        } else {
+          // There is a port number and a path after the port
+          val maybeJustPortNumber = portAndMaybePath.substring(0, pathStartIndex)
+          port = if (maybeJustPortNumber.isBlank()) fallbackPort else maybeJustPortNumber.toIntOrNull() ?: fallbackPort
+          path = portAndMaybePath.substring(pathStartIndex).ifBlank { "/" }
+        }
+      } else {
+        // No port, fallback
+        port = fallbackPort
+      }
 
       // Find the first slash to start the path
       val pathStartIndex = hostAndMaybePath.indexOf("/")
       val host: String
-      val path: String
       if (pathStartIndex < 0) {
         // No path delivered, it's all host
-        // path is root
         host = hostAndMaybePath
-        path = "/"
+        if (path.isBlank()) {
+          // Path not found yet, assume root
+          path = "/"
+        }
       } else {
         host = hostAndMaybePath.substring(0, pathStartIndex)
-        path = hostAndMaybePath.substring(pathStartIndex).ifBlank { "/" }
+
+        if (path.isBlank()) {
+          // Otherwise assign best path
+          path = hostAndMaybePath.substring(pathStartIndex).ifBlank { "/" }
+        }
       }
 
       return HttpHostAndPort(
