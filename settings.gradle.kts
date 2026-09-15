@@ -79,8 +79,6 @@ gradle.lifecycle.beforeProject {
   }
 }
 
-plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" apply true }
-
 rootProject.name = "TetherFuseNet"
 
 include(":app")
