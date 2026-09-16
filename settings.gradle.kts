@@ -25,6 +25,15 @@ pluginManagement {
   }
 }
 
+// A plugin for easy JDK management
+// You can configure the JDK in "Build, Execution" -> "Build Tools" -> "Gradle" -> (Advanced)
+// Pick Adoptium/Temurin
+// Do NOT enable since this messes up FDroid. Just turn this on to grab the tool chain and then
+// call `./gradlew uDJ --rerun --no-configuration-cache --jvm-vendor ADOPTIUM --jvm-version 25`
+plugins {
+  id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" apply false
+}
+
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
