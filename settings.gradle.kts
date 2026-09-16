@@ -28,10 +28,14 @@ pluginManagement {
 // A plugin for easy JDK management
 // You can configure the JDK in "Build, Execution" -> "Build Tools" -> "Gradle" -> (Advanced)
 // Pick Adoptium/Temurin
-// Do NOT enable since this messes up FDroid. Just turn this on to grab the tool chain and then
-// call `./gradlew uDJ --rerun --no-configuration-cache --jvm-vendor ADOPTIUM --jvm-version 25`
 plugins {
-  id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" apply false
+  // FDroid builds do NOT want this enabled, but on our local machine we DO want this
+  // This environment variable is set by our "flatpak launcher script"
+  // and can be updated via bin/toolchain-sync
+  //
+  // We should regularly update as JVM releases happen.
+  val isFoojayEnabled: Boolean = (System.getenv("PYAMSOFT_USE_FOOJAY").orEmpty() == "1")
+  id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" apply isFoojayEnabled
 }
 
 dependencyResolutionManagement {
