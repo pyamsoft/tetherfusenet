@@ -13,7 +13,7 @@ kotlin = "2.4.20"
 coroutines = "1.11.0"
 
 # Us
-pydroid = "30.0.0"
+pydroid = "30.0.1"
 
 # Square
 leakCanary = "2.14"
