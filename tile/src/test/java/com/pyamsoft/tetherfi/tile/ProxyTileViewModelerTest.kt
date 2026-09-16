@@ -19,7 +19,6 @@ package com.pyamsoft.tetherfi.tile
 import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.createThreadEnforcer
@@ -52,7 +51,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 private class TestForegroundService : Service() {
   override fun onBind(intent: Intent?): IBinder? = null

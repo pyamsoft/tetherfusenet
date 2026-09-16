@@ -18,7 +18,6 @@ package com.pyamsoft.tetherfi.server.netty.handler
 
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.util.AppDispatchers
-import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.netty.TestSetup
 import com.pyamsoft.tetherfi.server.netty.withLogging
 import com.pyamsoft.tetherfi.server.proxy.session.address
@@ -223,15 +222,14 @@ class Http1HandlerTest {
   }
 
   @Test
-  fun `test HTTP1 forward resolves default port 80 with root path`(): Unit =
-      runBlockingWithDelays {
-        assertForwardedTo(
-            uri = "http://192.168.10.123/",
-            expectedHost = "192.168.10.123",
-            expectedPort = 80,
-            expectedPath = "/",
-        )
-      }
+  fun `test HTTP1 forward resolves default port 80 with root path`(): Unit = runBlockingWithDelays {
+    assertForwardedTo(
+        uri = "http://192.168.10.123/",
+        expectedHost = "192.168.10.123",
+        expectedPort = 80,
+        expectedPath = "/",
+    )
+  }
 
   @Test
   fun `test HTTP1S forward resolves default port 443 with root path`(): Unit =

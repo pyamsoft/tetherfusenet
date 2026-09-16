@@ -684,11 +684,15 @@ private constructor(
         val pathStartIndex = portAndMaybePath.indexOf("/")
         if (pathStartIndex < 0) {
           // There is no path after the port OR there is no port
-          port = if (portAndMaybePath.isBlank()) fallbackPort else portAndMaybePath.toIntOrNull() ?: fallbackPort
+          port =
+              if (portAndMaybePath.isBlank()) fallbackPort
+              else portAndMaybePath.toIntOrNull() ?: fallbackPort
         } else {
           // There is a port number and a path after the port
           val maybeJustPortNumber = portAndMaybePath.substring(0, pathStartIndex)
-          port = if (maybeJustPortNumber.isBlank()) fallbackPort else maybeJustPortNumber.toIntOrNull() ?: fallbackPort
+          port =
+              if (maybeJustPortNumber.isBlank()) fallbackPort
+              else maybeJustPortNumber.toIntOrNull() ?: fallbackPort
           if (path.isBlank()) {
             path = portAndMaybePath.substring(pathStartIndex).ifBlank { "/" }
           }

@@ -18,7 +18,6 @@ package com.pyamsoft.tetherfi.main
 
 import android.app.Service
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import com.pyamsoft.pydroid.core.createThreadEnforcer
 import com.pyamsoft.pydroid.util.AppDispatchers
@@ -62,7 +61,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 private class TestForegroundService : Service() {
   override fun onBind(intent: Intent?): IBinder? = null

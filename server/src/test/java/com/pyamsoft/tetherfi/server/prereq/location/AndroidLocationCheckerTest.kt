@@ -18,7 +18,6 @@ package com.pyamsoft.tetherfi.server.prereq.location
 
 import android.content.Context
 import android.content.ContextWrapper
-import android.os.Build
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.server.TweakPreferences
 import kotlin.test.assertTrue
@@ -29,7 +28,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 private class FakeTweakPreferences(
     private val ignoreLocation: Boolean,
