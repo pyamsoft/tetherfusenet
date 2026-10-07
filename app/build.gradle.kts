@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import java.util.Properties
 
 plugins {
   // Can't use alias() or we get some weird error about double Android on classpath?
@@ -35,8 +35,8 @@ android {
   defaultConfig {
     applicationId = "com.pyamsoft.tetherfi"
 
-    versionCode = 75
-    versionName = "20260916-1"
+    versionCode = 76
+    versionName = "20261007-1"
 
     minSdk = libs.versions.minSdk.get().toInt()
     targetSdk = libs.versions.targetSdk.get().toInt()
