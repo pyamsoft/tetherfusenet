@@ -50,9 +50,9 @@ import com.pyamsoft.tetherfi.service.ServiceLauncher
 import com.pyamsoft.tetherfi.tile.ProxyTileService
 import com.pyamsoft.tetherfi.ui.InstallPYDroidExtras
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
 
@@ -83,7 +83,9 @@ class MainActivity : ComponentActivity() {
                   override val changelog = buildChangeLog {
                     bugfix("Fix UDP_ASSOC delivering the wrong address to clients")
                     bugfix("Fix various memory leaks in the networking code")
-                    bugfix("Fix a potential 'stuck Wi-Fi Direct' state when the app did not clean up correctly.")
+                    bugfix(
+                        "Fix a potential 'stuck Wi-Fi Direct' state when the app did not clean up correctly."
+                    )
                   }
                 },
         )
