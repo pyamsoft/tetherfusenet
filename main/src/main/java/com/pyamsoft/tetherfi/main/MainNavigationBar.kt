@@ -116,8 +116,7 @@ private fun MainTab(
 @Composable
 private fun PreviewMainNavigationBar() {
   val allTabs = rememberAllTabs()
-  MainTopBar(
-      appName = "TEST",
+  MainNavigationBar(
       pagerState =
           rememberPagerState(
               initialPage = 0,

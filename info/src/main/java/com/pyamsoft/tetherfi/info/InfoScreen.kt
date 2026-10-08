@@ -19,7 +19,6 @@ package com.pyamsoft.tetherfi.info
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -96,7 +95,7 @@ fun InfoScreen(
         contentType = InfoContentTypes.BOTTOM_SPACER,
     ) {
       Spacer(
-          modifier = Modifier.padding(top = MaterialTheme.keylines.content).navigationBarsPadding(),
+          modifier = Modifier.padding(top = MaterialTheme.keylines.content),
       )
     }
   }

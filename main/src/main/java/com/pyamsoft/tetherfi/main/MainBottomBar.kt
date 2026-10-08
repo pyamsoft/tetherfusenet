@@ -16,7 +16,9 @@
 
 package com.pyamsoft.tetherfi.main
 
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,9 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun MainTopBar(
+fun MainBottomBar(
     modifier: Modifier = Modifier,
-    appName: String,
+    pagerState: PagerState,
+    allTabs: List<MainView>,
+    onTabChanged: (MainView) -> Unit,
 ) {
   Surface(
       modifier = modifier,
@@ -35,21 +39,31 @@ fun MainTopBar(
       color = MaterialTheme.colorScheme.primary,
       shape =
           MaterialTheme.shapes.large.copy(
-              topStart = ZeroCornerSize,
-              topEnd = ZeroCornerSize,
+              bottomStart = ZeroCornerSize,
+              bottomEnd = ZeroCornerSize,
           ),
   ) {
-    MainToolbar(
-        modifier = Modifier.statusBarsPadding(),
-        appName = appName,
+    MainNavigationBar(
+        modifier = Modifier.navigationBarsPadding(),
+        pagerState = pagerState,
+        allTabs = allTabs,
+        onTabChanged = onTabChanged,
     )
   }
 }
 
 @Preview
 @Composable
-private fun PreviewMainTopBar() {
-  MainTopBar(
-      appName = "TEST",
+private fun PreviewMainBottomBar() {
+  val allTabs = rememberAllTabs()
+  MainBottomBar(
+      pagerState =
+          rememberPagerState(
+              initialPage = 0,
+              initialPageOffsetFraction = 0F,
+              pageCount = { allTabs.size },
+          ),
+      allTabs = allTabs,
+      onTabChanged = {},
   )
 }

@@ -21,7 +21,6 @@ package com.pyamsoft.tetherfi.status
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -186,8 +185,7 @@ internal fun LazyListScope.renderLoadedContent(
       contentType = StatusLoadedContentTypes.SPACER,
   ) {
     Spacer(
-        modifier =
-            itemModifier.padding(top = MaterialTheme.keylines.content).navigationBarsPadding(),
+        modifier = Modifier.padding(top = MaterialTheme.keylines.content),
     )
   }
 }

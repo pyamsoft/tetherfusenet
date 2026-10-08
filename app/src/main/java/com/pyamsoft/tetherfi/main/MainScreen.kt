@@ -21,7 +21,6 @@ package com.pyamsoft.tetherfi.main
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -100,6 +99,11 @@ fun MainScreen(
         MainTopBar(
             modifier = Modifier.fillMaxWidth(),
             appName = appName,
+        )
+      },
+      bottomBar = {
+        MainBottomBar(
+            modifier = Modifier.fillMaxWidth(),
             pagerState = pagerState,
             allTabs = allTabs,
             onTabChanged = onTabChanged,
@@ -107,21 +111,10 @@ fun MainScreen(
       },
   ) { pv ->
     Column(
-        modifier =
-            Modifier.padding(
-                top = remember(pv) { pv.calculateTopPadding() },
-            ),
+        modifier = Modifier.padding(paddingValues = pv),
     ) {
       MainContent(
-          modifier =
-              Modifier.fillMaxWidth()
-                  .weight(1F)
-                  // So this basically doesn't do anything since we handle the padding ourselves
-                  // BUT, we don't just want to consume it because we DO actually care when using
-                  // Modifier.navigationBarsPadding()
-                  .heightIn(
-                      min = remember(pv) { pv.calculateBottomPadding() },
-                  ),
+          modifier = Modifier.fillMaxWidth().weight(1F),
           appName = appName,
           pagerState = pagerState,
           state = state,

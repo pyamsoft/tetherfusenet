@@ -17,7 +17,6 @@
 package com.pyamsoft.tetherfi.main
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
@@ -36,7 +35,7 @@ internal fun MainToolbar(
 ) {
   val contentColor = LocalContentColor.current
   TopAppBar(
-      modifier = modifier.fillMaxWidth().statusBarsPadding(),
+      modifier = modifier.fillMaxWidth(),
       colors =
           TopAppBarDefaults.topAppBarColors(
               containerColor = Color.Transparent,
