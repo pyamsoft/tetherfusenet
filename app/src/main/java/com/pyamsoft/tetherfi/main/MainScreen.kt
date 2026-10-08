@@ -49,6 +49,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.ui.util.rememberAsStateList
@@ -58,11 +59,16 @@ import com.pyamsoft.tetherfi.server.network.PreferredNetwork
 import com.pyamsoft.tetherfi.server.status.RunningStatus
 import com.pyamsoft.tetherfi.service.prereq.HotspotStartBlocker
 import com.pyamsoft.tetherfi.ui.ServerPortTypes
-import kotlin.math.sign
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.TestOnly
 
 private val SCROLL_THRESHOLD = 48.dp
+
+// 1500 ish means "anything slightly faster than just a scroll from a thumb"
+// 1900 is just about "i actually meant to fling scroll"
+// 2400 is "really this is a deliberate scroll"
+
+private val FLING_THRESHOLD = 1900.dp
 
 @Composable
 fun MainScreen(
@@ -190,15 +196,25 @@ private fun rememberBottomBarScrollConnection(
 ): NestedScrollConnection {
   val handleVisibilityChanged by rememberUpdatedState(onVisibilityChanged)
 
-  val downThreshold = LocalDensity.current.run { SCROLL_THRESHOLD.toPx() }
-  val upThreshold = downThreshold * 2
+  val density = LocalDensity.current
+  val scrollThreshold = density.run { SCROLL_THRESHOLD.toPx() }
+  val flingThreshold = density.run { FLING_THRESHOLD.toPx() }
 
   return remember(
-      downThreshold,
-      upThreshold,
+      scrollThreshold,
+      flingThreshold,
   ) {
     object : NestedScrollConnection {
       private var accumulated = 0F
+
+      override suspend fun onPreFling(available: Velocity): Velocity {
+        if (available.y < -flingThreshold) {
+          handleVisibilityChanged(false)
+          accumulated = 0F
+        }
+
+        return Velocity.Zero
+      }
 
       override fun onPostScroll(
           consumed: Offset,
@@ -206,19 +222,14 @@ private fun rememberBottomBarScrollConnection(
           source: NestedScrollSource,
       ): Offset {
         val delta = consumed.y
-        if (delta != 0F) {
-          if (delta.sign != accumulated.sign) {
-            accumulated = 0F
-          }
+        if (delta > 0F) {
           accumulated += delta
-
-          if (accumulated < -downThreshold) {
-            handleVisibilityChanged(false)
-            accumulated = 0F
-          } else if (accumulated > upThreshold) {
+          if (accumulated > scrollThreshold) {
             handleVisibilityChanged(true)
             accumulated = 0F
           }
+        } else if (delta < 0F) {
+          accumulated = 0F
         }
 
         // Always return Zero so that we do NOT consume any of the scroll,
