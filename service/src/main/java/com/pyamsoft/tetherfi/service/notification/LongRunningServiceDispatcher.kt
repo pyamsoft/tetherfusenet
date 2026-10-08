@@ -25,9 +25,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.annotation.CheckResult
-import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import com.pyamsoft.pydroid.notify.NotifyChannelInfo
@@ -72,7 +70,6 @@ internal constructor(
     )
   }
 
-  @RequiresApi(Build.VERSION_CODES.O)
   override fun onGuaranteeNotificationChannelExists(channelInfo: NotifyChannelInfo) {
     val notificationGroup =
         NotificationChannelGroup("${channelInfo.id} Group", "${channelInfo.title} Group")

@@ -38,7 +38,7 @@ fun MainContent(
     appName: String,
     pagerState: PagerState,
     state: ServerViewState,
-    allTabs: List<MainView>,
+    allDestinations: List<MainView>,
 
     // Main
     onHttpEnabledChanged: (Boolean) -> Unit,
@@ -77,10 +77,10 @@ fun MainContent(
   ) { page ->
     val screen =
         remember(
-            allTabs,
+            allDestinations,
             page,
         ) {
-          allTabs[page]
+          allDestinations[page]
         }
 
     when (screen) {

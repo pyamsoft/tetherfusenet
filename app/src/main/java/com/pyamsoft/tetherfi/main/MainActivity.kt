@@ -145,23 +145,23 @@ class MainActivity : ComponentActivity() {
       val theme by vm.mode.collectAsStateWithLifecycle()
       val isMaterialYou by vm.isMaterialYou.collectAsStateWithLifecycle()
 
-      val allTabs = rememberAllTabs()
+      val allDestinations = rememberAllDestinations()
       val pagerState =
           rememberPagerState(
               initialPage = 0,
               initialPageOffsetFraction = 0F,
-              pageCount = { allTabs.size },
+              pageCount = { allDestinations.size },
           )
 
       SaveStateDisposableEffect(vm)
 
       LaunchedEffect(
           settingsCommandBus,
-          allTabs,
+          allDestinations,
           pagerState,
       ) {
         settingsCommandBus.collect {
-          val settingsIndex = allTabs.indexOfFirst { it == MainView.SETTINGS }
+          val settingsIndex = allDestinations.indexOfFirst { it == MainView.SETTINGS }
           if (settingsIndex >= 0) {
             pagerState.animateScrollToPage(settingsIndex)
           }
@@ -183,7 +183,7 @@ class MainActivity : ComponentActivity() {
         MainEntry(
             modifier = Modifier.fillMaxSize(),
             appName = appName,
-            allTabs = allTabs,
+            allDestinations = allDestinations,
             pagerState = pagerState,
             onShowInAppRating = { handleShowInAppRating() },
             onUpdateTile = { ProxyTileService.updateTile(this) },

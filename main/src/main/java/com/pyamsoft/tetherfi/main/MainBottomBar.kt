@@ -34,8 +34,8 @@ import com.pyamsoft.pydroid.theme.keylines
 fun MainBottomBar(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
-    allTabs: List<MainView>,
-    onTabChanged: (MainView) -> Unit,
+    allDestinations: List<MainView>,
+    onDestinationChanged: (MainView) -> Unit,
 ) {
   Column(
       modifier =
@@ -52,8 +52,8 @@ fun MainBottomBar(
     ) {
       MainNavigationBar(
           pagerState = pagerState,
-          allTabs = allTabs,
-          onTabChanged = onTabChanged,
+          allDestinations = allDestinations,
+          onDestinationChanged = onDestinationChanged,
       )
     }
 
@@ -66,15 +66,15 @@ fun MainBottomBar(
 @Preview
 @Composable
 private fun PreviewMainBottomBar() {
-  val allTabs = rememberAllTabs()
+  val allDestinations = rememberAllDestinations()
   MainBottomBar(
       pagerState =
           rememberPagerState(
               initialPage = 0,
               initialPageOffsetFraction = 0F,
-              pageCount = { allTabs.size },
+              pageCount = { allDestinations.size },
           ),
-      allTabs = allTabs,
-      onTabChanged = {},
+      allDestinations = allDestinations,
+      onDestinationChanged = {},
   )
 }

@@ -76,7 +76,7 @@ fun MainScreen(
     appName: String,
     state: MainViewState,
     pagerState: PagerState,
-    allTabs: List<MainView>,
+    allDestinations: List<MainView>,
 
     // Main
     onHttpEnabledChanged: (Boolean) -> Unit,
@@ -84,7 +84,7 @@ fun MainScreen(
     onPortChanged: (Int) -> Unit,
 
     // Settings
-    onTabChanged: (MainView) -> Unit,
+    onDestinationChanged: (MainView) -> Unit,
 
     // Actions
     onShowQRCode: () -> Unit,
@@ -154,7 +154,7 @@ fun MainScreen(
           appName = appName,
           pagerState = pagerState,
           state = state,
-          allTabs = allTabs,
+          allDestinations = allDestinations,
           onShowQRCode = onShowQRCode,
           onRefreshConnection = onRefreshConnection,
           onJumpToHowTo = onJumpToHowTo,
@@ -181,8 +181,8 @@ fun MainScreen(
         MainBottomBar(
             modifier = Modifier.fillMaxWidth(),
             pagerState = pagerState,
-            allTabs = allTabs,
-            onTabChanged = onTabChanged,
+            allDestinations = allDestinations,
+            onDestinationChanged = onDestinationChanged,
         )
       }
     }
@@ -275,14 +275,14 @@ private fun PreviewMainScreen(
         override val isShowingBroadcastError = MutableStateFlow(false)
         override val isShowingProxyError = MutableStateFlow(false)
       }
-  val allTabs = MainView.entries.rememberAsStateList()
+  val allDestinations = MainView.entries.rememberAsStateList()
 
   MainScreen(
       appName = "TEST",
       state = state,
-      pagerState = rememberPagerState { allTabs.size },
-      allTabs = allTabs,
-      onTabChanged = {},
+      pagerState = rememberPagerState { allDestinations.size },
+      allDestinations = allDestinations,
+      onDestinationChanged = {},
       onShowQRCode = {},
       onRefreshConnection = {},
       onJumpToHowTo = {},

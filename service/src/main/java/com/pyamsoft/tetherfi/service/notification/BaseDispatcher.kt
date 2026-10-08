@@ -22,9 +22,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.annotation.CheckResult
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import com.pyamsoft.pydroid.core.requireNotNull
@@ -60,9 +58,7 @@ protected constructor(
   }
 
   private fun guaranteeNotificationChannelExists(channelInfo: NotifyChannelInfo) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      onGuaranteeNotificationChannelExists(channelInfo)
-    }
+    onGuaranteeNotificationChannelExists(channelInfo)
   }
 
   @CheckResult
@@ -90,7 +86,6 @@ protected constructor(
         .build()
   }
 
-  @RequiresApi(Build.VERSION_CODES.O)
   protected abstract fun onGuaranteeNotificationChannelExists(channelInfo: NotifyChannelInfo)
 
   @CheckResult

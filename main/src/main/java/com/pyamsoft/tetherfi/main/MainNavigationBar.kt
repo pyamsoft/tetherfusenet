@@ -17,15 +17,13 @@
 package com.pyamsoft.tetherfi.main
 
 import androidx.annotation.CheckResult
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SecondaryScrollableTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -35,11 +33,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import com.pyamsoft.pydroid.theme.keylines
 
 @Composable
 @CheckResult
-fun rememberAllTabs(): List<MainView> {
+fun rememberAllDestinations(): List<MainView> {
   return remember { MainView.entries.toMutableStateList() }
 }
 
@@ -47,28 +44,17 @@ fun rememberAllTabs(): List<MainView> {
 fun MainNavigationBar(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
-    allTabs: List<MainView>,
-    onTabChanged: (MainView) -> Unit,
+    allDestinations: List<MainView>,
+    onDestinationChanged: (MainView) -> Unit,
 ) {
   val currentPage = pagerState.currentPage
-  SecondaryScrollableTabRow(
+  BottomAppBar(
       modifier = modifier.fillMaxWidth(),
-      selectedTabIndex = currentPage,
       containerColor = Color.Transparent,
       contentColor = LocalContentColor.current,
-      indicator = {
-        TabRowDefaults.SecondaryIndicator(
-            modifier =
-                Modifier.tabIndicatorOffset(
-                    selectedTabIndex = currentPage,
-                ),
-            height = MaterialTheme.keylines.typography,
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
-      },
   ) {
-    for (index in allTabs.indices) {
-      val tab = allTabs[index]
+    for (index in allDestinations.indices) {
+      val tab = allDestinations[index]
       val isSelected =
           remember(
               index,
@@ -77,53 +63,47 @@ fun MainNavigationBar(
             index == currentPage
           }
 
-      MainTab(
-          tab = tab,
+      MainDestination(
+          destination = tab,
           isSelected = isSelected,
-          onSelected = { onTabChanged(tab) },
+          onSelected = { onDestinationChanged(tab) },
       )
     }
   }
 }
 
 @Composable
-private fun MainTab(
+private fun MainDestination(
     modifier: Modifier = Modifier,
-    tab: MainView,
+    destination: MainView,
     isSelected: Boolean,
     onSelected: () -> Unit,
 ) {
   val textStyle = LocalTextStyle.current
-  val tabName = stringResource(tab.displayNameRes)
+  val destinationName = stringResource(destination.displayNameRes)
 
-  Tab(
-      modifier = modifier,
-      selected = isSelected,
-      onClick = onSelected,
-      text = {
-        Text(
-            text = tabName,
-            style =
-                textStyle.copy(
-                    fontWeight = if (isSelected) FontWeight.W700 else null,
-                ),
-        )
-      },
+  Text(
+      modifier = modifier.clickable { onSelected() },
+      text = destinationName,
+      style =
+          textStyle.copy(
+              fontWeight = if (isSelected) FontWeight.W700 else null,
+          ),
   )
 }
 
 @Preview
 @Composable
 private fun PreviewMainNavigationBar() {
-  val allTabs = rememberAllTabs()
+  val allDestinations = rememberAllDestinations()
   MainNavigationBar(
       pagerState =
           rememberPagerState(
               initialPage = 0,
               initialPageOffsetFraction = 0F,
-              pageCount = { allTabs.size },
+              pageCount = { allDestinations.size },
           ),
-      allTabs = allTabs,
-      onTabChanged = {},
+      allDestinations = allDestinations,
+      onDestinationChanged = {},
   )
 }

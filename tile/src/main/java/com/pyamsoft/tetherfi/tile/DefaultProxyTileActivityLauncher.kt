@@ -132,7 +132,7 @@ internal constructor(
         )
       }
 
-      @RequiresApi(value = 34)
+      @RequiresApi(value = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
       override fun onLaunchTileActivity(service: TileService, action: ProxyTileAction) {
         val pendingIntent = createNewPendingIntent(action)
         service.startActivityAndCollapse(pendingIntent)

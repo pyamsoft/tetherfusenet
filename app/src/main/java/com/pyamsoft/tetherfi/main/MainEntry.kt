@@ -90,14 +90,14 @@ private fun RegisterPermissionRequests(
 private fun WatchTabSwipe(
     dispatchers: AppDispatchers,
     pagerState: PagerState,
-    allTabs: List<MainView>,
+    allDestinations: List<MainView>,
 ) {
   val hapticManager = LocalHapticManager.current
 
   // Watch for a swipe causing a page change and update accordingly
   LaunchedEffect(
       pagerState,
-      allTabs,
+      allDestinations,
       hapticManager,
   ) {
     // We don't need to remember and re-render off this, so it's fine here
@@ -107,7 +107,7 @@ private fun WatchTabSwipe(
 
     snapshotFlow { pagerState.targetPage }
         .distinctUntilChanged()
-        .mapNotNull { allTabs.getOrNull(it) }
+        .mapNotNull { allDestinations.getOrNull(it) }
         .collect { page ->
           Timber.d { "Page swiped: $page" }
           // Buzz only when we are caused by a Swipe
@@ -125,7 +125,7 @@ private fun MountHooks(
     dispatchers: AppDispatchers,
     viewModel: MainViewModeler,
     pagerState: PagerState,
-    allTabs: List<MainView>,
+    allDestinations: List<MainView>,
     permissionResponseBus: Flow<PermissionResponse>,
     onToggleProxy: CoroutineScope.() -> Unit,
     onShowInAppRating: () -> Unit,
@@ -137,7 +137,7 @@ private fun MountHooks(
   WatchTabSwipe(
       dispatchers = dispatchers,
       pagerState = pagerState,
-      allTabs = allTabs,
+      allDestinations = allDestinations,
   )
 
   // As early as possible because of Lifecycle quirks
@@ -165,7 +165,7 @@ private fun MountHooks(
 fun MainEntry(
     modifier: Modifier = Modifier,
     appName: String,
-    allTabs: List<MainView>,
+    allDestinations: List<MainView>,
     pagerState: PagerState,
 
     // Action
@@ -196,7 +196,7 @@ fun MainEntry(
     // Click fires the index to update
     // The index updating is caught by the snapshot flow
     // Which then triggers the page update function
-    val index = allTabs.indexOf(tab)
+    val index = allDestinations.indexOf(tab)
     scope.launch(context = dispatchers.main) { pagerState.animateScrollToPage(index) }
   }
 
@@ -204,7 +204,7 @@ fun MainEntry(
       viewModel = viewModel,
       permissionResponseBus = permissionResponseBus,
       pagerState = pagerState,
-      allTabs = allTabs,
+      allDestinations = allDestinations,
       dispatchers = dispatchers,
       onShowInAppRating = { handleShowInAppRating() },
       onToggleProxy = { viewModel.handleToggleProxy() },
@@ -215,8 +215,8 @@ fun MainEntry(
       appName = appName,
       state = viewModel,
       pagerState = pagerState,
-      allTabs = allTabs,
-      onTabChanged = { handleTabSelected(it) },
+      allDestinations = allDestinations,
+      onDestinationChanged = { handleTabSelected(it) },
       onShowQRCode = { viewModel.handleOpenDialog(MainViewDialogs.QR_CODE) },
       onRefreshConnection = { viewModel.handleRefreshConnectionInfo(scope) },
       onJumpToHowTo = { handleTabSelected(MainView.INFO) },

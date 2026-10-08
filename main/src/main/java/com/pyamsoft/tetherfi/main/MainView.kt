@@ -18,7 +18,9 @@ package com.pyamsoft.tetherfi.main
 
 import androidx.annotation.StringRes
 
-enum class MainView(@param:StringRes val displayNameRes: Int) {
+enum class MainView(
+    @param:StringRes val displayNameRes: Int,
+) {
   STATUS(R.string.main_tab_name_status),
   BEHAVIOR(R.string.main_tab_name_behavior),
   INFO(R.string.main_tab_name_info),
