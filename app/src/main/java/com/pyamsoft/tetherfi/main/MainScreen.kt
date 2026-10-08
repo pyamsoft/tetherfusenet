@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
@@ -95,16 +96,22 @@ fun MainScreen(
   Scaffold(
       modifier = modifier.fillMaxSize(),
       snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+      topBar = {
+        MainTopBar(
+            modifier = Modifier.fillMaxWidth(),
+            appName = appName,
+            pagerState = pagerState,
+            allTabs = allTabs,
+            onTabChanged = onTabChanged,
+        )
+      },
   ) { pv ->
-    Column {
-      MainTopBar(
-          modifier = Modifier.fillMaxWidth(),
-          appName = appName,
-          pagerState = pagerState,
-          allTabs = allTabs,
-          onTabChanged = onTabChanged,
-      )
-
+    Column(
+        modifier =
+            Modifier.padding(
+                top = remember(pv) { pv.calculateTopPadding() },
+            ),
+    ) {
       MainContent(
           modifier =
               Modifier.fillMaxWidth()
