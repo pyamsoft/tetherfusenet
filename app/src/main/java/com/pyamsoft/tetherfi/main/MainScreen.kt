@@ -114,7 +114,7 @@ fun MainScreen(
         modifier = Modifier.padding(paddingValues = pv),
     ) {
       MainContent(
-          modifier = Modifier.fillMaxWidth().weight(1F),
+          modifier = Modifier.fillMaxSize(),
           appName = appName,
           pagerState = pagerState,
           state = state,
