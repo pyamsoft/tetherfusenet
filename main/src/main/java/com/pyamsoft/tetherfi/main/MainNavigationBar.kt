@@ -18,7 +18,6 @@ package com.pyamsoft.tetherfi.main
 
 import androidx.annotation.CheckResult
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -110,12 +109,13 @@ private fun MainDestination(
     AnimatedVisibility(
         modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
         visible = isSelected,
-        enter = slideInHorizontally(),
     ) {
       Text(
           text = destinationName,
           style = MaterialTheme.typography.labelSmall,
           color = tint,
+          maxLines = 1,
+          softWrap = false,
       )
     }
   }
