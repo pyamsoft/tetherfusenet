@@ -17,22 +17,34 @@
 package com.pyamsoft.tetherfi.main
 
 import androidx.annotation.CheckResult
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import com.pyamsoft.pydroid.theme.keylines
+import com.pyamsoft.tetherfi.ui.surfaceAlpha
 
 @Composable
 @CheckResult
@@ -53,21 +65,27 @@ fun MainNavigationBar(
       containerColor = Color.Transparent,
       contentColor = LocalContentColor.current,
   ) {
-    for (index in allDestinations.indices) {
-      val tab = allDestinations[index]
-      val isSelected =
-          remember(
-              index,
-              currentPage,
-          ) {
-            index == currentPage
-          }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+      for (index in allDestinations.indices) {
+        val tab = allDestinations[index]
+        val isSelected =
+            remember(
+                index,
+                currentPage,
+            ) {
+              index == currentPage
+            }
 
-      MainDestination(
-          destination = tab,
-          isSelected = isSelected,
-          onSelected = { onDestinationChanged(tab) },
-      )
+        MainDestination(
+            destination = tab,
+            isSelected = isSelected,
+            onSelected = { onDestinationChanged(tab) },
+        )
+      }
     }
   }
 }
@@ -79,17 +97,35 @@ private fun MainDestination(
     isSelected: Boolean,
     onSelected: () -> Unit,
 ) {
-  val textStyle = LocalTextStyle.current
   val destinationName = stringResource(destination.displayNameRes)
+  val tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = surfaceAlpha(isSelected))
 
-  Text(
-      modifier = modifier.clickable { onSelected() },
-      text = destinationName,
-      style =
-          textStyle.copy(
-              fontWeight = if (isSelected) FontWeight.W700 else null,
-          ),
-  )
+  Column(
+      modifier =
+          modifier
+              .clip(MaterialTheme.shapes.small)
+              .clickable { onSelected() }
+              .padding(all = MaterialTheme.keylines.baseline),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.Center,
+  ) {
+    Icon(
+        contentDescription = destinationName,
+        painter = painterResource(destination.icon),
+        tint = tint,
+    )
+    AnimatedVisibility(
+        visible = isSelected,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+      Text(
+          text = destinationName,
+          style = MaterialTheme.typography.labelSmall,
+          color = tint,
+      )
+    }
+  }
 }
 
 @Preview
