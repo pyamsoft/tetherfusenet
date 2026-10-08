@@ -16,15 +16,19 @@
 
 package com.pyamsoft.tetherfi.main
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.pyamsoft.pydroid.theme.keylines
 
 @Composable
 fun MainBottomBar(
@@ -33,21 +37,28 @@ fun MainBottomBar(
     allTabs: List<MainView>,
     onTabChanged: (MainView) -> Unit,
 ) {
-  Surface(
-      modifier = modifier,
-      contentColor = MaterialTheme.colorScheme.onPrimary,
-      color = MaterialTheme.colorScheme.primary,
-      shape =
-          MaterialTheme.shapes.large.copy(
-              bottomStart = ZeroCornerSize,
-              bottomEnd = ZeroCornerSize,
+  Column(
+      modifier =
+          modifier.padding(
+              vertical = MaterialTheme.keylines.content,
+              horizontal = MaterialTheme.keylines.content * 2,
           ),
   ) {
-    MainNavigationBar(
-        modifier = Modifier.navigationBarsPadding(),
-        pagerState = pagerState,
-        allTabs = allTabs,
-        onTabChanged = onTabChanged,
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        color = MaterialTheme.colorScheme.primary,
+        shape = MaterialTheme.shapes.large,
+    ) {
+      MainNavigationBar(
+          pagerState = pagerState,
+          allTabs = allTabs,
+          onTabChanged = onTabChanged,
+      )
+    }
+
+    Spacer(
+        modifier = Modifier.padding(top = MaterialTheme.keylines.content).navigationBarsPadding(),
     )
   }
 }

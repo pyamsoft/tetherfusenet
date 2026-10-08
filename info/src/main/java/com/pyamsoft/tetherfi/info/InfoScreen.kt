@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.pyamsoft.pydroid.theme.keylines
+import com.pyamsoft.tetherfi.ui.BottomPadding
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
 import com.pyamsoft.tetherfi.ui.ServerViewState
 import com.pyamsoft.tetherfi.ui.renderLinks
@@ -94,9 +95,7 @@ fun InfoScreen(
     item(
         contentType = InfoContentTypes.BOTTOM_SPACER,
     ) {
-      Spacer(
-          modifier = Modifier.padding(top = MaterialTheme.keylines.content),
-      )
+      BottomPadding()
     }
   }
 }

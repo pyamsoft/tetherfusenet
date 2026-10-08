@@ -20,7 +20,6 @@ package com.pyamsoft.tetherfi.behavior
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -33,6 +32,7 @@ import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.tetherfi.behavior.sections.expert.renderExpertSettings
 import com.pyamsoft.tetherfi.behavior.sections.operating.renderOperatingSettings
 import com.pyamsoft.tetherfi.behavior.sections.tweaks.renderTweaks
+import com.pyamsoft.tetherfi.ui.BottomPadding
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
 import org.jetbrains.annotations.TestOnly
 
@@ -104,9 +104,7 @@ internal fun LazyListScope.renderLoadedContent(
   item(
       contentType = BehaviorLoadedContentTypes.BOTTOM_SPACER,
   ) {
-    Spacer(
-        modifier = Modifier.padding(top = MaterialTheme.keylines.content),
-    )
+    BottomPadding()
   }
 }
 

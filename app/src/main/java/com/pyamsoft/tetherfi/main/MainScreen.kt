@@ -18,7 +18,9 @@
 
 package com.pyamsoft.tetherfi.main
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -32,7 +34,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.ui.util.rememberAsStateList
@@ -101,17 +105,17 @@ fun MainScreen(
             appName = appName,
         )
       },
-      bottomBar = {
-        MainBottomBar(
-            modifier = Modifier.fillMaxWidth(),
-            pagerState = pagerState,
-            allTabs = allTabs,
-            onTabChanged = onTabChanged,
-        )
-      },
   ) { pv ->
-    Column(
-        modifier = Modifier.padding(paddingValues = pv),
+    val layoutDirection = LocalLayoutDirection.current
+    Box(
+        modifier =
+            Modifier.padding(
+                // Do NOT use bottom padding so that we can "full bleed" into the nav bar
+                top = remember(pv) { pv.calculateTopPadding() },
+                start = remember(pv, layoutDirection) { pv.calculateStartPadding(layoutDirection) },
+                end = remember(pv, layoutDirection) { pv.calculateEndPadding(layoutDirection) },
+            ),
+        contentAlignment = Alignment.Center,
     ) {
       MainContent(
           modifier = Modifier.fillMaxSize(),
@@ -134,6 +138,13 @@ fun MainScreen(
           onSocksEnabledChanged = onSocksEnabledChanged,
           onPortChanged = onPortChanged,
           onEnableChangeFailed = { setSnackbarError(it) },
+      )
+
+      MainBottomBar(
+          modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
+          pagerState = pagerState,
+          allTabs = allTabs,
+          onTabChanged = onTabChanged,
       )
     }
   }

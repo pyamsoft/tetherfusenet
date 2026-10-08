@@ -17,8 +17,6 @@
 package com.pyamsoft.tetherfi.connections
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -38,6 +36,7 @@ import com.pyamsoft.tetherfi.server.clients.ByteTransferReport
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.clients.TransferAmount
 import com.pyamsoft.tetherfi.server.clients.TransferUnit
+import com.pyamsoft.tetherfi.ui.BottomPadding
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
 import com.pyamsoft.tetherfi.ui.ServerViewState
 import com.pyamsoft.tetherfi.ui.renderLinks
@@ -112,9 +111,7 @@ fun ConnectionScreen(
     item(
         contentType = ConnectionScreenContentTypes.BOTTOM_SPACER,
     ) {
-      Spacer(
-          modifier = Modifier.padding(top = MaterialTheme.keylines.content),
-      )
+      BottomPadding()
     }
   }
 

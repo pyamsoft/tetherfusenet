@@ -34,6 +34,7 @@ import com.pyamsoft.pydroid.core.LintIgnoreLongMethod
 import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.pydroid.ui.defaults.TypographyDefaults
 import com.pyamsoft.tetherfi.core.AppDevEnvironment
+import com.pyamsoft.tetherfi.ui.BottomPadding
 
 private enum class SettingsContentTypes {
   DEBUG_YOLO_ERROR,
@@ -117,9 +118,7 @@ internal fun LazyListScope.renderExperiments(
   item(
       contentType = SettingsContentTypes.BOTTOM_SPACER,
   ) {
-    Spacer(
-        modifier = Modifier.padding(MaterialTheme.keylines.content),
-    )
+    BottomPadding()
   }
 }
 
