@@ -23,6 +23,11 @@ import androidx.compose.ui.platform.LocalContext
 import com.pyamsoft.pydroid.ui.settings.SettingsPage
 import com.pyamsoft.pydroid.util.isDebugMode
 import com.pyamsoft.tetherfi.core.AppDevEnvironment
+import com.pyamsoft.tetherfi.ui.BottomPadding
+
+private enum class SettingsItems {
+  EXTRA_BOTTOM_PADDING
+}
 
 @Composable
 fun SettingsScreen(
@@ -48,5 +53,10 @@ fun SettingsScreen(
           )
         }
       },
+    extraBottomContent = {
+      item(contentType = SettingsItems.EXTRA_BOTTOM_PADDING) {
+        BottomPadding()
+      }
+    }
   )
 }
