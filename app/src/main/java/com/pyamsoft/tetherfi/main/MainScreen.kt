@@ -18,6 +18,10 @@
 
 package com.pyamsoft.tetherfi.main
 
+import androidx.annotation.CheckResult
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -32,12 +36,20 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.ui.util.rememberAsStateList
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
@@ -46,8 +58,11 @@ import com.pyamsoft.tetherfi.server.network.PreferredNetwork
 import com.pyamsoft.tetherfi.server.status.RunningStatus
 import com.pyamsoft.tetherfi.service.prereq.HotspotStartBlocker
 import com.pyamsoft.tetherfi.ui.ServerPortTypes
+import kotlin.math.sign
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.TestOnly
+
+private val SCROLL_THRESHOLD = 48.dp
 
 @Composable
 fun MainScreen(
@@ -85,6 +100,14 @@ fun MainScreen(
   val (snackbarError, setSnackbarError) = remember { mutableStateOf<ServerPortTypes?>(null) }
   val snackbarHostState = remember { SnackbarHostState() }
 
+  val (isBottomBarVisible, setBottomBarVisible) = remember { mutableStateOf(true) }
+  val bottomBarScrollConnection = rememberBottomBarScrollConnection { setBottomBarVisible(it) }
+
+  // Whenever the page changes, make the bar visible again
+  LaunchedEffect(pagerState.currentPage) {
+    setBottomBarVisible(true)
+  }
+
   LaunchedEffect(snackbarError, snackbarHostState, setSnackbarError) {
     if (snackbarError != null) {
       snackbarHostState.showSnackbar(
@@ -110,11 +133,14 @@ fun MainScreen(
     Box(
         modifier =
             Modifier.padding(
-                // Do NOT use bottom padding so that we can "full bleed" into the nav bar
-                top = remember(pv) { pv.calculateTopPadding() },
-                start = remember(pv, layoutDirection) { pv.calculateStartPadding(layoutDirection) },
-                end = remember(pv, layoutDirection) { pv.calculateEndPadding(layoutDirection) },
-            ),
+                    // Do NOT use bottom padding so that we can "full bleed" into the nav bar
+                    top = remember(pv) { pv.calculateTopPadding() },
+                    start =
+                        remember(pv, layoutDirection) { pv.calculateStartPadding(layoutDirection) },
+                    end = remember(pv, layoutDirection) { pv.calculateEndPadding(layoutDirection) },
+                )
+                // Watch scrolling on this container
+                .nestedScroll(bottomBarScrollConnection),
         contentAlignment = Alignment.Center,
     ) {
       MainContent(
@@ -140,12 +166,65 @@ fun MainScreen(
           onEnableChangeFailed = { setSnackbarError(it) },
       )
 
-      MainBottomBar(
+      AnimatedVisibility(
           modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
-          pagerState = pagerState,
-          allTabs = allTabs,
-          onTabChanged = onTabChanged,
-      )
+          visible = isBottomBarVisible,
+          enter = slideInVertically { it },
+          exit = slideOutVertically { it },
+      ) {
+        MainBottomBar(
+            modifier = Modifier.fillMaxWidth(),
+            pagerState = pagerState,
+            allTabs = allTabs,
+            onTabChanged = onTabChanged,
+        )
+      }
+    }
+  }
+}
+
+@Composable
+@CheckResult
+private fun rememberBottomBarScrollConnection(
+    onVisibilityChanged: (visible: Boolean) -> Unit
+): NestedScrollConnection {
+  val handleVisibilityChanged by rememberUpdatedState(onVisibilityChanged)
+
+  val downThreshold = LocalDensity.current.run { SCROLL_THRESHOLD.toPx() }
+  val upThreshold = downThreshold * 2
+
+  return remember(
+      downThreshold,
+      upThreshold,
+  ) {
+    object : NestedScrollConnection {
+      private var accumulated = 0F
+
+      override fun onPostScroll(
+          consumed: Offset,
+          available: Offset,
+          source: NestedScrollSource,
+      ): Offset {
+        val delta = consumed.y
+        if (delta != 0F) {
+          if (delta.sign != accumulated.sign) {
+            accumulated = 0F
+          }
+          accumulated += delta
+
+          if (accumulated < -downThreshold) {
+            handleVisibilityChanged(false)
+            accumulated = 0F
+          } else if (accumulated > upThreshold) {
+            handleVisibilityChanged(true)
+            accumulated = 0F
+          }
+        }
+
+        // Always return Zero so that we do NOT consume any of the scroll,
+        // we just watch it
+        return Offset.Zero
+      }
     }
   }
 }

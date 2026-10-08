@@ -53,10 +53,10 @@ fun SettingsScreen(
           )
         }
       },
-    extraBottomContent = {
-      item(contentType = SettingsItems.EXTRA_BOTTOM_PADDING) {
-        BottomPadding()
-      }
-    }
+      extraBottomContent = {
+        item(contentType = SettingsItems.EXTRA_BOTTOM_PADDING) {
+          BottomPadding()
+        }
+      },
   )
 }
