@@ -38,11 +38,7 @@ fun MainBottomBar(
     onDestinationChanged: (MainView) -> Unit,
 ) {
   Column(
-      modifier =
-          modifier.padding(
-              vertical = MaterialTheme.keylines.content,
-              horizontal = MaterialTheme.keylines.content * 2,
-          ),
+      modifier = modifier.padding(all = MaterialTheme.keylines.content),
   ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),

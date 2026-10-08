@@ -18,19 +18,15 @@ package com.pyamsoft.tetherfi.main
 
 import androidx.annotation.CheckResult
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,7 +35,6 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,32 +55,26 @@ fun MainNavigationBar(
     onDestinationChanged: (MainView) -> Unit,
 ) {
   val currentPage = pagerState.currentPage
-  BottomAppBar(
+  Row(
       modifier = modifier.fillMaxWidth(),
-      containerColor = Color.Transparent,
-      contentColor = LocalContentColor.current,
+      horizontalArrangement = Arrangement.SpaceEvenly,
+      verticalAlignment = Alignment.CenterVertically,
   ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-      for (index in allDestinations.indices) {
-        val tab = allDestinations[index]
-        val isSelected =
-            remember(
-                index,
-                currentPage,
-            ) {
-              index == currentPage
-            }
+    for (index in allDestinations.indices) {
+      val tab = allDestinations[index]
+      val isSelected =
+          remember(
+              index,
+              currentPage,
+          ) {
+            index == currentPage
+          }
 
-        MainDestination(
-            destination = tab,
-            isSelected = isSelected,
-            onSelected = { onDestinationChanged(tab) },
-        )
-      }
+      MainDestination(
+          destination = tab,
+          isSelected = isSelected,
+          onSelected = { onDestinationChanged(tab) },
+      )
     }
   }
 }
@@ -100,14 +89,18 @@ private fun MainDestination(
   val destinationName = stringResource(destination.displayNameRes)
   val tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = surfaceAlpha(isSelected))
 
-  Column(
+  Row(
       modifier =
           modifier
+              .padding(
+                  vertical = MaterialTheme.keylines.baseline,
+                  horizontal = MaterialTheme.keylines.typography,
+              )
               .clip(MaterialTheme.shapes.small)
               .clickable { onSelected() }
-              .padding(all = MaterialTheme.keylines.baseline),
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.Center,
+              .padding(all = MaterialTheme.keylines.typography),
+      horizontalArrangement = Arrangement.Start,
+      verticalAlignment = Alignment.CenterVertically,
   ) {
     Icon(
         contentDescription = destinationName,
@@ -115,9 +108,9 @@ private fun MainDestination(
         tint = tint,
     )
     AnimatedVisibility(
+        modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
         visible = isSelected,
-        enter = fadeIn(),
-        exit = fadeOut(),
+        enter = slideInHorizontally(),
     ) {
       Text(
           text = destinationName,
