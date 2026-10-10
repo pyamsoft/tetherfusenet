@@ -18,13 +18,13 @@
   <string name="expert_title">Expert Settings</string>
   <string
     name="expert_description"
-  >This is for Advanced Users.\n\nAdjusting these options may completely change how %1$s performs, proceed at your own risk. Many users will NOT need to change these settings.</string>
+  >This is for Advanced Users.\n\nAdjusting these options may completely change how %1$s performs, proceed at your own risk.\n\nMany users will NOT need to change these settings.</string>
 
   <!-- TODO Need translations -->
   <string name="expert_socket_timeout_title">Socket Timeout</string>
   <string
     name="expert_socket_timeout_description"
-  >This is for Advanced Users.\n\nYou can adjust the timeout, which controls how long %1$s will wait for a connection before closing a socket. For most well behaving, modern websites on a decent connection, you should be fine with the default. If you notice connections are reporting frequent time outs, you should try increasing this value. If you notice high latency, you could try lowering the value</string>
+  >You can adjust the timeout, which controls how long %1$s will wait for a connection before closing a socket. If you notice connections are reporting frequent timeouts, you should try increasing this value. If you notice high latency, you could try lowering the value.\n\nFor usage with SSH or other remote sessions, you should use `No Timeout`</string>
   <string name="expert_socket_timeout_button">Adjust Socket Timeout</string>
 
   <string name="expert_timeout_yolo_title">No Timeout</string>
@@ -51,4 +51,10 @@
   <string
     name="expert_timeout_longwait_description"
   >Almost every website should work. If there are many connections, could massively increase latency and memory usage.</string>
+
+  <!-- TODO(Peter): Need zh-rTW translation -->
+  <string name="hold_wakelock_title">Use Wakelock</string>
+  <string
+    name="hold_wakelock_description"
+  >Using a wakelock will keep your CPU on and will keep processing fast. However, it will consume more battery.\n\nOn devices that use restrictive power-saving measures, this may not work, and you should try the Keep Screen On tweak, or enable Always Alive instead.</string>
 </resources>

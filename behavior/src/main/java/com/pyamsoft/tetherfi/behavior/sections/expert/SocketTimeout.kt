@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.tetherfi.behavior.R
+import com.pyamsoft.tetherfi.ui.surfaceAlpha
 import com.pyamsoft.tetherfi.ui.textAlpha
 
 @Composable
@@ -43,11 +44,11 @@ internal fun SocketTimeout(
     Text(
         text = stringResource(R.string.expert_socket_timeout_title),
         style =
-            MaterialTheme.typography.headlineSmall.copy(
+            MaterialTheme.typography.bodyLarge.copy(
                 fontWeight = FontWeight.W700,
                 color =
-                    MaterialTheme.colorScheme.primary.copy(
-                        alpha = textAlpha(isEditable),
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                        alpha = surfaceAlpha(isEditable),
                     ),
             ),
     )

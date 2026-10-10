@@ -23,15 +23,13 @@
   <string name="expert_broadcast_type_wifi_direct_title">Wi-Fi Direct</string>
   <string name="expert_broadcast_type_wifi_direct_description">
     Using Wi-Fi direct, create a mobile hotspot for multiple devices to connect to.
-    \n\nThis relies on your device\'s ability to successfully use Wi-Fi Direct, which may not be supported on
-    all devices.
+    \n\nNot all devices are supported.
   </string>
 
   <string name="expert_broadcast_type_rndis_title">USB Tethering</string>
   <string name="expert_broadcast_type_rndis_description">
-    Using USB Tethering (RNDIS), create a connection for a single device via USB cable.
-    \n\nThis relies on your device\'s ability to successfully use USB Tethering, which may not be supported on
-    all devices.
+    Using USB Tethering, create a connection for a single device via USB cable.
+    \n\nNot all devices are supported.
   </string>
 
   <string name="expert_preferred_network_title">Preferred Network</string>

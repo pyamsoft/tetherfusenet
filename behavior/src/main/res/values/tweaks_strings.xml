@@ -40,10 +40,4 @@
         KNOW your device does NOT need Location to use Wi-Fi Direct, turn this
         option on to avoid the blocking dialog.
         \n\nPermission for Location/Nearby Devices will still be required for Wi-Fi Direct.</string>
-
-  <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="hold_wakelock_title">Use Wakelock</string>
-  <string
-    name="hold_wakelock_description"
-  >Using a wakelock will keep your CPU on and will keep processing fast. However, it will consume more battery. On devices that use restrictive power-saving measures, this may not work, and you should try the Keep Screen On tweak, or enable Always Alive instead.</string>
 </resources>

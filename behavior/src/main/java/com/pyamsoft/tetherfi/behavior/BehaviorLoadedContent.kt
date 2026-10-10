@@ -91,14 +91,15 @@ internal fun LazyListScope.renderLoadedContent(
       onToggleIgnoreLocation = onToggleIgnoreLocation,
       onToggleShutdownWithNoClients = onToggleShutdownWithNoClients,
       onToggleKeepScreenOn = onToggleKeepScreenOn,
-      onToggleWakeLock = onToggleWakeLock,
   )
 
   renderExpertSettings(
       itemModifier = itemModifier,
+      state = state,
       isEditable = isEditable,
       appName = appName,
       onShowSocketTimeout = onShowSocketTimeout,
+      onToggleWakeLock = onToggleWakeLock,
   )
 
   item(
