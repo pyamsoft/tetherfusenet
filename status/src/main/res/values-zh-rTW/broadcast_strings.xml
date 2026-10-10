@@ -16,12 +16,16 @@
   -->
 <resources>
   <string name="expert_broadcast_title">熱點類型</string>
-  <string
-    name="expert_broadcast_description"
-  >變更 %1$s 創建一個熱點連線的方式</string>
 
   <string name="expert_broadcast_type_wifi_direct_title">Wi-Fi Direct</string>
+  <string name="expert_broadcast_type_wifi_direct_description">
+    使用 Wi-Fi direct 創建一個可以讓多個裝置連接的行動熱點。
+  </string>
+
   <string name="expert_broadcast_type_rndis_title">USB 網路分享</string>
+  <string name="expert_broadcast_type_rndis_description">
+    使用 USB 網路分享 創建一個可以讓一台裝置透過 USB 傳輸線連接的連線。
+  </string>
 
   <string name="expert_preferred_network_title">偏好的網路</string>
   <string

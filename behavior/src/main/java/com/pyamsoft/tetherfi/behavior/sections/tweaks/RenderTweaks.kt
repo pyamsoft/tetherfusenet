@@ -90,7 +90,7 @@ internal fun LazyListScope.renderTweaks(
                     .padding(bottom = MaterialTheme.keylines.content),
             text = stringResource(R.string.tweaks_description, appName),
             style =
-                MaterialTheme.typography.bodyMedium.copy(
+                MaterialTheme.typography.bodySmall.copy(
                     color =
                         MaterialTheme.colorScheme.onSurfaceVariant.copy(
                             alpha = textAlpha(isEditable),

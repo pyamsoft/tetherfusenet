@@ -323,7 +323,7 @@ private fun EditProxyPort(
         modifier = Modifier.padding(horizontal = MaterialTheme.keylines.content),
         text = stringResource(descriptionRes),
         style =
-            MaterialTheme.typography.bodySmall.copy(
+            MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
     )

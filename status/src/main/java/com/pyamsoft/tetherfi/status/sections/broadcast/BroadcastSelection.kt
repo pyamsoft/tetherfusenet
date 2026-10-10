@@ -16,6 +16,7 @@
 
 package com.pyamsoft.tetherfi.status.sections.broadcast
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,13 +43,33 @@ import com.pyamsoft.tetherfi.ui.rememberCheckableIconColor
 import com.pyamsoft.tetherfi.ui.textAlpha
 
 @Composable
+internal inline fun <reified T : Any> BroadcastSelection(
+    modifier: Modifier = Modifier,
+    isEditable: Boolean,
+    currentSelection: T?,
+    allSelections: Collection<T>,
+    @StringRes title: Int,
+    crossinline onSelect: (T) -> Unit,
+    crossinline onResolveStrings: (T) -> Strings,
+) {
+  BroadcastSelection(
+      modifier = modifier,
+      isEditable = isEditable,
+      currentSelection = currentSelection,
+      allSelections = remember(allSelections) { allSelections.toTypedArray() },
+      title = title,
+      onSelect = { onSelect(it) },
+      onResolveStrings = { onResolveStrings(it) },
+  )
+}
+
+@Composable
 internal fun <T : Any> BroadcastSelection(
     modifier: Modifier = Modifier,
-    appName: String,
     isEditable: Boolean,
     currentSelection: T?,
     allSelections: Array<T>,
-    strings: Strings,
+    @StringRes title: Int,
     onSelect: (T) -> Unit,
     onResolveStrings: (T) -> Strings,
 ) {
@@ -57,25 +78,12 @@ internal fun <T : Any> BroadcastSelection(
   ) {
     Text(
         modifier = Modifier.padding(horizontal = MaterialTheme.keylines.content),
-        text = stringResource(strings.title),
+        text = stringResource(title),
         style =
             MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.W700,
                 color =
                     MaterialTheme.colorScheme.primary.copy(
-                        alpha = textAlpha(isEditable),
-                    ),
-            ),
-    )
-    Text(
-        modifier =
-            Modifier.padding(horizontal = MaterialTheme.keylines.content)
-                .padding(bottom = MaterialTheme.keylines.baseline),
-        text = stringResource(strings.description, appName),
-        style =
-            MaterialTheme.typography.bodySmall.copy(
-                color =
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(
                         alpha = textAlpha(isEditable),
                     ),
             ),
@@ -110,6 +118,7 @@ private fun <T : Any> Selectable(
 
   val strings = remember(selection) { handleResolveStrings(selection) }
   val title = stringResource(strings.title)
+  val description = stringResource(strings.description)
 
   val color by
       rememberCheckableColor(
@@ -156,19 +165,16 @@ private fun <T : Any> Selectable(
       )
     }
 
-    if (strings.description != 0) {
-      val description = stringResource(strings.description)
-      Text(
-          modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
-          text = description,
-          style =
-              MaterialTheme.typography.bodyMedium.copy(
-                  color =
-                      MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                          alpha = textAlpha(isEditable),
-                      ),
-              ),
-      )
-    }
+    Text(
+        modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
+        text = description,
+        style =
+            MaterialTheme.typography.bodySmall.copy(
+                color =
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                        alpha = textAlpha(isEditable),
+                    ),
+            ),
+    )
   }
 }

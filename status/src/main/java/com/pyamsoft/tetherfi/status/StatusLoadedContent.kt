@@ -149,7 +149,6 @@ internal fun LazyListScope.renderLoadedContent(
       PreferredNetworkSelection(
           modifier = Modifier.padding(vertical = MaterialTheme.keylines.content),
           serverViewState = serverViewState,
-          appName = appName,
           isEditable = isEditable,
           onSelectPreferredNetwork = onSelectPreferredNetwork,
       )
@@ -171,7 +170,6 @@ internal fun LazyListScope.renderLoadedContent(
       BroadcastTypeSelection(
           modifier = Modifier.padding(vertical = MaterialTheme.keylines.content),
           serverViewState = serverViewState,
-          appName = appName,
           isEditable = isEditable,
           onSelectBroadcastType = onSelectBroadcastType,
       )

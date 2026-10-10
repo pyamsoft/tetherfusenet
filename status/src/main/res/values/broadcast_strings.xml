@@ -16,20 +16,34 @@
   -->
 <resources>
   <string name="expert_broadcast_title">Hotspot Type</string>
-  <string
-    name="expert_broadcast_description"
-  >Change how %1$s creates a Hotspot connection</string>
 
   <string name="expert_broadcast_type_wifi_direct_title">Wi-Fi Direct</string>
+  <string name="expert_broadcast_type_wifi_direct_description">
+    Using Wi-Fi direct, create a mobile hotspot for multiple devices to connect to.
+  </string>
 
   <string name="expert_broadcast_type_rndis_title">USB Tethering</string>
+  <string name="expert_broadcast_type_rndis_description">
+    Using USB Tethering, create a connection for a single device via USB cable.
+  </string>
 
   <string name="expert_preferred_network_title">Preferred Network</string>
   <string
     name="expert_preferred_network_description"
-  >Change which network type %1$s uses for Hotspot communication</string>
+  >Change which connect type %1$s uses for Hotspot communication</string>
 
   <string name="expert_preferred_network_none_title">Active Network</string>
+  <string name="expert_preferred_network_none_description">
+    Connections to the Hotspot will go over the device\'s active connection.
+  </string>
+
   <string name="expert_preferred_network_wifi_title">Wi-Fi</string>
+  <string name="expert_preferred_network_wifi_description">
+    Connections to the Hotspot will go over Wi-Fi connection if available
+  </string>
+
   <string name="expert_preferred_network_cellular_title">Cellular Data</string>
+  <string name="expert_preferred_network_cellular_description">
+    Connections to the Hotspot will go over Cellular Data connection if available
+  </string>
 </resources>

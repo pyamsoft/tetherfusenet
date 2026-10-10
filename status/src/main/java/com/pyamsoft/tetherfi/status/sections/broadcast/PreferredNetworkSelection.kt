@@ -26,35 +26,28 @@ import com.pyamsoft.tetherfi.server.network.PreferredNetwork
 import com.pyamsoft.tetherfi.status.R
 import com.pyamsoft.tetherfi.ui.ServerViewState
 
-private val NETWORK_STRINGS =
-    Strings(
-        title = R.string.expert_preferred_network_title,
-        description = R.string.expert_preferred_network_description,
-    )
-
 private val NETWORK_NONE_STRINGS =
     Strings(
         title = R.string.expert_preferred_network_none_title,
-        description = 0,
+        description = R.string.expert_preferred_network_none_description,
     )
 
 private val NETWORK_WIFI_STRINGS =
     Strings(
         title = R.string.expert_preferred_network_wifi_title,
-        description = 0,
+        description = R.string.expert_preferred_network_wifi_description,
     )
 
 private val NETWORK_CELLULAR_STRINGS =
     Strings(
         title = R.string.expert_preferred_network_cellular_title,
-        description = 0,
+        description = R.string.expert_preferred_network_cellular_description,
     )
 
 @Composable
 internal fun PreferredNetworkSelection(
     modifier: Modifier = Modifier,
     serverViewState: ServerViewState,
-    appName: String,
     isEditable: Boolean,
     onSelectPreferredNetwork: (PreferredNetwork) -> Unit,
 ) {
@@ -71,12 +64,11 @@ internal fun PreferredNetworkSelection(
 
   BroadcastSelection(
       modifier = modifier,
-      appName = appName,
       isEditable = isEditable,
       onSelect = onSelectPreferredNetwork,
       currentSelection = currentPreferredNetwork,
       allSelections = allPreferredNetworks,
-      strings = NETWORK_STRINGS,
+      title = R.string.expert_preferred_network_title,
       onResolveStrings = { handleResolveStrings(it) },
   )
 }

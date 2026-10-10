@@ -26,29 +26,22 @@ import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.status.R
 import com.pyamsoft.tetherfi.ui.ServerViewState
 
-private val BROADCAST_STRINGS =
-    Strings(
-        title = R.string.expert_broadcast_title,
-        description = R.string.expert_broadcast_description,
-    )
-
 private val BROADCAST_WIFI_STRINGS =
     Strings(
         title = R.string.expert_broadcast_type_wifi_direct_title,
-        description = 0,
+        description = R.string.expert_broadcast_type_wifi_direct_description,
     )
 
 private val BROADCAST_RNDIS_STRINGS =
     Strings(
         title = R.string.expert_broadcast_type_rndis_title,
-        description = 0,
+        description = R.string.expert_broadcast_type_rndis_description,
     )
 
 @Composable
 internal fun BroadcastTypeSelection(
     modifier: Modifier = Modifier,
     serverViewState: ServerViewState,
-    appName: String,
     isEditable: Boolean,
     onSelectBroadcastType: (BroadcastType) -> Unit,
 ) {
@@ -64,12 +57,11 @@ internal fun BroadcastTypeSelection(
 
   BroadcastSelection(
       modifier = modifier,
-      appName = appName,
       isEditable = isEditable,
       onSelect = onSelectBroadcastType,
       currentSelection = currentBroadcastType,
       allSelections = allBroadcastTypes,
-      strings = BROADCAST_STRINGS,
+      title = R.string.expert_broadcast_title,
       onResolveStrings = { handleResolveStrings(it) },
   )
 }

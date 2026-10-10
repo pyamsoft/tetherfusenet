@@ -77,7 +77,7 @@ internal fun LazyListScope.renderExpertSettings(
           modifier = Modifier.padding(all = MaterialTheme.keylines.content),
           text = stringResource(R.string.expert_description, appName),
           style =
-              MaterialTheme.typography.bodyMedium.copy(
+              MaterialTheme.typography.bodySmall.copy(
                   color =
                       MaterialTheme.colorScheme.onSurfaceVariant.copy(
                           alpha = textAlpha(isEditable),
