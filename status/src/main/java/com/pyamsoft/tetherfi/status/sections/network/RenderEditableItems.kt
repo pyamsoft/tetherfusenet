@@ -145,7 +145,10 @@ internal fun LazyListScope.renderEditableItems(
     ) {
       Column {
         Text(
-            modifier = Modifier.padding(MaterialTheme.keylines.content),
+            modifier =
+                Modifier.padding(horizontal = MaterialTheme.keylines.content)
+                    .padding(top = MaterialTheme.keylines.content)
+                    .padding(bottom = MaterialTheme.keylines.baseline),
             text = stringResource(R.string.editmode_hotspot_proxy_mode_title),
             style =
                 MaterialTheme.typography.headlineSmall.copy(
@@ -290,36 +293,21 @@ private fun EditProxyPort(
   Column(
       modifier = modifier.padding(bottom = MaterialTheme.keylines.baseline),
   ) {
-    Text(
-        modifier = Modifier.padding(horizontal = MaterialTheme.keylines.content),
-        text = stringResource(titleRes),
-        style =
-            MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.W700,
-                color = MaterialTheme.colorScheme.primary,
-            ),
-    )
-    Text(
-        modifier =
-            Modifier.padding(
-                horizontal = MaterialTheme.keylines.content,
-                vertical = MaterialTheme.keylines.baseline,
-            ),
-        text = stringResource(descriptionRes),
-        style =
-            MaterialTheme.typography.bodyMedium.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
-    )
-
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-      Switch(
-          modifier =
-              Modifier.padding(
-                  horizontal = MaterialTheme.keylines.content,
+      Text(
+          modifier = Modifier.weight(1F).padding(start = MaterialTheme.keylines.content),
+          text = stringResource(titleRes),
+          style =
+              MaterialTheme.typography.bodyLarge.copy(
+                  fontWeight = FontWeight.W700,
+                  color = MaterialTheme.colorScheme.primary,
               ),
+      )
+
+      Switch(
+          modifier = Modifier.padding(horizontal = MaterialTheme.keylines.content),
           checked = isEnabled,
           onCheckedChange = {
             if (isOtherEnabled) {
@@ -330,6 +318,15 @@ private fun EditProxyPort(
           },
       )
     }
+
+    Text(
+        modifier = Modifier.padding(horizontal = MaterialTheme.keylines.content),
+        text = stringResource(descriptionRes),
+        style =
+            MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+    )
   }
 }
 

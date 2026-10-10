@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
   ~ Copyright 2026 pyamsoft
-  ~ Copyright 2026 林博仁(Buo-ren Lin)
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -22,16 +21,7 @@
   >變更 %1$s 創建一個熱點連線的方式</string>
 
   <string name="expert_broadcast_type_wifi_direct_title">Wi-Fi Direct</string>
-  <string name="expert_broadcast_type_wifi_direct_description">
-    使用 Wi-Fi direct 創建一個可以讓多個裝置連接的行動熱點。
-    \n\n這仰賴您裝置能夠成功使用 Wi-Fi Direct 的能力，並不是所有裝置都支援這個功能。
-  </string>
-
   <string name="expert_broadcast_type_rndis_title">USB 網路分享</string>
-  <string name="expert_broadcast_type_rndis_description">
-    使用 USB 網路分享(RNDIS) 創建一個可以讓一台裝置透過 USB 傳輸線連接的連線。
-    \n\n這仰賴您裝置能夠成功使用 USB 網路分享功能的能力，並不是所有裝置都支援這個功能。
-  </string>
 
   <string name="expert_preferred_network_title">偏好的網路</string>
   <string
@@ -39,17 +29,6 @@
   >變更 %1$s 用於熱點資料傳輸的連接類型</string>
 
   <string name="expert_preferred_network_none_title">當前作用中的網路</string>
-  <string name="expert_preferred_network_none_description">
-    通往熱點的連線會走裝置當前作用中的對外網路連線。
-  </string>
-
   <string name="expert_preferred_network_wifi_title">Wi-Fi</string>
-  <string name="expert_preferred_network_wifi_description">
-    通往熱點的連線會從 Wi-Fi 網路連線連出去（如果可用）
-  </string>
-
   <string name="expert_preferred_network_cellular_title">行動網路</string>
-  <string name="expert_preferred_network_cellular_description">
-    通往熱點的連線會從行動網路連線連出去（如果可用）
-  </string>
 </resources>

@@ -42,7 +42,7 @@ import com.pyamsoft.tetherfi.ui.rememberCheckableIconColor
 import com.pyamsoft.tetherfi.ui.textAlpha
 
 @Composable
-internal fun <T : Any> ExpertSelection(
+internal fun <T : Any> BroadcastSelection(
     modifier: Modifier = Modifier,
     appName: String,
     isEditable: Boolean,
@@ -68,10 +68,12 @@ internal fun <T : Any> ExpertSelection(
             ),
     )
     Text(
-        modifier = Modifier.padding(horizontal = MaterialTheme.keylines.content),
+        modifier =
+            Modifier.padding(horizontal = MaterialTheme.keylines.content)
+                .padding(bottom = MaterialTheme.keylines.baseline),
         text = stringResource(strings.description, appName),
         style =
-            MaterialTheme.typography.bodyMedium.copy(
+            MaterialTheme.typography.bodySmall.copy(
                 color =
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(
                         alpha = textAlpha(isEditable),
@@ -108,7 +110,6 @@ private fun <T : Any> Selectable(
 
   val strings = remember(selection) { handleResolveStrings(selection) }
   val title = stringResource(strings.title)
-  val description = stringResource(strings.description)
 
   val color by
       rememberCheckableColor(
@@ -125,13 +126,16 @@ private fun <T : Any> Selectable(
                 hapticManager?.toggleOn()
                 onClick(selection)
               }
-              .padding(MaterialTheme.keylines.content),
+              .padding(
+                  horizontal = MaterialTheme.keylines.content,
+                  vertical = MaterialTheme.keylines.typography,
+              ),
   ) {
     Row(
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
       Text(
-          modifier = Modifier.weight(1F).padding(bottom = MaterialTheme.keylines.baseline),
+          modifier = Modifier.weight(1F),
           text = title,
           style =
               MaterialTheme.typography.bodyLarge.copy(
@@ -152,15 +156,19 @@ private fun <T : Any> Selectable(
       )
     }
 
-    Text(
-        text = description,
-        style =
-            MaterialTheme.typography.bodyMedium.copy(
-                color =
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                        alpha = textAlpha(isEditable),
-                    ),
-            ),
-    )
+    if (strings.description != 0) {
+      val description = stringResource(strings.description)
+      Text(
+          modifier = Modifier.padding(top = MaterialTheme.keylines.baseline),
+          text = description,
+          style =
+              MaterialTheme.typography.bodyMedium.copy(
+                  color =
+                      MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                          alpha = textAlpha(isEditable),
+                      ),
+              ),
+      )
+    }
   }
 }

@@ -35,19 +35,19 @@ private val NETWORK_STRINGS =
 private val NETWORK_NONE_STRINGS =
     Strings(
         title = R.string.expert_preferred_network_none_title,
-        description = R.string.expert_preferred_network_none_description,
+        description = 0,
     )
 
 private val NETWORK_WIFI_STRINGS =
     Strings(
         title = R.string.expert_preferred_network_wifi_title,
-        description = R.string.expert_preferred_network_wifi_description,
+        description = 0,
     )
 
 private val NETWORK_CELLULAR_STRINGS =
     Strings(
         title = R.string.expert_preferred_network_cellular_title,
-        description = R.string.expert_preferred_network_cellular_description,
+        description = 0,
     )
 
 @Composable
@@ -69,7 +69,7 @@ internal fun PreferredNetworkSelection(
     }
   }
 
-  ExpertSelection(
+  BroadcastSelection(
       modifier = modifier,
       appName = appName,
       isEditable = isEditable,

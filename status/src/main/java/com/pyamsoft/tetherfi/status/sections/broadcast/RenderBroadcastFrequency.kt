@@ -192,10 +192,11 @@ private fun SelectableNetworkBand(
               .padding(top = MaterialTheme.keylines.content),
   ) {
     Row(
-        verticalAlignment = Alignment.Top,
+        modifier = Modifier.padding(bottom = MaterialTheme.keylines.baseline),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
       Text(
-          modifier = Modifier.weight(1F).padding(bottom = MaterialTheme.keylines.baseline),
+          modifier = Modifier.weight(1F),
           text = title,
           style =
               MaterialTheme.typography.bodyLarge.copy(
@@ -219,7 +220,7 @@ private fun SelectableNetworkBand(
     Text(
         text = description,
         style =
-            MaterialTheme.typography.bodyMedium.copy(
+            MaterialTheme.typography.bodySmall.copy(
                 color =
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(
                         alpha = textAlpha(isEditable),

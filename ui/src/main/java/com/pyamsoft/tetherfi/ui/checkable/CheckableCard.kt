@@ -128,7 +128,7 @@ private fun CheckableCard(
                 .padding(MaterialTheme.keylines.content),
     ) {
       Row(
-          verticalAlignment = Alignment.Top,
+          verticalAlignment = Alignment.CenterVertically,
       ) {
         Text(
             modifier = Modifier.weight(1F).padding(bottom = MaterialTheme.keylines.baseline),

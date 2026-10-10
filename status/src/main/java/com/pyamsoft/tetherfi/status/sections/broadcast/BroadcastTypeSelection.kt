@@ -35,13 +35,13 @@ private val BROADCAST_STRINGS =
 private val BROADCAST_WIFI_STRINGS =
     Strings(
         title = R.string.expert_broadcast_type_wifi_direct_title,
-        description = R.string.expert_broadcast_type_wifi_direct_description,
+        description = 0,
     )
 
 private val BROADCAST_RNDIS_STRINGS =
     Strings(
         title = R.string.expert_broadcast_type_rndis_title,
-        description = R.string.expert_broadcast_type_rndis_description,
+        description = 0,
     )
 
 @Composable
@@ -62,7 +62,7 @@ internal fun BroadcastTypeSelection(
     }
   }
 
-  ExpertSelection(
+  BroadcastSelection(
       modifier = modifier,
       appName = appName,
       isEditable = isEditable,
