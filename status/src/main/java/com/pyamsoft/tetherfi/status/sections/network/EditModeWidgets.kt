@@ -60,7 +60,6 @@ private fun EditPort(
 
   StatusEditor(
       modifier = modifier,
-      mode = StatusEditorMode.OUTLINED,
       title = stringResource(portLabelRes),
       value = portString,
       onChange = { newValue ->
@@ -202,7 +201,6 @@ internal fun EditPassword(
 
   StatusEditor(
       modifier = modifier,
-      mode = StatusEditorMode.STANDARD,
       enabled = canUseCustomConfig,
       title = stringResource(R.string.editmode_hotspot_password),
       value = hotspotPassword,
@@ -301,7 +299,6 @@ internal fun EditSsid(
 
   StatusEditor(
       modifier = modifier,
-      mode = StatusEditorMode.STANDARD,
       enabled = canUseCustomConfig,
       title = stringResource(R.string.editmode_hotspot_name),
       value = hotspotSsid,
