@@ -46,6 +46,7 @@ import com.pyamsoft.tetherfi.ui.icons.IconPainters
 
 private enum class ServerErrorDialogContentTypes {
   TITLE,
+  DESCRIPTION,
   EXTRA,
   TRACE,
 }
@@ -73,6 +74,7 @@ fun ServerErrorTile(onShowError: () -> Unit, content: IconButtonContent) {
 fun ServerErrorDialog(
     modifier: Modifier = Modifier,
     title: String,
+    description: String? = null,
     error: Throwable,
     onDismiss: () -> Unit,
 ) {
@@ -106,6 +108,16 @@ fun ServerErrorDialog(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
             )
+          }
+
+          if (description != null) {
+            item(contentType = ServerErrorDialogContentTypes.DESCRIPTION) {
+              Text(
+                  modifier = Modifier.padding(MaterialTheme.keylines.content),
+                  text = description,
+                  style = MaterialTheme.typography.bodyMedium,
+              )
+            }
           }
 
           if (error is RNDISInitializeException) {

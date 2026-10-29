@@ -16,6 +16,7 @@
 
 package com.pyamsoft.tetherfi.ui.trouble
 
+import androidx.annotation.CheckResult
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -26,7 +27,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +36,21 @@ import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.server.broadcast.rndis.RNDISInitializeException
 import com.pyamsoft.tetherfi.ui.R
 import org.jetbrains.annotations.TestOnly
+
+@Composable
+@CheckResult
+private fun resolveErrorType(
+    isBroadcastError: Boolean,
+    isProxyError: Boolean,
+): String {
+  return if (isBroadcastError && isProxyError) {
+    stringResource(R.string.trouble_err_type_both)
+  } else if (isProxyError) {
+    stringResource(R.string.trouble_err_type_proxy)
+  } else {
+    stringResource(R.string.trouble_err_type_broadcast)
+  }
+}
 
 @Composable
 fun TroubleshootUnableToStart(
@@ -48,24 +63,10 @@ fun TroubleshootUnableToStart(
 ) {
   val (showStackTrace, setShowStackTrace) = rememberSaveable { mutableStateOf(false) }
 
-  val context = LocalContext.current
-  val errType =
-      remember(
-          isBroadcastError,
-          isProxyError,
-          context,
-      ) {
-        if (isBroadcastError && isProxyError) {
-          context.getString(R.string.trouble_err_type_both)
-        } else if (isProxyError) {
-          context.getString(R.string.trouble_err_type_proxy)
-        } else {
-          context.getString(R.string.trouble_err_type_broadcast)
-        }
-      }
-
   val showTroubleshooting =
       remember(isBroadcastError, isProxyError) { isBroadcastError || isProxyError }
+
+  val errType = resolveErrorType(isBroadcastError, isProxyError)
 
   // TODO(Peter): Lazy column
   // TODO(Peter): Checkbox to show stacktrace

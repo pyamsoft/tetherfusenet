@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+@file:LintIgnoreTooManyFunctions
+
 package com.pyamsoft.tetherfi.server.proxy.session.netty.handler
 
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
+import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.pydroid.util.ifNotCancellation
 import com.pyamsoft.tetherfi.core.Timber

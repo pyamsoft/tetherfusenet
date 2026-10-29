@@ -29,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
-import com.pyamsoft.tetherfi.status.R
+import com.pyamsoft.tetherfi.ui.R as R2
 import com.pyamsoft.tetherfi.ui.dialog.ServerErrorTile
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
@@ -78,7 +78,7 @@ internal fun GroupErrorTile(
         renderIcon()
 
         Text(
-            text = stringResource(R.string.tile_broadcast_error),
+            text = stringResource(R2.string.hotspot_group_removed),
             style =
                 MaterialTheme.typography.bodySmall.copy(
                     color = color,

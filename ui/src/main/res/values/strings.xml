@@ -24,6 +24,18 @@
   <string name="something_went_wrong">Something went wrong</string>
   <string name="unknown_error">ERROR</string>
 
+  <!-- TODO(Peter): Need zh-rTW translation -->
+  <string
+    name="hotspot_initialization_error"
+  >Hotspot Initialization Error</string>
+
+  <!-- TODO(Peter): Need zh-rTW translation -->
+  <string name="hotspot_group_removed">Hotspot Removed</string>
+  <string name="hotspot_group_removed_title">Hotspot Removed by System</string>
+  <string
+    name="hotspot_group_removed_description"
+  >Your device removed the Hotspot because no device connected to it in time. Restart the Hotspot and connect your other device right away after starting.</string>
+
   <string name="hotspot_speed_what">Slow Hotspot Performance</string>
   <string name="hotspot_speed_sad">Experiencing %1$s?</string>
   <string-array name="hotspot_speed_items">

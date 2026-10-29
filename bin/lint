@@ -140,7 +140,7 @@ _run_detekt() {
     --jvm-target "$(_resolve_jvm_target_version)" \
     --fail-on-severity "Warning" \
     --parallel \
-    --excludes '**/node_modules/**,**/build/**,**/gradle/**' \
+    --excludes '**/node_modules/**,**/build/**,**/gradle/**,**/worktrees/**' \
     --input "${_inputs}"
   return 0
 }

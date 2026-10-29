@@ -127,7 +127,7 @@ internal constructor(
         when (notification.group) {
           is BroadcastNetworkStatus.GroupInfo.Unchanged -> "Hotspot preparing..."
           is BroadcastNetworkStatus.GroupInfo.Empty -> "Hotspot Group Unavailable. $openAppMessage"
-          is BroadcastNetworkStatus.GroupInfo.Error -> "Hotspot Group Error. $openAppMessage"
+          is BroadcastNetworkStatus.GroupInfo.Error -> "Hotspot removed by system. $openAppMessage"
           is BroadcastNetworkStatus.GroupInfo.Connected -> {
             // Wi-Fi direction connection info must be available
             when (notification.connection) {

@@ -61,9 +61,7 @@ interface BroadcastNetworkStatus : Server {
 
     data class Error
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    constructor(
-        val error: Throwable,
-    ) : GroupInfo
+    constructor(val error: Throwable) : GroupInfo
 
     @CheckResult
     fun update(onUpdate: (Connected) -> Connected): GroupInfo {

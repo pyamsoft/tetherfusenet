@@ -302,13 +302,17 @@ internal constructor(
     }
 
     // Regardless of what the system gives back, we "track" this time to avoid request spamming
+    // On some phones apparently, the system can just yolo kill the group?
+    // but only if you take ~10 seconds to connect to the hotspot? What kind of stupid idea is that.
+    // https://github.com/pyamsoft/tetherfusenet/issues/603
     val result = resolveCurrentGroupInfo(source)
     lastGroupRefreshTime = now
 
+    // Debug overriding so we can test the weird phone edge case
     if (allowDebugOverride) {
       val forcedDebugResult = handleGroupDebugEnvironment()
       if (forcedDebugResult != null) {
-        Timber.w { "Returning DEBUG result which overrides real: $result" }
+        Timber.w { "Returning DEBUG result which overrides real group : $result" }
         return forcedDebugResult
       }
     }
@@ -375,7 +379,7 @@ internal constructor(
     if (allowDebugOverride) {
       val forcedDebugResult = handleConnectionDebugEnvironment()
       if (forcedDebugResult != null) {
-        Timber.w { "Returning DEBUG result which overrides real: $result" }
+        Timber.w { "Returning DEBUG result which overrides real connection: $result" }
         return forcedDebugResult
       }
     }

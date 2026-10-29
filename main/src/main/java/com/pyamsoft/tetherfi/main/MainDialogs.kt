@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
@@ -39,9 +40,9 @@ import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.server.network.PreferredNetwork
 import com.pyamsoft.tetherfi.server.status.RunningStatus
 import com.pyamsoft.tetherfi.service.prereq.HotspotStartBlocker
+import com.pyamsoft.tetherfi.ui.R
 import com.pyamsoft.tetherfi.ui.dialog.ServerErrorDialog
 import com.pyamsoft.tetherfi.ui.trouble.TroubleshootDialog
-import kotlin.collections.emptySet
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
@@ -263,7 +264,8 @@ private fun GroupErrorDialog(
     AnimatedVisibility(visible = show) {
       ServerErrorDialog(
           modifier = modifier,
-          title = "Hotspot Initialization Error",
+          title = stringResource(R.string.hotspot_group_removed_title),
+          description = stringResource(R.string.hotspot_group_removed_description),
           error = groupError,
           onDismiss = onDismiss,
       )
