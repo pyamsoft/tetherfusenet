@@ -28,4 +28,7 @@ enum class HotspotStartBlocker(val required: Boolean) {
 
   /** TetherFuseNet MUST be allowed to use background data. It does NOT need to be whitelisted */
   BACKGROUND_DATA(required = false),
+
+  /** Wifi direct mode needs wifi */
+  WIFI(required = true),
 }

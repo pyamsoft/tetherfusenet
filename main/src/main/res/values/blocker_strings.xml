@@ -34,6 +34,15 @@
   >Please enable Location on your device, and then attempt to launch the Hotspot again. Alternatively, you can enable the \"%1$s\" tweak to test if %2$s works on your device without requiring Location to be on.</string>
   <string name="block_location_open_settings">Enable Location Services</string>
 
+  <string name="block_wifi_title">Wi-Fi is Off</string>
+  <string
+    name="block_wifi_description"
+  >%1$s cannot start the hotspot while Wi-Fi is turned off. Wi-Fi Direct is only available when Wi-Fi is on.</string>
+  <string
+    name="block_wifi_instruction"
+  >Please turn on Wi-Fi, and then attempt to launch the Hotspot again. You do not need to connect to a Wi-Fi network.</string>
+  <string name="block_wifi_open_settings">Turn on Wi-Fi</string>
+
   <string name="block_permission_title">Permission Request</string>
   <string
     name="block_permission_description"

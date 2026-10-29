@@ -17,11 +17,18 @@
 package com.pyamsoft.tetherfi.service.prereq
 
 import com.pyamsoft.pydroid.util.AppDispatchers
+import com.pyamsoft.tetherfi.server.ExpertPreferences
+import com.pyamsoft.tetherfi.server.ServerSocketTimeout
+import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
+import com.pyamsoft.tetherfi.server.network.PreferredNetwork
 import com.pyamsoft.tetherfi.server.prereq.background.BackgroundDataGuard
 import com.pyamsoft.tetherfi.server.prereq.location.LocationChecker
 import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuard
 import com.pyamsoft.tetherfi.server.prereq.vpn.VpnChecker
+import com.pyamsoft.tetherfi.server.prereq.wifi.WifiChecker
 import kotlin.test.assertEquals
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -43,18 +50,42 @@ private class FakeLocationChecker(private val locationOn: Boolean) : LocationChe
   override suspend fun isLocationOn(): Boolean = locationOn
 }
 
+private class FakeWifiChecker(private val wifiOn: Boolean) : WifiChecker {
+  override suspend fun isWifiOn(): Boolean = wifiOn
+}
+
+private class FakeExpertPreferences(private val broadcastType: BroadcastType) : ExpertPreferences {
+  override fun listenForSocketTimeout(): Flow<ServerSocketTimeout> =
+      MutableStateFlow(ServerSocketTimeout.Defaults.BALANCED)
+
+  override fun setSocketTimeout(limit: ServerSocketTimeout) = Unit
+
+  override fun listenForBroadcastType(): Flow<BroadcastType> = MutableStateFlow(broadcastType)
+
+  override fun setBroadcastType(type: BroadcastType) = Unit
+
+  override fun listenForPreferredNetwork(): Flow<PreferredNetwork> =
+      MutableStateFlow(PreferredNetwork.entries.first())
+
+  override fun setPreferredNetwork(network: PreferredNetwork) = Unit
+}
+
 private fun newRequirements(
     dispatchers: AppDispatchers,
     permissionGranted: Boolean = true,
     backgroundDataAllowed: Boolean = true,
     usingVpn: Boolean = false,
     locationOn: Boolean = true,
+    wifiOn: Boolean = true,
+    broadcastType: BroadcastType = BroadcastType.WIFI_DIRECT,
 ): AndroidHotspotRequirements =
     AndroidHotspotRequirements(
         backgroundDataGuard = FakeBackgroundDataGuard(backgroundDataAllowed),
         permissionGuard = FakePermissionGuard(permissionGranted),
         vpnChecker = FakeVpnChecker(usingVpn),
         locationChecker = FakeLocationChecker(locationOn),
+        wifiChecker = FakeWifiChecker(wifiOn),
+        expertPreferences = FakeExpertPreferences(broadcastType),
         dispatchers = dispatchers,
     )
 
@@ -120,6 +151,31 @@ class AndroidHotspotRequirementsTest {
   }
 
   @Test
+  fun `wifi disabled is reported as a blocker`() = runTest {
+    val blockers =
+        newRequirements(
+                wifiOn = false,
+                // TODO(Peter): Do we need test dispatchers?
+                dispatchers = AppDispatchers.create(),
+            )
+            .blockers()
+    assertEquals(setOf(HotspotStartBlocker.WIFI), blockers)
+  }
+
+  @Test
+  fun `wifi disabled is not a blocker in rndis mode`() = runTest {
+    val blockers =
+        newRequirements(
+                wifiOn = false,
+                broadcastType = BroadcastType.RNDIS,
+                // TODO(Peter): Do we need test dispatchers?
+                dispatchers = AppDispatchers.create(),
+            )
+            .blockers()
+    assertEquals(emptySet(), blockers)
+  }
+
+  @Test
   fun `all blockers reported when everything is blocked`() = runTest {
     val blockers =
         newRequirements(
@@ -127,6 +183,7 @@ class AndroidHotspotRequirementsTest {
                 backgroundDataAllowed = false,
                 usingVpn = true,
                 locationOn = false,
+                wifiOn = false,
                 // TODO(Peter): Do we need test dispatchers?
                 dispatchers = AppDispatchers.create(),
             )
@@ -138,6 +195,7 @@ class AndroidHotspotRequirementsTest {
             HotspotStartBlocker.BACKGROUND_DATA,
             HotspotStartBlocker.VPN,
             HotspotStartBlocker.LOCATION,
+            HotspotStartBlocker.WIFI,
         ),
         blockers,
     )

@@ -35,6 +35,7 @@ import com.pyamsoft.tetherfi.main.blockers.BackgroundDataBlocker
 import com.pyamsoft.tetherfi.main.blockers.LocationBlocker
 import com.pyamsoft.tetherfi.main.blockers.PermissionBlocker
 import com.pyamsoft.tetherfi.main.blockers.VpnBlocker
+import com.pyamsoft.tetherfi.main.blockers.WifiBlocker
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastNetworkStatus
 import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.server.network.PreferredNetwork
@@ -61,6 +62,9 @@ fun MainDialogs(
 
     // Background Data
     onOpenBackroundDataSettings: () -> Unit,
+
+    // Wi-Fi
+    onOpenWifiSettings: () -> Unit,
 
     // Errors
     onDismissSetupError: () -> Unit,
@@ -96,6 +100,7 @@ fun MainDialogs(
       onOpenLocationSettings = onOpenLocationSettings,
       onOpenPermissionSettings = onOpenPermissionSettings,
       onOpenBackroundDataSettings = onOpenBackroundDataSettings,
+      onOpenWifiSettings = onOpenWifiSettings,
   )
 
   AnimatedVisibility(visible = isShowingSetupError) {
@@ -192,6 +197,9 @@ private fun ShowBlockers(
 
     // Background Data
     onOpenBackroundDataSettings: () -> Unit,
+
+    // Wi-Fi
+    onOpenWifiSettings: () -> Unit,
 ) {
   val list =
       remember(requiredBlockers, skippableBlockers) {
@@ -229,6 +237,14 @@ private fun ShowBlockers(
             appName = appName,
             onDismiss = { onDismissBlocker(blocker) },
             onOpenBackgroundDataSettings = onOpenBackroundDataSettings,
+        )
+      }
+      HotspotStartBlocker.WIFI -> {
+        WifiBlocker(
+            modifier = modifier,
+            appName = appName,
+            onDismiss = { onDismissBlocker(blocker) },
+            onOpenWifiSettings = onOpenWifiSettings,
         )
       }
     }
@@ -352,6 +368,7 @@ private fun PreviewMainDialogs(blockers: Collection<HotspotStartBlocker>) {
       onOpenLocationSettings = {},
       onOpenPermissionSettings = {},
       onOpenBackroundDataSettings = {},
+      onOpenWifiSettings = {},
   )
 }
 
@@ -383,6 +400,12 @@ private fun PreviewMainDialogsBlockVPN() {
 @Composable
 private fun PreviewMainDialogsBlockLocation() {
   PreviewMainDialogs(blockers = setOf(HotspotStartBlocker.LOCATION))
+}
+
+@Preview
+@Composable
+private fun PreviewMainDialogsBlockWifi() {
+  PreviewMainDialogs(blockers = setOf(HotspotStartBlocker.WIFI))
 }
 
 @Preview

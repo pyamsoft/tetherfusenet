@@ -45,6 +45,8 @@ import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuard
 import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuardImpl
 import com.pyamsoft.tetherfi.server.prereq.vpn.AndroidVpnChecker
 import com.pyamsoft.tetherfi.server.prereq.vpn.VpnChecker
+import com.pyamsoft.tetherfi.server.prereq.wifi.AndroidWifiChecker
+import com.pyamsoft.tetherfi.server.prereq.wifi.WifiChecker
 import com.pyamsoft.tetherfi.server.proxy.AndroidSocketTagger
 import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.proxy.SocketTagger
@@ -84,6 +86,8 @@ abstract class ServerAppModule {
   @Binds
   @CheckResult
   internal abstract fun bindLocationChecker(impl: AndroidLocationChecker): LocationChecker
+
+  @Binds @CheckResult internal abstract fun bindWifiChecker(impl: AndroidWifiChecker): WifiChecker
 
   // OS level
   @Binds

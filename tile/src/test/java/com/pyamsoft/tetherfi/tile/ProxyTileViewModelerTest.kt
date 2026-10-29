@@ -288,6 +288,8 @@ class ProxyTileViewModelerTest {
     blockerTest(HotspotStartBlocker.VPN, "vpn")
   }
 
+  @Test fun `Wifi off blocker`() = runTest { blockerTest(HotspotStartBlocker.WIFI, "wi-fi is off") }
+
   @Test
   fun `handleDismissed hides the tile`() {
     val state = MutableProxyTileViewState()

@@ -255,6 +255,7 @@ fun MainEntry(
       onOpenBackroundDataSettings = {
         onLaunchIntent(Settings.ACTION_IGNORE_BACKGROUND_DATA_RESTRICTIONS_SETTINGS)
       },
+      onOpenWifiSettings = { onLaunchIntent(Settings.ACTION_WIFI_SETTINGS) },
   )
 
   val isShowingQRCodeDialog by viewModel.isShowingQRCodeDialog.collectAsStateWithLifecycle()

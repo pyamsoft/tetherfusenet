@@ -17,11 +17,15 @@
 package com.pyamsoft.tetherfi.service.prereq
 
 import com.pyamsoft.pydroid.util.AppDispatchers
+import com.pyamsoft.tetherfi.server.ExpertPreferences
+import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.server.prereq.background.BackgroundDataGuard
 import com.pyamsoft.tetherfi.server.prereq.location.LocationChecker
 import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuard
 import com.pyamsoft.tetherfi.server.prereq.vpn.VpnChecker
+import com.pyamsoft.tetherfi.server.prereq.wifi.WifiChecker
 import javax.inject.Inject
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 internal class AndroidHotspotRequirements
@@ -31,6 +35,8 @@ internal constructor(
     private val permissionGuard: PermissionGuard,
     private val vpnChecker: VpnChecker,
     private val locationChecker: LocationChecker,
+    private val wifiChecker: WifiChecker,
+    private val expertPreferences: ExpertPreferences,
     private val dispatchers: AppDispatchers,
 ) : HotspotRequirements {
 
@@ -52,6 +58,13 @@ internal constructor(
 
         if (!locationChecker.isLocationOn()) {
           blockers.add(HotspotStartBlocker.LOCATION)
+        }
+
+        val broadcastType = expertPreferences.listenForBroadcastType().first()
+        if (broadcastType == BroadcastType.WIFI_DIRECT) {
+          if (!wifiChecker.isWifiOn()) {
+            blockers.add(HotspotStartBlocker.WIFI)
+          }
         }
 
         return@withContext blockers

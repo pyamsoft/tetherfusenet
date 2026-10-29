@@ -96,6 +96,14 @@ internal constructor(
             )
       }
 
+      if (blockers.contains(HotspotStartBlocker.WIFI)) {
+        Timber.w { "Cannot launch Proxy until Wi-Fi is on" }
+        state.status.value =
+            RunningStatus.HotspotError(
+                IllegalStateException("Wi-Fi is off, turn on Wi-Fi to start Hotspot"),
+            )
+      }
+
       return
     }
 
