@@ -24,6 +24,7 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.netty.TestSetup
 import com.pyamsoft.tetherfi.server.runBlockingWithDelays
 import java.io.DataInputStream
+import java.net.BindException
 import java.net.ConnectException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -137,6 +138,17 @@ class Socks5UdpAssociateTest {
     return Association(control = control, relay = InetSocketAddress(bindAddr, bindPort))
   }
 
+  private suspend fun awaitRelayClosed(relay: InetSocketAddress) {
+    while (true) {
+      try {
+        DatagramSocket(InetSocketAddress(relay.port)).close()
+        return
+      } catch (_: BindException) {
+        delay(10.milliseconds)
+      }
+    }
+  }
+
   @CheckResult
   private fun header(destination: InetSocketAddress): ByteArray {
     return ByteBuffer.allocate(10)
@@ -212,8 +224,7 @@ class Socks5UdpAssociateTest {
           val association = associate(control)
           association.close()
 
-          // Teardown travels relay close -> control close asynchronously
-          delay(500.milliseconds)
+          awaitRelayClosed(association.relay)
 
           client.sendTo(association.relay, header(echo.address) + byteArrayOf(1))
           assertFailsWith<SocketTimeoutException> { client.receiveBytes() }

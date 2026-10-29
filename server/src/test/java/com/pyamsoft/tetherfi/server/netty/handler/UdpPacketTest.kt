@@ -41,12 +41,11 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import org.junit.Test
 
 class UdpPacketTest {
@@ -118,12 +117,13 @@ class UdpPacketTest {
   private fun Harness.unwrap(
       scope: CoroutineScope,
       msg: DatagramPacket,
+      dispatchers: AppDispatchers = AppDispatchers.create(),
   ): CompletableDeferred<Outcome> {
     val outcome = CompletableDeferred<Outcome>()
     UDP.unwrap(
         channelId = "TEST",
         scope = scope,
-        dispatchers = AppDispatchers.create(),
+        dispatchers = dispatchers,
         ctx = ctx,
         msg = msg,
         onError = { failed: ReferenceCounted ->
@@ -141,15 +141,12 @@ class UdpPacketTest {
     return outcome
   }
 
-  private suspend fun awaitReleased(buf: ByteBuf) {
-    var count = 0
-    while (buf.refCnt() > 0) {
-      ++count
-      delay(10.milliseconds)
-
-      assert(count < MAX_WAIT_COUNT) { "Waited for too long for buffer release!" }
-    }
-  }
+  private val inlineDispatchers =
+      object : AppDispatchers {
+        override val default = Dispatchers.Unconfined
+        override val main = Dispatchers.Unconfined
+        override val io = Dispatchers.Unconfined
+      }
 
   private fun assertDropped(vararg bytes: Int) = withHarness { h ->
     val msg = packet(*bytes)
@@ -237,9 +234,9 @@ class UdpPacketTest {
     val content = msg.content()
 
     val dead = CoroutineScope(SupervisorJob()).apply { cancel() }
-    val outcome = h.unwrap(scope = dead, msg)
+    val outcome = h.unwrap(scope = dead, msg, dispatchers = inlineDispatchers)
 
-    awaitReleased(content)
+    assertEquals(0, content.refCnt())
     assertFalse(outcome.isCompleted)
   }
 
@@ -250,14 +247,13 @@ class UdpPacketTest {
 
     h.channel.close().sync()
     h.eventLoop.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).sync()
-    val outcome = h.unwrap(scope = this, msg)
+    val outcome = h.unwrap(scope = this, msg, dispatchers = inlineDispatchers)
 
-    awaitReleased(content)
+    assertEquals(0, content.refCnt())
     assertFalse(outcome.isCompleted)
   }
 
   companion object {
-    private const val MAX_WAIT_COUNT = 10
     private const val PROXY_HOST = "127.0.0.1"
   }
 }
