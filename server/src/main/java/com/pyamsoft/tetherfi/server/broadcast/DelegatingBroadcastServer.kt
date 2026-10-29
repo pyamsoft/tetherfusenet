@@ -477,7 +477,7 @@ internal constructor(
             Timber.d { "Network update Connection=$connectionInfo" }
             connectionInfoChannel.value = connectionInfo
           } else {
-            Timber.w { "Network update connection not accepted: $groupInfo" }
+            Timber.w { "Network update connection not accepted: $connectionInfo" }
           }
         }
 
