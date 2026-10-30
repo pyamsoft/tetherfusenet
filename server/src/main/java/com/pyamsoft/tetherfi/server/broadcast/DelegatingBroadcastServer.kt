@@ -396,17 +396,6 @@ internal constructor(
     )
   }
 
-  private enum class NetworkUpdateStrategy {
-    /** Artificially limit the frequency that the system can fire requests to WiFi direct */
-    DEBOUNCE_FAST_REQUESTS,
-
-    /** The response from the Wifi direct system will only be accepted if everything is CONNECTED */
-    UPDATE_ONLY_IF_ALL_CONNECTED,
-
-    /** Force a check for the latest information */
-    FORCE_CHECK_LATEST,
-  }
-
   /**
    * Attempt to update network info for Group and Connection
    *
@@ -553,26 +542,41 @@ internal constructor(
     return groupInfoChannel
   }
 
-  override suspend fun withLockStartBroadcast(
-      updateNetworkInfo: suspend (ServerDataType) -> UpdateResult
-  ): ServerDataType {
-    return resolveImplementation().withLockStartBroadcast(updateNetworkInfo)
-  }
-
+  /**
+   * Resolve connection information for what IP to connect to
+   */
   override suspend fun resolveCurrentConnectionInfo(
       source: ServerDataType
   ): BroadcastNetworkStatus.ConnectionInfo {
     return resolveImplementation().resolveCurrentConnectionInfo(source)
   }
 
+  /**
+   * Resolve the current broadcast network information
+   */
   override suspend fun resolveCurrentGroupInfo(source: ServerDataType): BroadcastNetworkStatus.GroupInfo {
     return resolveImplementation().resolveCurrentGroupInfo(source)
   }
 
+  /**
+   * Lock is claimed: Start the broadcast
+   */
+  override suspend fun withLockStartBroadcast(
+    updateNetworkInfo: suspend (ServerDataType) -> UpdateResult
+  ): ServerDataType {
+    return resolveImplementation().withLockStartBroadcast(updateNetworkInfo)
+  }
+
+  /**
+   * Lock is claimed: Stop broadcasting
+   */
   override suspend fun withLockStopBroadcast(source: ServerDataType) {
     return resolveImplementation().withLockStopBroadcast(source)
   }
 
+  /**
+   * Network has started, launch the proxy
+   */
   override fun onNetworkStarted(
       scope: CoroutineScope,
       lock: Locker.Lock,
@@ -593,6 +597,17 @@ internal constructor(
           connectionStatus = connectionStatus,
       )
     }
+  }
+
+  private enum class NetworkUpdateStrategy {
+    /** Artificially limit the frequency that the system can fire requests to WiFi direct */
+    DEBOUNCE_FAST_REQUESTS,
+
+    /** The response from the Wifi direct system will only be accepted if everything is CONNECTED */
+    UPDATE_ONLY_IF_ALL_CONNECTED,
+
+    /** Force a check for the latest information */
+    FORCE_CHECK_LATEST,
   }
 
   companion object {
