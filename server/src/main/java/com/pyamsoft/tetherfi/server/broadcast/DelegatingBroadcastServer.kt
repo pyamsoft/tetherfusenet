@@ -39,11 +39,6 @@ import com.pyamsoft.tetherfi.server.lock.Locker
 import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuard
 import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.status.RunningStatus
-import java.time.Clock
-import java.time.LocalDateTime
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -57,6 +52,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.time.Clock
+import java.time.LocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 typealias ServerDataType = Any
 
@@ -485,7 +485,7 @@ internal constructor(
       }
 
   @CheckResult
-  private suspend fun resolveImplementation(): BroadcastServerImplementation<Any> {
+  private suspend fun resolveImplementation(): BroadcastServerImplementation<ServerDataType> {
     val broadcastType = expertPreferences.listenForBroadcastType().first()
     val impl: ServerDataType =
         when (broadcastType) {
@@ -493,7 +493,7 @@ internal constructor(
           BroadcastType.RNDIS -> rndisImplementation
         }
 
-    return impl.cast<BroadcastServerImplementation<Any>>().requireNotNull()
+    return impl.cast<BroadcastServerImplementation<ServerDataType>>().requireNotNull()
   }
 
   override suspend fun updateNetworkInfo() =
@@ -554,22 +554,22 @@ internal constructor(
   }
 
   override suspend fun withLockStartBroadcast(
-      updateNetworkInfo: suspend (Any) -> UpdateResult
-  ): Any {
+      updateNetworkInfo: suspend (ServerDataType) -> UpdateResult
+  ): ServerDataType {
     return resolveImplementation().withLockStartBroadcast(updateNetworkInfo)
   }
 
   override suspend fun resolveCurrentConnectionInfo(
-      source: Any
+      source: ServerDataType
   ): BroadcastNetworkStatus.ConnectionInfo {
     return resolveImplementation().resolveCurrentConnectionInfo(source)
   }
 
-  override suspend fun resolveCurrentGroupInfo(source: Any): BroadcastNetworkStatus.GroupInfo {
+  override suspend fun resolveCurrentGroupInfo(source: ServerDataType): BroadcastNetworkStatus.GroupInfo {
     return resolveImplementation().resolveCurrentGroupInfo(source)
   }
 
-  override suspend fun withLockStopBroadcast(source: Any) {
+  override suspend fun withLockStopBroadcast(source: ServerDataType) {
     return resolveImplementation().withLockStopBroadcast(source)
   }
 
