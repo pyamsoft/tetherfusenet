@@ -21,7 +21,7 @@ timber = "5.0.1"
 
 qrCode = "4.5.0"
 dagger = "2.60.1"
-netty = "4.2.19.Final"
+netty = "4.2.20.Final"
 # Silence SLF4J logging warnings
 slf4j = "2.0.20"
 
@@ -44,8 +44,8 @@ ksp = "2.3.13"
 coil = "3.6.3"
 
 # Developer Tools
-ktfmt = "0.64"
-spotless = "8.10.4"
+ktfmt = "0.65"
+spotless = "8.11.0"
 jdkDesugar = "2.1.5"
 caupain = "1.10.1"
 detekt = "2.0.0-alpha.6"
