@@ -274,7 +274,7 @@ class ProxyTileViewModelerTest {
             .contains(
                 message,
                 ignoreCase = true,
-            )
+            ),
     )
     val stopped = shadowOf(RuntimeEnvironment.getApplication()).nextStoppedService
     assertEquals(TestForegroundService::class.java.name, stopped?.component?.className)

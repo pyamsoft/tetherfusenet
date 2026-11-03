@@ -322,7 +322,7 @@ internal constructor(
 
   @LintIgnoreThrowsCount
   override suspend fun withLockStartBroadcast(
-      updateNetworkInfo: suspend (Channel) -> DelegatingBroadcastServer.UpdateResult
+      updateNetworkInfo: suspend (Channel) -> DelegatingBroadcastServer.UpdateResult,
   ): Channel {
     enforcer.assertOffMainThread()
 
@@ -413,7 +413,7 @@ internal constructor(
   }
 
   override suspend fun resolveCurrentConnectionInfo(
-      source: Channel
+      source: Channel,
   ): BroadcastNetworkStatus.ConnectionInfo {
     enforcer.assertOffMainThread()
 

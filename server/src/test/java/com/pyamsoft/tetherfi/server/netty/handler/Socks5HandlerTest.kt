@@ -43,7 +43,7 @@ class Socks5HandlerTest {
 
   @CheckResult
   private fun CoroutineScope.socks5HandlerFactory(
-      factoryParams: TestSetup.FactoryParams
+      factoryParams: TestSetup.FactoryParams,
   ): ChannelInboundHandler {
     val factory =
         Socks5ProxyHandler.factory(

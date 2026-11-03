@@ -37,7 +37,7 @@ import com.pyamsoft.tetherfi.server.broadcast.BroadcastType
 import com.pyamsoft.tetherfi.ui.dialog.CardDialog
 
 private enum class TroubleshootDialogContentTypes {
-  STEPS
+  STEPS,
 }
 
 @Composable

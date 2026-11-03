@@ -76,7 +76,7 @@ internal constructor(
                 RNDISCandidate(
                     name = name,
                     hostNames = hostNames,
-                )
+                ),
             )
           }
         }
@@ -101,14 +101,14 @@ internal constructor(
       }
 
   override suspend fun withLockStartBroadcast(
-      updateNetworkInfo: suspend (String) -> DelegatingBroadcastServer.UpdateResult
+      updateNetworkInfo: suspend (String) -> DelegatingBroadcastServer.UpdateResult,
   ): String {
     return resolveRNDISNetwork()
   }
 
   @SuppressLint("VisibleForTests")
   override suspend fun resolveCurrentConnectionInfo(
-      source: String
+      source: String,
   ): BroadcastNetworkStatus.ConnectionInfo {
     return BroadcastNetworkStatus.ConnectionInfo.Connected(
         hostName = source,

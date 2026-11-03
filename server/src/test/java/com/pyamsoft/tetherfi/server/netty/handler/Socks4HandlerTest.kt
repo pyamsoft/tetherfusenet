@@ -38,7 +38,7 @@ class Socks4HandlerTest {
 
   @CheckResult
   private fun CoroutineScope.socks4HandlerFactory(
-      factory: TestSetup.FactoryParams
+      factory: TestSetup.FactoryParams,
   ): ChannelInboundHandler {
     val factory =
         Socks4ProxyHandler.factory(

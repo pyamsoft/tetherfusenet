@@ -42,7 +42,7 @@ import com.pyamsoft.pydroid.ui.uri.rememberUriHandler
 import com.pyamsoft.tetherfi.core.GITHUB_URL
 
 private enum class LinkContentTypes {
-  FAQ_LINK
+  FAQ_LINK,
 }
 
 @LintIgnoreLongMethod

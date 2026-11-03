@@ -27,13 +27,13 @@ abstract class CoreAppModule {
   // TODO(Peter): Move into slim shared module
   @Binds
   internal abstract fun bindErrorLauncher(
-      impl: NotificationErrorLauncherImpl
+      impl: NotificationErrorLauncherImpl,
   ): NotificationErrorLauncher
 
   @Binds internal abstract fun bindFeatureFlags(impl: AppFeatureFlags): FeatureFlags
 
   @Binds
   internal abstract fun bindExperimentalRuntimeFlags(
-      impl: AppDevEnvironment
+      impl: AppDevEnvironment,
   ): ExperimentalRuntimeFlags
 }

@@ -97,7 +97,7 @@ protected constructor(
 
     val serverScope =
         CoroutineScope(
-            context = SupervisorJob() + dispatchers.io + CoroutineName(this::class.java.name)
+            context = SupervisorJob() + dispatchers.io + CoroutineName(this::class.java.name),
         )
 
     val bootstrap =
@@ -112,7 +112,7 @@ protected constructor(
                   override fun initChannel(ch: SocketChannel) {
                     channelInitialized(serverScope, ch)
                   }
-                }
+                },
             )
 
     // Tag the server socket

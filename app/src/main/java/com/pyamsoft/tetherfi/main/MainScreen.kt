@@ -192,7 +192,7 @@ fun MainScreen(
 @Composable
 @CheckResult
 private fun rememberBottomBarScrollConnection(
-    onVisibilityChanged: (visible: Boolean) -> Unit
+    onVisibilityChanged: (visible: Boolean) -> Unit,
 ): NestedScrollConnection {
   val handleVisibilityChanged by rememberUpdatedState(onVisibilityChanged)
 

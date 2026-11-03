@@ -26,7 +26,7 @@ import com.pyamsoft.tetherfi.core.AppDevEnvironment
 import com.pyamsoft.tetherfi.ui.BottomPadding
 
 private enum class SettingsItems {
-  EXTRA_BOTTOM_PADDING
+  EXTRA_BOTTOM_PADDING,
 }
 
 @Composable

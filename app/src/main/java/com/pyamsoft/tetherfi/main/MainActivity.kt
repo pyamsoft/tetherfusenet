@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
                     bugfix("Fix UDP_ASSOC delivering the wrong address to clients")
                     bugfix("Fix various memory leaks in the networking code")
                     bugfix(
-                        "Fix a potential 'stuck Wi-Fi Direct' state when the app did not clean up correctly."
+                        "Fix a potential 'stuck Wi-Fi Direct' state when the app did not clean up correctly.",
                     )
                   }
                 },

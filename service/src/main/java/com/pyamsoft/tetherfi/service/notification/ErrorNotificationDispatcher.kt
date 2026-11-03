@@ -85,7 +85,7 @@ internal constructor(
           .setContentText(
               notification.throwable.message.orEmpty().ifBlank {
                 "An unexpected error occurred. Please restart the $appName Hotspot."
-              }
+              },
           )
 
   override fun canShow(notification: NotifyData): Boolean {

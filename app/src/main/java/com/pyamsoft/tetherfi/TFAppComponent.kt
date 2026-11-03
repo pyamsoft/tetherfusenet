@@ -105,10 +105,10 @@ private val Context.dataStore: DataStore<Preferences> by
                       ),
                   produceSharedPreferences = {
                     PreferenceManager.getDefaultSharedPreferences(
-                        migrationContext.applicationContext
+                        migrationContext.applicationContext,
                     )
                   },
-              )
+              ),
           )
         },
     )
@@ -170,12 +170,12 @@ internal interface TFAppComponent {
 
     @Binds
     internal abstract fun bindPermissionRequestConsumer(
-        impl: EventBus<PermissionRequests>
+        impl: EventBus<PermissionRequests>,
     ): EventConsumer<PermissionRequests>
 
     @Binds
     internal abstract fun bindPermissionResponseConsumer(
-        impl: EventBus<PermissionResponse>
+        impl: EventBus<PermissionResponse>,
     ): EventConsumer<PermissionResponse>
 
     @Module

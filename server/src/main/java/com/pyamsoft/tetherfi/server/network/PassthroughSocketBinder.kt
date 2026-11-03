@@ -27,7 +27,7 @@ import javax.inject.Singleton
 internal class PassthroughSocketBinder @Inject internal constructor() : SocketBinder {
 
   override suspend fun withMobileDataNetworkActive(
-      block: suspend (SocketBinder.NetworkBinder) -> Unit
+      block: suspend (SocketBinder.NetworkBinder) -> Unit,
   ) {
     Timber.d { "Using currently active network for proxy connections..." }
     block(NOOP_BOUND)

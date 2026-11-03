@@ -45,7 +45,7 @@ import kotlin.reflect.KClass
 import kotlinx.coroutines.withContext
 
 internal fun ChannelHandlerContext.attachIdleStateHandler(
-    serverSocketTimeout: ServerSocketTimeout
+    serverSocketTimeout: ServerSocketTimeout,
 ) {
   val self = this
   val timeout = serverSocketTimeout.timeoutDuration

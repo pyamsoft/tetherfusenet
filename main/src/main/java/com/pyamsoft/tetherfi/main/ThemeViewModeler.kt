@@ -39,7 +39,7 @@ internal constructor(
 ) : ThemeViewState by state, AbstractViewModeler<ThemeViewState>(state) {
 
   override fun registerSaveState(
-      registry: SaveableStateRegistry
+      registry: SaveableStateRegistry,
   ): List<SaveableStateRegistry.Entry> =
       mutableListOf<SaveableStateRegistry.Entry>().apply {
         val s = state

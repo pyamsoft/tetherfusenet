@@ -24,6 +24,6 @@ abstract class TileModule {
 
   @Binds
   internal abstract fun bindLauncher(
-      impl: DefaultProxyTileActivityLauncher
+      impl: DefaultProxyTileActivityLauncher,
   ): ProxyTileActivityLauncher
 }

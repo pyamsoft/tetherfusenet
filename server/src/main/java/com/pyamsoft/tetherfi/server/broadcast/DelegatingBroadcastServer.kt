@@ -39,6 +39,11 @@ import com.pyamsoft.tetherfi.server.lock.Locker
 import com.pyamsoft.tetherfi.server.prereq.permission.PermissionGuard
 import com.pyamsoft.tetherfi.server.proxy.SharedProxy
 import com.pyamsoft.tetherfi.server.status.RunningStatus
+import java.time.Clock
+import java.time.LocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -52,11 +57,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.time.Clock
-import java.time.LocalDateTime
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 
 typealias ServerDataType = Any
 
@@ -96,7 +96,7 @@ internal constructor(
   // On some devices, refreshing channel info too frequently leads to errors
   private val connectionInfoChannel =
       MutableStateFlow<BroadcastNetworkStatus.ConnectionInfo>(
-          BroadcastNetworkStatus.ConnectionInfo.Empty
+          BroadcastNetworkStatus.ConnectionInfo.Empty,
       )
 
   private var lastConnectionRefreshTime = LocalDateTime.MIN
@@ -258,7 +258,7 @@ internal constructor(
     if (debugGroup.isError.first()) {
       Timber.w { "DEBUG forcing Error group response" }
       return BroadcastNetworkStatus.GroupInfo.Error(
-          error = IllegalStateException("DEBUG FORCED ERROR RESPONSE")
+          error = IllegalStateException("DEBUG FORCED ERROR RESPONSE"),
       )
     }
 
@@ -333,7 +333,7 @@ internal constructor(
     if (debugConnection.isError.first()) {
       Timber.w { "DEBUG forcing Error connection response" }
       return BroadcastNetworkStatus.ConnectionInfo.Error(
-          error = IllegalStateException("DEBUG FORCED ERROR RESPONSE")
+          error = IllegalStateException("DEBUG FORCED ERROR RESPONSE"),
       )
     }
 
@@ -391,8 +391,8 @@ internal constructor(
     status.set(newStatus, clearErrorStatus)
     shutdownBus.emit(
         ServerShutdownEvent(
-            throwable = if (newStatus is RunningStatus.Error) newStatus.throwable else null
-        )
+            throwable = if (newStatus is RunningStatus.Error) newStatus.throwable else null,
+        ),
     )
   }
 
@@ -542,41 +542,33 @@ internal constructor(
     return groupInfoChannel
   }
 
-  /**
-   * Resolve connection information for what IP to connect to
-   */
+  /** Resolve connection information for what IP to connect to */
   override suspend fun resolveCurrentConnectionInfo(
-      source: ServerDataType
+      source: ServerDataType,
   ): BroadcastNetworkStatus.ConnectionInfo {
     return resolveImplementation().resolveCurrentConnectionInfo(source)
   }
 
-  /**
-   * Resolve the current broadcast network information
-   */
-  override suspend fun resolveCurrentGroupInfo(source: ServerDataType): BroadcastNetworkStatus.GroupInfo {
+  /** Resolve the current broadcast network information */
+  override suspend fun resolveCurrentGroupInfo(
+      source: ServerDataType,
+  ): BroadcastNetworkStatus.GroupInfo {
     return resolveImplementation().resolveCurrentGroupInfo(source)
   }
 
-  /**
-   * Lock is claimed: Start the broadcast
-   */
+  /** Lock is claimed: Start the broadcast */
   override suspend fun withLockStartBroadcast(
-    updateNetworkInfo: suspend (ServerDataType) -> UpdateResult
+      updateNetworkInfo: suspend (ServerDataType) -> UpdateResult,
   ): ServerDataType {
     return resolveImplementation().withLockStartBroadcast(updateNetworkInfo)
   }
 
-  /**
-   * Lock is claimed: Stop broadcasting
-   */
+  /** Lock is claimed: Stop broadcasting */
   override suspend fun withLockStopBroadcast(source: ServerDataType) {
     return resolveImplementation().withLockStopBroadcast(source)
   }
 
-  /**
-   * Network has started, launch the proxy
-   */
+  /** Network has started, launch the proxy */
   override fun onNetworkStarted(
       scope: CoroutineScope,
       lock: Locker.Lock,

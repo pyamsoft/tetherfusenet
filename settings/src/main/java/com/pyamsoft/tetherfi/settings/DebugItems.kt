@@ -132,7 +132,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isYoloError by
         appEnvironment.isYoloError.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_YOLO_FAKE_ERROR_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_YOLO_FAKE_ERROR_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -148,7 +148,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isBroadcastFakeError by
         appEnvironment.isBroadcastFakeError.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_BROADCAST_FAKE_ERROR_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_BROADCAST_FAKE_ERROR_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -164,7 +164,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isProxyFakeError by
         appEnvironment.isProxyFakeError.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_PROXY_FAKE_ERROR_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_PROXY_FAKE_ERROR_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -180,7 +180,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isGroupFakeEmpty by
         appEnvironment.fakeGroup.isEmpty.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -196,7 +196,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isGroupFakeConnected by
         appEnvironment.fakeGroup.isConnected.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -212,7 +212,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isGroupFakeError by
         appEnvironment.fakeGroup.isError.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_GROUP_FIELD_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -228,7 +228,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isConnectionFakeEmpty by
         appEnvironment.fakeConnection.isEmpty.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -244,7 +244,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isConnectionFakeConnected by
         appEnvironment.fakeConnection.isConnected.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -260,7 +260,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isConnectionFakeError by
         appEnvironment.fakeConnection.isError.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_CONNECTION_FIELD_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -276,7 +276,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isSocketOOM by
         appEnvironment.isSocketBuilderOOMServer.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_SOCKET_FAKE_OOM_SERVER_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_SOCKET_FAKE_OOM_SERVER_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,
@@ -292,7 +292,7 @@ internal fun LazyListScope.renderExtraDebugContent(
   ) {
     val isSocketFake by
         appEnvironment.isSocketBuilderOOMClient.collectAsStateWithLifecycle(
-            AppDevEnvironment.Defaults.IS_SOCKET_FAKE_OOM_CLIENT_INITIAL_STATE
+            AppDevEnvironment.Defaults.IS_SOCKET_FAKE_OOM_CLIENT_INITIAL_STATE,
         )
     DebugItem(
         modifier = itemModifier,

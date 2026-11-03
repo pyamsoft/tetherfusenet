@@ -29,7 +29,7 @@ internal constructor(
 ) : InfoViewState by state, AbstractViewModeler<InfoViewState>(state) {
 
   override fun registerSaveState(
-      registry: SaveableStateRegistry
+      registry: SaveableStateRegistry,
   ): List<SaveableStateRegistry.Entry> =
       mutableListOf<SaveableStateRegistry.Entry>().apply {
         registry

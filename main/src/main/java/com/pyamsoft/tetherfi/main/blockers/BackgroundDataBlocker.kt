@@ -99,7 +99,7 @@ internal fun BackgroundDataBlocker(
           onClick = {
             hapticManager?.confirmButtonPress()
             onOpenBackgroundDataSettings()
-          }
+          },
       ) {
         Text(text = stringResource(R.string.block_background_data_open_settings))
       }

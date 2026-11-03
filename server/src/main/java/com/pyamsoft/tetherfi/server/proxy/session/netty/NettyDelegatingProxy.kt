@@ -136,7 +136,7 @@ internal constructor(
                 // If non-null SOCKS is enabled
                 udp = udpSocketCreator,
             ),
-        )
+        ),
     )
   }
 }

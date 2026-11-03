@@ -120,7 +120,7 @@ internal constructor(
   }
 
   override suspend fun withMobileDataNetworkActive(
-      block: suspend (SocketBinder.NetworkBinder) -> Unit
+      block: suspend (SocketBinder.NetworkBinder) -> Unit,
   ) {
     val preferred = getPreferredNetwork()
     if (preferred == PreferredNetwork.NONE) {

@@ -69,7 +69,7 @@ abstract class ServerAppModule {
   @Binds
   @CheckResult
   internal abstract fun bindShutdownConsumer(
-      impl: EventBus<ServerShutdownEvent>
+      impl: EventBus<ServerShutdownEvent>,
   ): EventConsumer<ServerShutdownEvent>
 
   // Prereqs
@@ -130,7 +130,7 @@ abstract class ServerAppModule {
   @CheckResult
   @ServerInternalApi
   internal abstract fun bindProxyManagerFactory(
-      impl: DefaultProxyManagerFactory
+      impl: DefaultProxyManagerFactory,
   ): ProxyManager.Factory
 
   // Lockers

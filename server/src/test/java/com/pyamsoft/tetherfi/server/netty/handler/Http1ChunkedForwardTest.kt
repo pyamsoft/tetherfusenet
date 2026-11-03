@@ -172,7 +172,7 @@ class Http1ChunkedForwardTest {
                 "5",
                 "hello",
             )
-            .rawNetwork()
+            .rawNetwork(),
     )
     proxy.server.send(listOf("6", " world", "0", "").rawNetwork())
 
@@ -207,7 +207,7 @@ class Http1ChunkedForwardTest {
                     "Expect: 100-continue",
                     "",
                 )
-                .rawNetwork()
+                .rawNetwork(),
         )
         val early = listOf("HTTP/1.1 100 Continue", "").rawNetwork()
         val outbound = proxy.outbound.await()

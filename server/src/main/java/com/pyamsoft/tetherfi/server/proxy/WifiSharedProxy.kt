@@ -166,7 +166,7 @@ internal constructor(
     if (!isHttpEnabled && !isSocksEnabled) {
       Timber.w { "Cannot run proxy. HTTP and SOCKS both disabled" }
       status.set(
-          RunningStatus.ProxyError(RuntimeException("Must enable either HTTP or SOCKS server"))
+          RunningStatus.ProxyError(RuntimeException("Must enable either HTTP or SOCKS server")),
       )
     } else {
       scope.launch(context = dispatchers.default) {

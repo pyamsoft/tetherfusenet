@@ -61,7 +61,7 @@ internal constructor(
       MutableStateFlow<BroadcastNetworkStatus.GroupInfo>(BroadcastNetworkStatus.GroupInfo.Unchanged)
   private val runningProxyConnection =
       MutableStateFlow<BroadcastNetworkStatus.ConnectionInfo>(
-          BroadcastNetworkStatus.ConnectionInfo.Unchanged
+          BroadcastNetworkStatus.ConnectionInfo.Unchanged,
       )
 
   @CheckResult

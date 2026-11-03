@@ -47,7 +47,7 @@ abstract class ServiceAppModule {
   @IntoSet
   @ServiceInternalApi
   internal abstract fun bindLongRunningServiceDispatcher(
-      impl: LongRunningServiceDispatcher
+      impl: LongRunningServiceDispatcher,
   ): NotifyDispatcher<*>
 
   // TODO(Peter): Move into some shared module and scope
@@ -59,7 +59,7 @@ abstract class ServiceAppModule {
   @Binds
   @CheckResult
   internal abstract fun bindNotificationRefreshConsumer(
-      impl: EventBus<NotificationRefreshEvent>
+      impl: EventBus<NotificationRefreshEvent>,
   ): EventConsumer<NotificationRefreshEvent>
 
   @Module

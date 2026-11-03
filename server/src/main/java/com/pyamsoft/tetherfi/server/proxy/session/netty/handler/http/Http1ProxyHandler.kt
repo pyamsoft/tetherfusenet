@@ -416,7 +416,7 @@ private constructor(
             DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
                 HttpResponseStatus.OK,
-            )
+            ),
         )
         .addListener {
           // Remove the http server codec only after 200 OK is fully written

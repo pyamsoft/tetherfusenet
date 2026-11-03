@@ -137,7 +137,7 @@ internal constructor(
             Socks4CommandStatus.SUCCESS,
             remote.address,
             remote.port,
-        )
+        ),
     )
   }
 

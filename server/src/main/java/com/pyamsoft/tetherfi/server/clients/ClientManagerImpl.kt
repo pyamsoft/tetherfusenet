@@ -157,7 +157,7 @@ internal constructor(
         scope.launch(context = dispatchers.default) {
           Timber.d { "Watch client count and purge old clients" }
           onTimerElapsed(OLD_CLIENT_TIMER_PERIOD) { purgeOldClients(it) }
-        }
+        },
     )
   }
 

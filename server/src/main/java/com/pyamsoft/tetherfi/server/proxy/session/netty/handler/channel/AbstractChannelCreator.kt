@@ -53,7 +53,7 @@ internal constructor(
               override fun initChannel(ch: Channel) {
                 onChannelInitialized(ch)
               }
-            }
+            },
         )
   }
 

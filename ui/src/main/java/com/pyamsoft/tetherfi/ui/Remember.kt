@@ -31,7 +31,7 @@ fun rememberServerSSID(group: BroadcastNetworkStatus.GroupInfo): String {
     is BroadcastNetworkStatus.GroupInfo.Error -> stringResource(R.string.hotspot_group_removed)
     is BroadcastNetworkStatus.GroupInfo.Unchanged -> {
       throw IllegalStateException(
-          "GroupInfo.Unchanged should never escape the server-module internals."
+          "GroupInfo.Unchanged should never escape the server-module internals.",
       )
     }
   }
@@ -49,7 +49,7 @@ fun rememberServerRawPassword(group: BroadcastNetworkStatus.GroupInfo): String {
       is BroadcastNetworkStatus.GroupInfo.Error -> ""
       is BroadcastNetworkStatus.GroupInfo.Unchanged -> {
         throw IllegalStateException(
-            "GroupInfo.Unchanged should never escape the server-module internals."
+            "GroupInfo.Unchanged should never escape the server-module internals.",
         )
       }
     }
@@ -85,7 +85,7 @@ fun rememberServerPassword(
     }
     is BroadcastNetworkStatus.GroupInfo.Unchanged -> {
       throw IllegalStateException(
-          "GroupInfo.Unchanged should never escape the server-module internals."
+          "GroupInfo.Unchanged should never escape the server-module internals.",
       )
     }
   }
@@ -100,7 +100,7 @@ fun rememberServerHostname(connection: BroadcastNetworkStatus.ConnectionInfo): S
     is BroadcastNetworkStatus.ConnectionInfo.Error -> stringResource(R.string.unknown_error)
     is BroadcastNetworkStatus.ConnectionInfo.Unchanged -> {
       throw IllegalStateException(
-          "ConnectionInfo.Unchanged should never escape the server-module internals."
+          "ConnectionInfo.Unchanged should never escape the server-module internals.",
       )
     }
   }

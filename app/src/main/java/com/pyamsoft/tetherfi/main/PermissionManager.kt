@@ -76,7 +76,7 @@ internal class PermissionManager private constructor() {
             is PermissionRequests.Notification -> {
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 notificationPermissionRequester.launch(
-                    android.Manifest.permission.POST_NOTIFICATIONS
+                    android.Manifest.permission.POST_NOTIFICATIONS,
                 )
               } else {
                 Timber.w { "Notification permission not needed old API: ${Build.VERSION.SDK_INT}" }

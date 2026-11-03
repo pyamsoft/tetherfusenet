@@ -234,8 +234,8 @@ internal object TestSetup {
                     provideUdpChannelCreator = {
                       udpSocketCreator.wrap { onUdpChannelCreated(it) }
                     },
-                )
-            )
+                ),
+            ),
         )
 
     return HandlerContext(

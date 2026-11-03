@@ -30,7 +30,7 @@ internal interface BroadcastServerImplementation<T> {
    */
   @CheckResult
   suspend fun withLockStartBroadcast(
-      updateNetworkInfo: suspend (T) -> DelegatingBroadcastServer.UpdateResult
+      updateNetworkInfo: suspend (T) -> DelegatingBroadcastServer.UpdateResult,
   ): T
 
   /**

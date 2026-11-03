@@ -221,7 +221,7 @@ internal fun LazyListScope.renderDeviceSetup(
                     contentDescription =
                         stringResource(
                             if (isPasswordVisible) com.pyamsoft.tetherfi.ui.R.string.pass_visible
-                            else com.pyamsoft.tetherfi.ui.R.string.pass_hidden
+                            else com.pyamsoft.tetherfi.ui.R.string.pass_hidden,
                         ),
                     tint = MaterialTheme.colorScheme.primary,
                 )

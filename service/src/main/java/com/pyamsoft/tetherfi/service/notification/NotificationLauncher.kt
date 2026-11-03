@@ -38,7 +38,7 @@ interface NotificationLauncher {
   suspend fun update()
 
   enum class Actions {
-    STOP
+    STOP,
   }
 
   fun interface Watcher {

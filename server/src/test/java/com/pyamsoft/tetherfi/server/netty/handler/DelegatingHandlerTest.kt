@@ -42,7 +42,7 @@ class DelegatingHandlerTest {
 
   @CheckResult
   private fun CoroutineScope.delegatingHandlerFactory(
-      factoryParams: TestSetup.FactoryParams
+      factoryParams: TestSetup.FactoryParams,
   ): ChannelInboundHandler {
     val params =
         ProtocolDelegatingHandler.Params(

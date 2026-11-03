@@ -292,7 +292,7 @@ internal constructor(
             type,
             bindAddr,
             relayControlAddress.port,
-        )
+        ),
     )
   }
 
@@ -369,7 +369,7 @@ internal constructor(
             resolveSocks5AddressType(remoteAddress),
             remote.address,
             remote.port,
-        )
+        ),
     )
   }
 

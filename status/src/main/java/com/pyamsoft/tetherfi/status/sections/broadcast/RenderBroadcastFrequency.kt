@@ -45,7 +45,7 @@ import com.pyamsoft.tetherfi.ui.surfaceAlpha
 import com.pyamsoft.tetherfi.ui.textAlpha
 
 private enum class RenderBroadcastFrequencyContentTypes {
-  BANDS
+  BANDS,
 }
 
 private val BAND_24GHZ_STRINGS =

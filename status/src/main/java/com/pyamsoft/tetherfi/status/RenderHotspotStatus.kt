@@ -38,7 +38,7 @@ import com.pyamsoft.tetherfi.server.status.RunningStatus
 import org.jetbrains.annotations.TestOnly
 
 private enum class RenderHotspotStatusContentTypes {
-  HOTSPOT_STATUS
+  HOTSPOT_STATUS,
 }
 
 internal fun LazyListScope.renderHotspotStatus(

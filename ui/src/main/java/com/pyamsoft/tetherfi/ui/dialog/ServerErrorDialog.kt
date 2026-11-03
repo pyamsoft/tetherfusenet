@@ -84,7 +84,7 @@ fun ServerErrorDialog(
             modifier
                 // Top already has padding for some reason?
                 .padding(horizontal = MaterialTheme.keylines.content)
-                .padding(bottom = MaterialTheme.keylines.content)
+                .padding(bottom = MaterialTheme.keylines.content),
     ) {
       DialogToolbar(
           modifier = Modifier.fillMaxWidth(),

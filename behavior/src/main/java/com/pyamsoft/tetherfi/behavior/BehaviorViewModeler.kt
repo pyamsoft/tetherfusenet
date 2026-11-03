@@ -72,7 +72,7 @@ internal constructor(
   }
 
   override fun registerSaveState(
-      registry: SaveableStateRegistry
+      registry: SaveableStateRegistry,
   ): List<SaveableStateRegistry.Entry> =
       mutableListOf<SaveableStateRegistry.Entry>().apply {
         registry
