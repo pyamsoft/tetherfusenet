@@ -127,6 +127,12 @@ If you know a few things about Android programming and want to help out with
 development, you can do so by creating issue tickets to squash bugs, and
 proposing feature requests.
 
+## Wiki
+
+The [Wiki](https://github.com/pyamsoft/tetherfusenet/wiki) is hosted on Github, but a versioned copy
+exists in this repository in the `wiki/` folder. The `wiki/` is a submodule and can be updated via
+`git submodule update --init --force`
+
 ## License
 
 Apache 2
