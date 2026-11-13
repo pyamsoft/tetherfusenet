@@ -38,9 +38,7 @@ compose = "1.12.1"
 composeMaterial3 = "1.4.0"
 
 # Google
-# 2.3.13 is buggy
-# https://github.com/google/ksp/issues/3286
-ksp = "2.3.12"
+ksp = "2.3.14"
 
 # Images
 coil = "3.6.3"
@@ -54,7 +52,7 @@ detekt = "2.0.0-alpha.6"
 
 # Testing
 junit = "4.13.2"
-robolectric = "4.17"
+robolectric = "4.18"
 
 
 [plugins]
