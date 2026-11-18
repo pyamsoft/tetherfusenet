@@ -19,15 +19,21 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel
 import androidx.annotation.CheckResult
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
+import io.netty.channel.EventLoop
 
 internal interface ChannelCreator {
 
-  @CheckResult fun bind(onChannelInitialized: (Channel) -> Unit): ChannelFuture
+  @CheckResult
+  fun bind(
+      eventLoop: EventLoop,
+      onChannelInitialized: (Channel) -> Unit,
+  ): ChannelFuture
 
   @CheckResult
   fun connect(
       hostName: String,
       port: Int,
+      eventLoop: EventLoop,
       onChannelInitialized: (Channel) -> Unit,
   ): ChannelFuture
 }

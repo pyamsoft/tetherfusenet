@@ -30,7 +30,6 @@ import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.ChannelC
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.TcpChannelCreator
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.channel.UdpChannelCreator
 import io.netty.channel.Channel
-import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
@@ -83,14 +82,12 @@ internal constructor(
   override fun onServerStarted(
       scope: CoroutineScope,
       channel: Channel,
-      workerGroup: EventLoopGroup,
   ) {
     Timber.d { "Netty proxy server initialized!" }
 
     if (isSocksEnabled) {
       udpSocketCreator =
           UdpChannelCreator(
-              eventLoop = workerGroup,
               scope = scope,
               dispatchers = dispatchers,
               socketTagger = socketTagger,
@@ -100,7 +97,6 @@ internal constructor(
 
     tcpSocketCreator =
         TcpChannelCreator(
-            eventLoop = workerGroup,
             scope = scope,
             dispatchers = dispatchers,
             socketTagger = socketTagger,

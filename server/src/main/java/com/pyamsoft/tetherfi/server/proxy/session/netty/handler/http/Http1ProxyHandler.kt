@@ -302,6 +302,7 @@ private constructor(
         tcpSocketCreator.connect(
             hostName = parsed.resolvedHostName,
             port = parsed.resolvedPort,
+            eventLoop = serverChannel.eventLoop(),
             onChannelInitialized = { ch ->
               val pipeline = ch.pipeline()
 
@@ -495,6 +496,7 @@ private constructor(
         tcpSocketCreator.connect(
             hostName = parsed.resolvedHostName,
             port = parsed.resolvedPort,
+            eventLoop = serverChannel.eventLoop(),
             onChannelInitialized = { ch ->
               val pipeline = ch.pipeline()
 

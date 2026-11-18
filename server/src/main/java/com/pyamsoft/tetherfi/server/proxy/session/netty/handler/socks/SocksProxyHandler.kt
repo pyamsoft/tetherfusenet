@@ -154,6 +154,7 @@ internal constructor(
         tcpSocketCreator.connect(
             hostName = dstAddr,
             port = dstPort,
+            eventLoop = ctx.channel().eventLoop(),
             onChannelInitialized = { ch ->
               val pipeline = ch.pipeline()
 

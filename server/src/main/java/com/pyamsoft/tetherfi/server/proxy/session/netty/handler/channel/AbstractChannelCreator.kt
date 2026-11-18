@@ -27,7 +27,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFactory
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelInitializer
-import io.netty.channel.EventLoopGroup
+import io.netty.channel.EventLoop
 import java.net.UnknownHostException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +35,6 @@ import kotlinx.coroutines.launch
 
 internal abstract class AbstractChannelCreator<T : Channel>
 internal constructor(
-    private val eventLoop: EventLoopGroup,
     private val scope: CoroutineScope,
     private val dispatchers: AppDispatchers,
     private val channelFactoryCreator: () -> ChannelFactory<T>,
@@ -44,7 +43,10 @@ internal constructor(
   private val channelFactory by lazy { channelFactoryCreator() }
 
   @CheckResult
-  private fun bootstrap(onChannelInitialized: (Channel) -> Unit): Bootstrap {
+  private fun bootstrap(
+      eventLoop: EventLoop,
+      onChannelInitialized: (Channel) -> Unit,
+  ): Bootstrap {
     return Bootstrap()
         .group(eventLoop)
         .channelFactory(channelFactory)
@@ -57,18 +59,22 @@ internal constructor(
         )
   }
 
-  override fun bind(onChannelInitialized: (Channel) -> Unit): ChannelFuture {
-    return bootstrap(onChannelInitialized).bind(0)
+  override fun bind(
+      eventLoop: EventLoop,
+      onChannelInitialized: (Channel) -> Unit,
+  ): ChannelFuture {
+    return bootstrap(eventLoop, onChannelInitialized).bind(0)
   }
 
   override fun connect(
       hostName: String,
       port: Int,
+      eventLoop: EventLoop,
       onChannelInitialized: (Channel) -> Unit,
   ): ChannelFuture {
     // We must bootstrap first and then manually field a DNS request
     // otherwise netty's default resolver group runs on the current thread and blocks
-    val registerFuture = bootstrap(onChannelInitialized).register()
+    val registerFuture = bootstrap(eventLoop, onChannelInitialized).register()
     val bootstrapChannel = registerFuture.channel()
 
     return bootstrapChannel.newPromise().also { promise ->
@@ -91,7 +97,6 @@ internal constructor(
                   )
 
               // Hop back onto the channel's event loop before touching the channel
-              val eventLoop = bootstrapChannel.eventLoop()
               try {
                 eventLoop.runInEventLoop {
                   if (resolved == null) {

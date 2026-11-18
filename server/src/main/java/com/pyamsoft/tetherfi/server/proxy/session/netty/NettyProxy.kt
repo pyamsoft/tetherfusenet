@@ -24,7 +24,6 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
-import io.netty.channel.EventLoopGroup
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.socket.SocketChannel
@@ -70,8 +69,8 @@ protected constructor(
     }
   }
 
-  private fun serverStarted(scope: CoroutineScope, channel: Channel, workerGroup: EventLoopGroup) {
-    onServerStarted(scope, channel, workerGroup)
+  private fun serverStarted(scope: CoroutineScope, channel: Channel) {
+    onServerStarted(scope, channel)
 
     onOpened()
   }
@@ -144,7 +143,7 @@ protected constructor(
       addListener { future ->
         if (future.isSuccess) {
           Timber.d { "Netty server started" }
-          serverStarted(serverScope, channel, workerGroup)
+          serverStarted(serverScope, channel)
         } else {
           val err = future.cause()
           Timber.e(err) { "Failed to bind netty server" }
@@ -168,7 +167,6 @@ protected constructor(
   protected open fun onServerStarted(
       scope: CoroutineScope,
       channel: Channel,
-      workerGroup: EventLoopGroup,
   ) {}
 
   protected open fun onServerStopped() {}

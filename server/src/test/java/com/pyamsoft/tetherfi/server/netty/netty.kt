@@ -35,6 +35,8 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelInboundHandler
+import io.netty.channel.EventLoop
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.embedded.EmbeddedChannel
 import io.netty.channel.nio.NioIoHandler
@@ -100,18 +102,29 @@ private class TestEmbeddedChannel(
 
 private data class TestChannelCreator(
     private val impl: ChannelCreator,
+    private val eventLoopGroup: EventLoopGroup,
     private val onChannelCreated: (Channel) -> Unit,
 ) : ChannelCreator {
 
-  override fun bind(onChannelInitialized: (Channel) -> Unit): ChannelFuture = impl.bind { channel ->
-    onChannelCreated(channel)
-    onChannelInitialized(channel)
-  }
+  override fun bind(
+      eventLoop: EventLoop,
+      onChannelInitialized: (Channel) -> Unit,
+  ): ChannelFuture =
+      impl.bind(eventLoopGroup.next()) { channel ->
+        onChannelCreated(channel)
+        onChannelInitialized(channel)
+      }
 
-  override fun connect(hostName: String, port: Int, onChannelInitialized: (Channel) -> Unit) =
+  override fun connect(
+      hostName: String,
+      port: Int,
+      eventLoop: EventLoop,
+      onChannelInitialized: (Channel) -> Unit,
+  ) =
       impl.connect(
           hostName = hostName,
           port = port,
+          eventLoop = eventLoopGroup.next(),
           onChannelInitialized = { channel ->
             onChannelCreated(channel)
             onChannelInitialized(channel)
@@ -122,9 +135,13 @@ private data class TestChannelCreator(
 internal object TestSetup {
 
   @CheckResult
-  private fun ChannelCreator.wrap(onChannelCreated: (Channel) -> Unit): ChannelCreator {
+  private fun ChannelCreator.wrap(
+      eventLoopGroup: EventLoopGroup,
+      onChannelCreated: (Channel) -> Unit,
+  ): ChannelCreator {
     return TestChannelCreator(
         impl = this,
+        eventLoopGroup = eventLoopGroup,
         onChannelCreated = onChannelCreated,
     )
   }
@@ -201,7 +218,6 @@ internal object TestSetup {
 
     val tcpSocketCreator =
         TcpChannelCreator(
-            eventLoop = workerGroup,
             scope = scope,
             dispatchers = dispatchers,
             socketTagger = socketTagger,
@@ -210,7 +226,6 @@ internal object TestSetup {
 
     val udpSocketCreator =
         UdpChannelCreator(
-            eventLoop = workerGroup,
             scope = scope,
             dispatchers = dispatchers,
             socketTagger = socketTagger,
@@ -229,10 +244,10 @@ internal object TestSetup {
                     serverSocketTimeout = ServerSocketTimeout.Defaults.BALANCED,
                     dispatchers = dispatchers,
                     provideTcpChannelCreator = {
-                      tcpSocketCreator.wrap { onTcpChannelCreated(it) }
+                      tcpSocketCreator.wrap(workerGroup) { onTcpChannelCreated(it) }
                     },
                     provideUdpChannelCreator = {
-                      udpSocketCreator.wrap { onUdpChannelCreated(it) }
+                      udpSocketCreator.wrap(workerGroup) { onUdpChannelCreated(it) }
                     },
                 ),
             ),

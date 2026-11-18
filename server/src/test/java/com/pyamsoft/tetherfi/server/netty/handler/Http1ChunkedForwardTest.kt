@@ -28,6 +28,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
+import io.netty.channel.EventLoop
 import io.netty.channel.embedded.EmbeddedChannel
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpObjectAggregator
@@ -53,13 +54,17 @@ class Http1ChunkedForwardTest {
     val outbound = CompletableDeferred<EmbeddedChannel>()
     val creator =
         object : ChannelCreator {
-          override fun bind(onChannelInitialized: (Channel) -> Unit): ChannelFuture {
+          override fun bind(
+              eventLoop: EventLoop,
+              onChannelInitialized: (Channel) -> Unit,
+          ): ChannelFuture {
             throw UnsupportedOperationException()
           }
 
           override fun connect(
               hostName: String,
               port: Int,
+              eventLoop: EventLoop,
               onChannelInitialized: (Channel) -> Unit,
           ): ChannelFuture {
             val ch = EmbeddedChannel()

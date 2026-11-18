@@ -181,19 +181,20 @@ internal constructor(
     // Do NOT attempt to later change this `bind` call to take the hostName since it will break
     // everything :)
     Timber.d { "(${channelId}) $tag Register UDP for TCP control $tcpControlAddress" }
-    val udpControl = udpSocketCreator.bind { ch ->
-      val pipeline = ch.pipeline()
+    val udpControl =
+        udpSocketCreator.bind(ctx.channel().eventLoop()) { ch ->
+          val pipeline = ch.pipeline()
 
-      if (isDebug) {
-        pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
-      }
+          if (isDebug) {
+            pipeline.addFirst(LoggingHandler(LogLevel.DEBUG))
+          }
 
-      // Bandwidth limiter
-      pipeline.applyBandwidthLimitFor(client)
+          // Bandwidth limiter
+          pipeline.applyBandwidthLimitFor(client)
 
-      // Read from the REMOTE and send back to the PROXY
-      pipeline.addLast(udpRelayHandlerFactory.create(Unit))
-    }
+          // Read from the REMOTE and send back to the PROXY
+          pipeline.addLast(udpRelayHandlerFactory.create(Unit))
+        }
 
     val udpRelay = udpControl.channel()
 

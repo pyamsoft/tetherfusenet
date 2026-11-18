@@ -28,6 +28,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelInboundHandler
+import io.netty.channel.EventLoop
 import io.netty.handler.codec.http.DefaultFullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
@@ -59,16 +60,19 @@ class Http1HandlerTest {
     val realTcpSocketCreator = factory.provideTcpChannelCreator()
     val capturingTcpSocketCreator =
         object : ChannelCreator {
-          override fun bind(onChannelInitialized: (Channel) -> Unit): ChannelFuture =
-              realTcpSocketCreator.bind(onChannelInitialized)
+          override fun bind(
+              eventLoop: EventLoop,
+              onChannelInitialized: (Channel) -> Unit,
+          ): ChannelFuture = realTcpSocketCreator.bind(eventLoop, onChannelInitialized)
 
           override fun connect(
               hostName: String,
               port: Int,
+              eventLoop: EventLoop,
               onChannelInitialized: (Channel) -> Unit,
           ): ChannelFuture {
             onConnectAttempt(hostName, port)
-            return realTcpSocketCreator.connect(hostName, port, onChannelInitialized)
+            return realTcpSocketCreator.connect(hostName, port, eventLoop, onChannelInitialized)
           }
         }
 
