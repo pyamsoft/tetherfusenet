@@ -67,7 +67,7 @@ internal constructor(
   private val mutex = Mutex()
 
   private val wifiP2PManager by lazy {
-    appContext.getSystemService<WifiP2pManager>().requireNotNull()
+    appContext.getSystemService<WifiP2pManager>().requireNotNull { "WifiP2pManager service is missing on this device." }
   }
 
   private fun createGroupQ(
