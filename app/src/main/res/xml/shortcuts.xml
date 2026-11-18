@@ -15,26 +15,38 @@
   ~ limitations under the License.
   -->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- This shortcut IS toggle, but if I remove it, it would break existing setups -->
   <shortcut
     android:enabled="true"
     android:shortcutId="toggle_hotspot"
     android:shortcutShortLabel="@string/toggle_hotspot_shortcut"
   >
-    <!-- This shortcut IS toggle, but if I remove it, it would break existing setups -->
     <intent
       android:action="android.intent.action.VIEW"
       android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
       android:targetPackage="com.pyamsoft.tetherfi"
     />
+  </shortcut>
 
-    <!-- START hotspot -->
+  <!-- START hotspot -->
+  <shortcut
+    android:enabled="true"
+    android:shortcutId="start_hotspot"
+    android:shortcutShortLabel="@string/start_hotspot"
+  >
     <intent
       android:action="com.pyamsoft.tetherfi.action.START"
       android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
       android:targetPackage="com.pyamsoft.tetherfi"
     />
+  </shortcut>
 
-    <!-- STOP hotspot -->
+  <!-- STOP hotspot -->
+  <shortcut
+    android:enabled="true"
+    android:shortcutId="stop_hotspot"
+    android:shortcutShortLabel="@string/stop_hotspot"
+  >
     <intent
       android:action="com.pyamsoft.tetherfi.action.STOP"
       android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
