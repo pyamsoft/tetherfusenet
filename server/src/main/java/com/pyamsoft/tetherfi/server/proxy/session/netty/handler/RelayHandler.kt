@@ -61,6 +61,8 @@ private constructor(
 
   private var byteCountJob: Job? = null
 
+  private var needsFlush = false
+
   private fun ensureChannelTag(ctx: ChannelHandlerContext) {
     applyChannelId {
       val tag = getChannelTag(ctx)
@@ -204,13 +206,30 @@ private constructor(
     bytesMoved.addAndGet(amountMoved)
 
     // Write here claims the msg
-    writeToChannel
-        .writeAndFlush(bytes)
-        .closeOnFailure(
-            ctx = ctx,
-            channelId = channelId,
-            tag = "RELAY",
-        )
+    needsFlush = true
+    writeToChannel.write(bytes).closeOnWriteFailure(ctx)
+  }
+
+  override fun channelReadComplete(ctx: ChannelHandlerContext) {
+    try {
+      if (needsFlush) {
+        needsFlush = false
+        ensureChannelTag(ctx)
+        val channelId = getChannelId()
+
+        val writeToChannel = getWritebackChannel(ctx)
+        if (writeToChannel == null) {
+          Timber.w {
+            "($channelId): channelReadComplete flush requested but writeToChannel is NULL"
+          }
+          return
+        }
+
+        writeToChannel.flush()
+      }
+    } finally {
+      super.channelReadComplete(ctx)
+    }
   }
 
   override fun channelWritabilityChanged(ctx: ChannelHandlerContext) {

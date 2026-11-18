@@ -186,17 +186,3 @@ internal fun EventExecutor.runInEventLoop(block: () -> Unit) {
     execute(block)
   }
 }
-
-internal fun ChannelFuture.closeOnFailure(
-    ctx: ChannelHandlerContext,
-    channelId: String,
-    tag: String,
-): ChannelFuture {
-  val self = this
-  return self.addListener { future ->
-    if (!future.isSuccess) {
-      Timber.e(future.cause()) { "($channelId) Failed $tag request, close" }
-      ctx.channel().close()
-    }
-  }
-}

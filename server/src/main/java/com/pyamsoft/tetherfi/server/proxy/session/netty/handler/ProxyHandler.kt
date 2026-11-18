@@ -26,6 +26,8 @@ import com.pyamsoft.tetherfi.server.ServerSocketTimeout
 import com.pyamsoft.tetherfi.server.clients.TetherClient
 import com.pyamsoft.tetherfi.server.isIpAddress
 import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
+import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.util.AttributeKey
@@ -47,6 +49,8 @@ internal constructor(
 
   // We only want to attach the idle state handler one time
   private val attached = AtomicBoolean(false)
+
+  private var closeOnWriteFailureListener: ChannelFutureListener? = null
 
   private fun ensureActivated(ctx: ChannelHandlerContext) {
     if (attached.compareAndSet(false, true)) {
@@ -72,6 +76,28 @@ internal constructor(
 
   protected fun setChannelId(id: String) {
     channelId = id
+  }
+
+  /**
+   * Re-use the same write failure listener instead of attaching a new one for every single write
+   * attempt
+   */
+  protected fun ChannelFuture.closeOnWriteFailure(ctx: ChannelHandlerContext): ChannelFuture {
+    val self = this
+
+    val listener =
+        closeOnWriteFailureListener
+            ?: ChannelFutureListener { future ->
+              if (!future.isSuccess) {
+                Timber.e(future.cause()) {
+                  "(${getChannelId()}) Write failed, close"
+                }
+                ctx.channel().close()
+              }
+            }
+                .also { closeOnWriteFailureListener = it }
+
+    return self.addListener(listener)
   }
 
   protected fun closeChannels(ctx: ChannelHandlerContext) {
