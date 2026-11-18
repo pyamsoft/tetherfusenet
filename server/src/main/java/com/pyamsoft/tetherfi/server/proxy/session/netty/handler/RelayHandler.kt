@@ -76,6 +76,9 @@ private constructor(
   private fun produceByteReport(client: TetherClient, direction: Direction) {
     // Reset back to zero or we keep double counting
     val count = bytesMoved.getAndSet(0)
+    if (count > 0) {
+      allowedClients.seen(client)
+    }
 
     var internetToProxy = 0
     var proxyToInternet = 0
@@ -193,8 +196,6 @@ private constructor(
       sendErrorAndClose(ctx, msg)
       return
     }
-
-    scope.launch(context = dispatchers.io) { allowedClients.seen(client) }
 
     // Grab the amount BEFORE the data buffer is released
     val amountMoved = bytes.readableBytes()

@@ -133,14 +133,8 @@ private constructor(
           // Grab the amount BEFORE the data buffer is released
           val amountMoved = retainedData.readableBytes()
 
-          // Side effect for client tracking
-          scope.launch(context = dispatchers.io) {
-            // Update latest client activity
-            allowedClients.seen(client)
-
-            // This is from Proxy out to Internet
-            bytesOutbound.addAndGet(amountMoved)
-          }
+          // This is from Proxy out to Internet
+          bytesOutbound.addAndGet(amountMoved)
 
           // Write here claims the msg
           ctx.writeAndFlush(DatagramPacket(retainedData, destination)).addListener { future ->
@@ -185,6 +179,9 @@ private constructor(
   private fun produceByteReport(client: TetherClient) {
     val inboundCount = bytesInbound.getAndSet(0)
     val outboundCount = bytesOutbound.getAndSet(0)
+    if (inboundCount > 0 || outboundCount > 0) {
+      allowedClients.seen(client)
+    }
 
     allowedClients.reportTransfer(
         client = client,
@@ -262,14 +259,8 @@ private constructor(
     // Grab the amount BEFORE the data buffer is released
     val amountMoved = response.readableBytes()
 
-    // Side effect for client tracking
-    scope.launch(context = dispatchers.io) {
-      // Update latest client activity
-      allowedClients.seen(client)
-
-      // This is from Internet back to Proxy
-      bytesInbound.addAndGet(amountMoved)
-    }
+    // This is from Internet back to Proxy
+    bytesInbound.addAndGet(amountMoved)
 
     // Write here claims the msg
     ctx.writeAndFlush(DatagramPacket(response, backToClient)).addListener { future ->
