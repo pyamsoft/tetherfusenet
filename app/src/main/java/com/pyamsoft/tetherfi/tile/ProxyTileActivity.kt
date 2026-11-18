@@ -44,7 +44,7 @@ class ProxyTileActivity : ComponentActivity() {
   @Inject @JvmField internal var viewModel: ThemeViewModeler? = null
 
   @CheckResult
-  private fun getTileAction(): ProxyTileAction {
+  private fun resolveTileActionFromExtras(): ProxyTileAction? {
     val rawValue = intent.getStringExtra(ProxyTileActionKeys.KEY_ACTION)
     if (rawValue != null) {
       try {
@@ -54,7 +54,40 @@ class ProxyTileActivity : ComponentActivity() {
       }
     }
 
+    return null
+  }
+
+  @CheckResult
+  private fun resolveTileActionFromAction(): ProxyTileAction? {
+    val rawValue = intent.action
+    if (rawValue != null) {
+      return when (rawValue) {
+        ProxyTileActionValues.VALUE_ACTION_START -> ProxyTileAction.START
+        ProxyTileActionValues.VALUE_ACTION_STOP -> ProxyTileAction.STOP
+        ProxyTileActionValues.VALUE_ACTION_TOGGLE -> ProxyTileAction.TOGGLE
+        else -> null
+      }
+    }
+
+    return null
+  }
+
+  @CheckResult
+  private fun getTileAction(): ProxyTileAction {
+    val extraValue = resolveTileActionFromExtras()
+    if (extraValue != null) {
+      Timber.d { "Tile Action from Intent Extra: $extraValue" }
+      return extraValue
+    }
+
+    val actionValue = resolveTileActionFromAction()
+    if (actionValue != null) {
+      Timber.d { "Tile Action from Intent Action: $actionValue" }
+      return actionValue
+    }
+
     // No value means TOGGLE
+    Timber.d { "No tile action. default=TOGGLE" }
     return ProxyTileAction.TOGGLE
   }
 

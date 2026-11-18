@@ -20,3 +20,10 @@ object ProxyTileActionKeys {
 
   const val KEY_ACTION = "key_action"
 }
+
+object ProxyTileActionValues {
+
+  const val VALUE_ACTION_START = "com.pyamsoft.tetherfi.action.START"
+  const val VALUE_ACTION_STOP = "com.pyamsoft.tetherfi.action.STOP"
+  const val VALUE_ACTION_TOGGLE = "com.pyamsoft.tetherfi.action.TOGGLE"
+}
