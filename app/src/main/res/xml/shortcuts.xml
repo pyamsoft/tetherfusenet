@@ -29,14 +29,16 @@
 
     <!-- START hotspot -->
     <intent
-        android:action="com.pyamsoft.tetherfi.action.START"
-        android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
-        android:targetPackage="com.pyamsoft.tetherfi" />
+      android:action="com.pyamsoft.tetherfi.action.START"
+      android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
+      android:targetPackage="com.pyamsoft.tetherfi"
+    />
 
     <!-- STOP hotspot -->
     <intent
-        android:action="com.pyamsoft.tetherfi.action.STOP"
-        android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
-        android:targetPackage="com.pyamsoft.tetherfi" />
+      android:action="com.pyamsoft.tetherfi.action.STOP"
+      android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
+      android:targetPackage="com.pyamsoft.tetherfi"
+    />
   </shortcut>
 </shortcuts>

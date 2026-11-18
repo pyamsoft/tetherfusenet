@@ -140,9 +140,9 @@
       android:windowSoftInputMode="adjustPan"
     >
       <intent-filter>
-        <action android:name="com.pyamsoft.tetherfi.action.START"/>
+        <action android:name="com.pyamsoft.tetherfi.action.START" />
         <action android:name="com.pyamsoft.tetherfi.action.STOP" />
-        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.DEFAULT" />
       </intent-filter>
     </activity>
   </application>
