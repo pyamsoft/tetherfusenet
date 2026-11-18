@@ -28,6 +28,8 @@ import io.netty.channel.ChannelFactory
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoop
+import io.netty.util.NetUtil
+import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -77,59 +79,72 @@ internal constructor(
     val registerFuture = bootstrap(eventLoop, onChannelInitialized).register()
     val bootstrapChannel = registerFuture.channel()
 
-    return bootstrapChannel.newPromise().also { promise ->
-      registerFuture.addListener {
-        if (!registerFuture.isSuccess) {
-          promise.tryFailure(registerFuture.cause())
+    val promise = bootstrapChannel.newPromise()
+
+    val connectTo = { resolved: InetSocketAddress ->
+      bootstrapChannel.connect(resolved).addListener { connectFuture ->
+        if (connectFuture.isSuccess) {
+          promise.trySuccess()
+        } else {
+          promise.tryFailure(connectFuture.cause())
           bootstrapChannel.close()
-          return@addListener
         }
-
-        // Branch off to IO
-        scope
-            .launch(context = dispatchers.io) {
-              // Resolve in the IO branch (blocking)
-              val resolved =
-                  bootstrapChannel.resolveDnsAddress(
-                      dispatchers = dispatchers,
-                      hostName = hostName,
-                      port = port,
-                  )
-
-              // Hop back onto the channel's event loop before touching the channel
-              try {
-                eventLoop.runInEventLoop {
-                  if (resolved == null) {
-                    promise.tryFailure(UnknownHostException(hostName))
-                    bootstrapChannel.close()
-                    return@runInEventLoop
-                  }
-
-                  bootstrapChannel.connect(resolved).addListener { connectFuture ->
-                    if (connectFuture.isSuccess) {
-                      promise.trySuccess()
-                    } else {
-                      promise.tryFailure(connectFuture.cause())
-                      bootstrapChannel.close()
-                    }
-                  }
-                }
-              } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-                Timber.e(e) { "Error during eventLoop execution submission" }
-                promise.tryFailure(e)
-                bootstrapChannel.close()
-              }
-            }
-            .invokeOnCompletion { throwable ->
-              if (throwable != null) {
-                if (throwable !is CancellationException) {
-                  Timber.e(throwable) { "Error during channel creation" }
-                }
-                promise.tryFailure(throwable)
-                bootstrapChannel.close()
-              }
-            }
       }
     }
+
+    registerFuture.addListener {
+      if (!registerFuture.isSuccess) {
+        promise.tryFailure(registerFuture.cause())
+        bootstrapChannel.close()
+        return@addListener
+      }
+
+      // Literally an IP address, fast path without coroutine
+      val literal = NetUtil.createInetAddressFromIpAddressString(hostName)
+      if (literal != null) {
+        connectTo(InetSocketAddress(literal, port))
+        return@addListener
+      }
+
+      // Branch off to IO
+      scope
+          .launch(context = dispatchers.io) {
+            // Resolve in the IO branch (blocking)
+            val resolved =
+                bootstrapChannel.resolveDnsAddress(
+                    dispatchers = dispatchers,
+                    hostName = hostName,
+                    port = port,
+                )
+
+            // Hop back onto the channel's event loop before touching the channel
+            try {
+              eventLoop.runInEventLoop {
+                if (resolved == null) {
+                  promise.tryFailure(UnknownHostException(hostName))
+                  bootstrapChannel.close()
+                  return@runInEventLoop
+                }
+
+                connectTo(resolved)
+              }
+            } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
+              Timber.e(e) { "Error during eventLoop execution submission" }
+              promise.tryFailure(e)
+              bootstrapChannel.close()
+            }
+          }
+          .invokeOnCompletion { throwable ->
+            if (throwable != null) {
+              if (throwable !is CancellationException) {
+                Timber.e(throwable) { "Error during channel creation" }
+              }
+              promise.tryFailure(throwable)
+              bootstrapChannel.close()
+            }
+          }
+    }
+
+    return promise
   }
 }

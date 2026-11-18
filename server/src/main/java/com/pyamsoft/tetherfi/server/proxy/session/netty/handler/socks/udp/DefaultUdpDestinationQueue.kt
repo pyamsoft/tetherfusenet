@@ -86,6 +86,7 @@ internal class DefaultUdpDestinationQueue(
       onReady: (ByteBuf, InetSocketAddress) -> Unit,
       onFailed: (ByteBuf) -> Unit,
   ) {
+    // Literally an IP address, fast path without coroutine
     val literal = NetUtil.createInetAddressFromIpAddressString(hostName)
     if (literal != null) {
       onReady(data, InetSocketAddress(literal, port))
@@ -138,8 +139,10 @@ internal class DefaultUdpDestinationQueue(
           }
         }
         .invokeOnCompletion { throwable ->
-          if (throwable != null && throwable !is CancellationException) {
-            Timber.e(throwable) { "(${channelId}) Error during UDP destination resolve" }
+          if (throwable != null) {
+            if (throwable !is CancellationException) {
+              Timber.e(throwable) { "(${channelId}) Error during UDP destination resolve" }
+            }
           }
         }
   }
