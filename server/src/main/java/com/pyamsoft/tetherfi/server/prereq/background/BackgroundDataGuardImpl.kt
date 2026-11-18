@@ -19,7 +19,6 @@ package com.pyamsoft.tetherfi.server.prereq.background
 import android.content.Context
 import android.net.ConnectivityManager
 import androidx.core.content.getSystemService
-import com.pyamsoft.pydroid.core.ThreadEnforcer
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
 import javax.inject.Inject
@@ -28,14 +27,14 @@ import kotlinx.coroutines.withContext
 internal class BackgroundDataGuardImpl
 @Inject
 internal constructor(
-    private val context: Context,
+    appContext: Context,
     private val dispatchers: AppDispatchers,
-    enforcer: ThreadEnforcer,
 ) : BackgroundDataGuard {
 
   private val connectivityManager by lazy {
-    enforcer.assertOffMainThread()
-    context.getSystemService<ConnectivityManager>().requireNotNull()
+    appContext.getSystemService<ConnectivityManager>().requireNotNull {
+      "ConnectivityManager service is missing"
+    }
   }
 
   override suspend fun canCreateNetwork(): Boolean =

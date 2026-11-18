@@ -27,15 +27,17 @@ import kotlinx.coroutines.withContext
 internal class BatteryOptimizerImpl
 @Inject
 internal constructor(
-    private val context: Context,
+    private val appContext: Context,
     private val dispatchers: AppDispatchers,
 ) : BatteryOptimizer {
 
-  private val powerManager by lazy { context.getSystemService<PowerManager>().requireNotNull() }
+  private val powerManager by lazy {
+    appContext.getSystemService<PowerManager>().requireNotNull { "PowerManager service is missing" }
+  }
 
   override suspend fun isOptimizationsIgnored(): Boolean =
       // Don't use proxyDispatcher since this is used from UI
       withContext(context = dispatchers.default) {
-        powerManager.isIgnoringBatteryOptimizations(context.packageName)
+        powerManager.isIgnoringBatteryOptimizations(appContext.packageName)
       }
 }

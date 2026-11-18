@@ -32,12 +32,12 @@ import kotlinx.coroutines.withContext
 internal class AndroidWifiChecker
 @Inject
 internal constructor(
-    private val context: Context,
+    appContext: Context,
     private val dispatchers: AppDispatchers,
 ) : WifiChecker {
 
   private val manager by lazy {
-    context.applicationContext.getSystemService<WifiManager>().requireNotNull()
+    appContext.getSystemService<WifiManager>().requireNotNull { "WifiManager service is missing" }
   }
 
   override suspend fun isWifiOn(): Boolean =

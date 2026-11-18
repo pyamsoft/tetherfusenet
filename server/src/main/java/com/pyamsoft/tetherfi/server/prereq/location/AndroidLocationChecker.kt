@@ -35,13 +35,15 @@ import kotlinx.coroutines.withContext
 internal class AndroidLocationChecker
 @Inject
 internal constructor(
-    private val context: Context,
+    appContext: Context,
     private val preferences: TweakPreferences,
     private val dispatchers: AppDispatchers,
 ) : LocationChecker {
 
   private val manager by lazy {
-    context.applicationContext.getSystemService<LocationManager>().requireNotNull()
+    appContext.getSystemService<LocationManager>().requireNotNull {
+      "LocationManager service is missing"
+    }
   }
 
   override suspend fun isLocationOn(): Boolean =

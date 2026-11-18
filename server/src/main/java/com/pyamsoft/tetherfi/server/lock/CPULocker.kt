@@ -32,15 +32,15 @@ import kotlinx.coroutines.withContext
 internal class CPULocker
 @Inject
 internal constructor(
-    context: Context,
+    appContext: Context,
     private val dispatchers: AppDispatchers,
 ) : AbstractLocker() {
 
   private val powerManager by lazy {
-    context.applicationContext.getSystemService<PowerManager>().requireNotNull()
+    appContext.getSystemService<PowerManager>().requireNotNull { "PowerManager service is missing" }
   }
 
-  private val tag by lazy { createTag(context.applicationContext.packageName) }
+  private val tag by lazy { createTag(appContext.packageName) }
 
   @CheckResult
   private fun createWakeLock(): PowerManager.WakeLock {

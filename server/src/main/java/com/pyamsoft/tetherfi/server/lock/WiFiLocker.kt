@@ -33,14 +33,14 @@ import kotlinx.coroutines.withContext
 internal class WiFiLocker
 @Inject
 internal constructor(
-    context: Context,
+    appContext: Context,
     private val dispatchers: AppDispatchers,
 ) : AbstractLocker() {
 
   private val wifiManager by lazy {
-    context.applicationContext.getSystemService<WifiManager>().requireNotNull()
+    appContext.getSystemService<WifiManager>().requireNotNull { "WifiManager service was missing" }
   }
-  private val tag by lazy { createTag(context.packageName) }
+  private val tag by lazy { createTag(appContext.packageName) }
 
   @CheckResult
   private fun createWiFiLock(): WifiLock {

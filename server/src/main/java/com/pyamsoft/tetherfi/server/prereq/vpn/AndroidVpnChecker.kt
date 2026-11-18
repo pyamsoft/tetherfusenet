@@ -33,13 +33,15 @@ import kotlinx.coroutines.withContext
 internal class AndroidVpnChecker
 @Inject
 internal constructor(
-    private val context: Context,
+    appContext: Context,
     private val preferences: TweakPreferences,
     private val dispatchers: AppDispatchers,
 ) : VpnChecker {
 
   private val manager by lazy {
-    context.applicationContext.getSystemService<ConnectivityManager>().requireNotNull()
+    appContext.getSystemService<ConnectivityManager>().requireNotNull {
+      "ConnectivityManager service is missing"
+    }
   }
 
   override suspend fun isUsingVpn(): Boolean =

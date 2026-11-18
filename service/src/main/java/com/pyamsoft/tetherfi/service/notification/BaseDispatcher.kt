@@ -33,18 +33,19 @@ import com.pyamsoft.pydroid.notify.NotifyId
 
 internal abstract class BaseDispatcher<T : NotifyData>
 protected constructor(
-    protected val context: Context,
+    protected val appContext: Context,
     private val mainActivityClass: Class<out Activity>,
     private val appNameRes: Int,
 ) : NotifyDispatcher<T> {
 
   protected val channelCreator by lazy {
-    context.applicationContext.getSystemService<NotificationManager>().requireNotNull()
+    appContext.getSystemService<NotificationManager>().requireNotNull {
+      "NotificationManager service is missing"
+    }
   }
 
   @CheckResult
   private fun getActivityPendingIntent(): PendingIntent {
-    val appContext = context.applicationContext
     val activityIntent =
         Intent(appContext, mainActivityClass).apply {
           flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -67,7 +68,7 @@ protected constructor(
       channelInfo: NotifyChannelInfo,
       notification: T,
   ): NotificationCompat.Builder {
-    return NotificationCompat.Builder(context.applicationContext, channelInfo.id)
+    return NotificationCompat.Builder(appContext, channelInfo.id)
         .setShowWhen(false)
         .setAutoCancel(false)
         .setContentIntent(getActivityPendingIntent())
@@ -79,7 +80,7 @@ protected constructor(
       channelInfo: NotifyChannelInfo,
       notification: T,
   ): Notification {
-    val appName = context.getString(appNameRes)
+    val appName = appContext.getString(appNameRes)
     guaranteeNotificationChannelExists(channelInfo)
     return createNotificationBuilder(appName, channelInfo, notification)
         .setContentTitle(appName)

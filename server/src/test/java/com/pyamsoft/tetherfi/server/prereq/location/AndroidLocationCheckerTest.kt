@@ -66,7 +66,7 @@ class AndroidLocationCheckerTest {
     val context = ThrowingLocationContext(RuntimeEnvironment.getApplication())
     val checker =
         AndroidLocationChecker(
-            context = context,
+            appContext = context,
             preferences = FakeTweakPreferences(ignoreLocation = true),
             // TODO(Peter): Do we need test dispatchers?
             dispatchers = AppDispatchers.create(),
@@ -79,7 +79,7 @@ class AndroidLocationCheckerTest {
   fun `location check`() = runTest {
     val checker =
         AndroidLocationChecker(
-            context = RuntimeEnvironment.getApplication(),
+            appContext = RuntimeEnvironment.getApplication(),
             preferences = FakeTweakPreferences(ignoreLocation = false),
             // TODO(Peter): Do we need test dispatchers?
             dispatchers = AppDispatchers.create(),

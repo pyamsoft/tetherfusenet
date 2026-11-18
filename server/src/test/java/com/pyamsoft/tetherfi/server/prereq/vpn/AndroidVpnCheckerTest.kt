@@ -68,7 +68,7 @@ class AndroidVpnCheckerTest {
     val context = ThrowingConnectivityContext(RuntimeEnvironment.getApplication())
     val checker =
         AndroidVpnChecker(
-            context = context,
+            appContext = context,
             preferences = FakeTweakPreferences(ignoreVpn = true),
             // TODO(Peter): Do we need test dispatchers?
             dispatchers = AppDispatchers.create(),
@@ -81,7 +81,7 @@ class AndroidVpnCheckerTest {
   fun `vpn off`() = runTest {
     val checker =
         AndroidVpnChecker(
-            context = RuntimeEnvironment.getApplication(),
+            appContext = RuntimeEnvironment.getApplication(),
             preferences = FakeTweakPreferences(ignoreVpn = false),
             // TODO(Peter): Do we need test dispatchers?
             dispatchers = AppDispatchers.create(),

@@ -43,15 +43,16 @@ import kotlinx.coroutines.withTimeoutOrNull
 internal class AndroidSocketBinder
 @Inject
 internal constructor(
+    appContext: Context,
     private val passthrough: PassthroughSocketBinder,
     private val preferences: ExpertPreferences,
-    private val context: Context,
     private val enforcer: ThreadEnforcer,
 ) : SocketBinder {
 
   private val connectivityManager by lazy {
-    enforcer.assertOffMainThread()
-    context.getSystemService<ConnectivityManager>().requireNotNull()
+    appContext.getSystemService<ConnectivityManager>().requireNotNull {
+      "ConnectivityManager service was missing"
+    }
   }
 
   @CheckResult

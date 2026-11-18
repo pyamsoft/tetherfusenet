@@ -36,12 +36,12 @@ import javax.inject.Singleton
 internal class ErrorNotificationDispatcher
 @Inject
 internal constructor(
-    context: Context,
+    appContext: Context,
     @Named("main_activity") mainActivityClass: Class<out Activity>,
     @StringRes @Named("app_name") appNameRes: Int,
 ) :
     BaseDispatcher<ErrorNotificationData>(
-        context = context,
+        appContext = appContext,
         mainActivityClass = mainActivityClass,
         appNameRes = appNameRes,
     ) {

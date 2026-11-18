@@ -41,20 +41,19 @@ import javax.inject.Singleton
 internal class LongRunningServiceDispatcher
 @Inject
 internal constructor(
-    context: Context,
+    appContext: Context,
     @Named("main_activity") mainActivityClass: Class<out Activity>,
     @StringRes @Named("app_name") appNameRes: Int,
     @param:Named("service") private val serviceClass: Class<out Service>,
 ) :
     BaseDispatcher<ServerNotificationData>(
-        context = context,
+        appContext = appContext,
         mainActivityClass = mainActivityClass,
         appNameRes = appNameRes,
     ) {
 
   @CheckResult
   private fun getServiceStopPendingIntent(): PendingIntent {
-    val appContext = context.applicationContext
     val serviceIntent =
         Intent(appContext, serviceClass).apply {
           putExtra(
