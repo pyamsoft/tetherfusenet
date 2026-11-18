@@ -29,13 +29,12 @@ internal class StopProxyTileService internal constructor() : AbstractProxyTileSe
 
   override fun ensureObjectGraphInjected() {
     ObjectGraph.ApplicationScope.retrieve(this)
-      .plusTileService()
-      .create(
-        service = this,
-      )
-      .inject(this)
+        .plusTileService()
+        .create(
+            service = this,
+        )
+        .inject(this)
   }
-
 
   override fun onUpdateTile(application: Application) {
     StartProxyTileService.updateTile(application)

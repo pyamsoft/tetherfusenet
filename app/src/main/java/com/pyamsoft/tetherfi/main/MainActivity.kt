@@ -52,9 +52,9 @@ import com.pyamsoft.tetherfi.tile.StopProxyTileService
 import com.pyamsoft.tetherfi.tile.ToggleProxyTileService
 import com.pyamsoft.tetherfi.ui.InstallPYDroidExtras
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
 

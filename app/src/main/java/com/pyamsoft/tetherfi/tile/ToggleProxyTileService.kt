@@ -29,11 +29,11 @@ internal class ToggleProxyTileService internal constructor() : AbstractProxyTile
 
   override fun ensureObjectGraphInjected() {
     ObjectGraph.ApplicationScope.retrieve(this)
-      .plusTileService()
-      .create(
-        service = this,
-      )
-      .inject(this)
+        .plusTileService()
+        .create(
+            service = this,
+        )
+        .inject(this)
   }
 
   override fun onUpdateTile(application: Application) {

@@ -15,7 +15,6 @@
   ~ limitations under the License.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
   <application
     android:name=".TFApp"
     android:allowBackup="true"
@@ -34,7 +33,6 @@
     -->
     <activity
       android:configChanges="allKnown"
-
       android:name=".main.MainActivity"
       android:excludeFromRecents="false"
       android:exported="true"
@@ -90,24 +88,26 @@
               https://developer.android.com/develop/ui/views/quicksettings-tiles#create-declare-tileservice
             -->
     <service
-        android:name=".tile.StartProxyTileService"
-        android:enabled="true"
-        android:exported="true"
-        android:icon="@drawable/ic_wifi_tethering_24"
-        android:label="@string/start_hotspot"
-        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+      android:name=".tile.StartProxyTileService"
+      android:enabled="true"
+      android:exported="true"
+      android:icon="@drawable/ic_wifi_tethering_24"
+      android:label="@string/start_hotspot"
+      android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+    >
       <intent-filter>
         <action android:name="android.service.quicksettings.action.QS_TILE" />
       </intent-filter>
     </service>
 
     <service
-        android:name=".tile.StopProxyTileService"
-        android:enabled="true"
-        android:exported="true"
-        android:icon="@drawable/ic_wifi_tethering_off_24"
-        android:label="@string/stop_hotspot"
-        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+      android:name=".tile.StopProxyTileService"
+      android:enabled="true"
+      android:exported="true"
+      android:icon="@drawable/ic_wifi_tethering_off_24"
+      android:label="@string/stop_hotspot"
+      android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+    >
       <intent-filter>
         <action android:name="android.service.quicksettings.action.QS_TILE" />
       </intent-filter>
@@ -141,7 +141,6 @@
     -->
     <activity
       android:configChanges="allKnown"
-
       android:name=".tile.ProxyTileActivity"
       android:clearTaskOnLaunch="true"
       android:excludeFromRecents="true"

@@ -75,7 +75,7 @@ class ProxyTileActivity : ComponentActivity() {
               ToggleProxyTileService.updateTile(this)
               StartProxyTileService.updateTile(this)
               StopProxyTileService.updateTile(this)
- },
+            },
         )
       }
     }

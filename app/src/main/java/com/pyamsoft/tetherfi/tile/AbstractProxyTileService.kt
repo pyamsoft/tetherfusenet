@@ -34,11 +34,11 @@ import com.pyamsoft.tetherfi.R
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.status.RunningStatus
 import com.pyamsoft.tetherfi.service.tile.TileHandler
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import javax.inject.Inject
 
 internal abstract class AbstractProxyTileService internal constructor() : TileService() {
 
@@ -97,21 +97,23 @@ internal abstract class AbstractProxyTileService internal constructor() : TileSe
       is RunningStatus.NotRunning -> {
         state = Tile.STATE_INACTIVE
         title = getString(R.string.app_name)
-        description = if (proxyTileAction == ProxyTileAction.STOP) {
-          "Hotspot is stopped."
-        } else {
-          "Click to start Hotspot"
-        }
+        description =
+            if (proxyTileAction == ProxyTileAction.STOP) {
+              "Hotspot is stopped."
+            } else {
+              "Click to start Hotspot"
+            }
       }
 
       is RunningStatus.Running -> {
         state = Tile.STATE_ACTIVE
         title = getString(R.string.app_name)
-        description = if (proxyTileAction == ProxyTileAction.STOP) {
-          "Click to stop Hotspot"
-        } else {
-          "Hotspot Running"
-        }
+        description =
+            if (proxyTileAction == ProxyTileAction.STOP) {
+              "Click to stop Hotspot"
+            } else {
+              "Hotspot Running"
+            }
       }
 
       is RunningStatus.Starting -> {
@@ -267,6 +269,7 @@ internal abstract class AbstractProxyTileService internal constructor() : TileSe
   protected abstract fun onUpdateTile(application: Application)
 
   protected abstract fun ensureObjectGraphInjected()
+
   protected abstract val proxyTileAction: ProxyTileAction
 
   companion object {
@@ -278,8 +281,8 @@ internal abstract class AbstractProxyTileService internal constructor() : TileSe
 
       try {
         requestListeningState(
-          appContext,
-          component,
+            appContext,
+            component,
         )
       } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
         // https://github.com/pyamsoft/tetherfusenet/issues/229
