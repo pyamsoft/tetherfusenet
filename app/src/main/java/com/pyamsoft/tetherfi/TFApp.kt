@@ -103,6 +103,7 @@ class TFApp : Application() {
         inAppDebugStatus = inAppDebugStatus,
     )
     addLibraries()
+    configureLeakCanary()
   }
 
   companion object {
