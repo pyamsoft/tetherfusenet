@@ -142,7 +142,6 @@
       <intent-filter>
         <action android:name="com.pyamsoft.tetherfi.action.START"/>
         <action android:name="com.pyamsoft.tetherfi.action.STOP" />
-        <action android:name="com.pyamsoft.tetherfi.action.TOGGLE" />
         <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
     </activity>

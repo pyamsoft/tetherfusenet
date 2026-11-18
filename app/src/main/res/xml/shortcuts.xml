@@ -20,10 +20,23 @@
     android:shortcutId="toggle_hotspot"
     android:shortcutShortLabel="@string/toggle_hotspot_shortcut"
   >
+    <!-- This shortcut IS toggle, but if I remove it, it would break existing setups -->
     <intent
       android:action="android.intent.action.VIEW"
       android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
       android:targetPackage="com.pyamsoft.tetherfi"
     />
+
+    <!-- START hotspot -->
+    <intent
+        android:action="com.pyamsoft.tetherfi.action.START"
+        android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
+        android:targetPackage="com.pyamsoft.tetherfi" />
+
+    <!-- STOP hotspot -->
+    <intent
+        android:action="com.pyamsoft.tetherfi.action.STOP"
+        android:targetClass="com.pyamsoft.tetherfi.tile.ProxyTileActivity"
+        android:targetPackage="com.pyamsoft.tetherfi" />
   </shortcut>
 </shortcuts>

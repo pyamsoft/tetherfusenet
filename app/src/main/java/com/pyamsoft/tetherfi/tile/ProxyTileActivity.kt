@@ -19,19 +19,16 @@ package com.pyamsoft.tetherfi.tile
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.CheckResult
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pyamsoft.pydroid.arch.SaveStateDisposableEffect
-import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.ObjectGraph
 import com.pyamsoft.tetherfi.R
 import com.pyamsoft.tetherfi.TFTheme
-import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.getSystemDarkMode
 import com.pyamsoft.tetherfi.main.SystemBars
 import com.pyamsoft.tetherfi.main.ThemeViewModeler
@@ -43,54 +40,6 @@ class ProxyTileActivity : ComponentActivity() {
   @Inject @JvmField internal var dispatchers: AppDispatchers? = null
   @Inject @JvmField internal var viewModel: ThemeViewModeler? = null
 
-  @CheckResult
-  private fun resolveTileActionFromExtras(): ProxyTileAction? {
-    val rawValue = intent.getStringExtra(ProxyTileActionKeys.KEY_ACTION)
-    if (rawValue != null) {
-      try {
-        return ProxyTileAction.valueOf(rawValue)
-      } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-        Timber.e(e) { "Error parsing ProxyTileActivity.Action param: $rawValue" }
-      }
-    }
-
-    return null
-  }
-
-  @CheckResult
-  private fun resolveTileActionFromAction(): ProxyTileAction? {
-    val rawValue = intent.action
-    if (rawValue != null) {
-      return when (rawValue) {
-        ProxyTileActionValues.VALUE_ACTION_START -> ProxyTileAction.START
-        ProxyTileActionValues.VALUE_ACTION_STOP -> ProxyTileAction.STOP
-        ProxyTileActionValues.VALUE_ACTION_TOGGLE -> ProxyTileAction.TOGGLE
-        else -> null
-      }
-    }
-
-    return null
-  }
-
-  @CheckResult
-  private fun getTileAction(): ProxyTileAction {
-    val extraValue = resolveTileActionFromExtras()
-    if (extraValue != null) {
-      Timber.d { "Tile Action from Intent Extra: $extraValue" }
-      return extraValue
-    }
-
-    val actionValue = resolveTileActionFromAction()
-    if (actionValue != null) {
-      Timber.d { "Tile Action from Intent Action: $actionValue" }
-      return actionValue
-    }
-
-    // No value means TOGGLE
-    Timber.d { "No tile action. default=TOGGLE" }
-    return ProxyTileAction.TOGGLE
-  }
-
   override fun onCreate(savedInstanceState: Bundle?) {
     setTheme(R.style.Theme_TFApp_Tile)
     super.onCreate(savedInstanceState)
@@ -101,7 +50,7 @@ class ProxyTileActivity : ComponentActivity() {
     val dis = dispatchers.requireNotNull()
     val appName = getString(R.string.app_name)
 
-    val tileAction = getTileAction()
+    val tileAction = TileActionResolver.getTileAction(intent, ProxyTileAction.TOGGLE)
 
     setContent {
       val theme by vm.mode.collectAsStateWithLifecycle()
