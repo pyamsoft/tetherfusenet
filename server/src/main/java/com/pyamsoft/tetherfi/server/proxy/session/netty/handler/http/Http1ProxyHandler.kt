@@ -59,9 +59,9 @@ import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
 import io.netty.util.concurrent.Future
+import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.net.InetSocketAddress
 
 // Cannot be shareable because of the local state messageQueue and outboundChannel
 internal class Http1ProxyHandler

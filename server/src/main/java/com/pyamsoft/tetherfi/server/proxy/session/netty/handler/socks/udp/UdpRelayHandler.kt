@@ -36,6 +36,7 @@ import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.ProxyHandler
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.flushAndClose
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.zeroOrAmountAsLong
 import com.pyamsoft.tetherfi.server.proxy.session.port
+import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
@@ -72,6 +73,12 @@ private constructor(
 
   private var byteCountJob: Job? = null
 
+  private val destinationQueue =
+      UdpDestinationQueue.create(
+          scope = scope,
+          dispatchers = dispatchers,
+      )
+
   @CheckResult
   private fun getBackToClientAddress(ctx: ChannelHandlerContext): InetSocketAddress? {
     return ctx.channel().attr(BACK_TO_CLIENT_ADDRESS).get()
@@ -103,49 +110,60 @@ private constructor(
   ) {
     UDP.unwrap(
         channelId = channelId,
-        scope = scope,
-        dispatchers = dispatchers,
-        ctx = ctx,
         msg = msg,
         onError = { sendErrorAndClose(ctx, it) },
-        onUnwrapped = { retainedData, destination ->
-          if (isBlockedLocalAddress(destination.address)) {
-            Timber.w { "($channelId) DROP: Blocked local address: $destination" }
-            sendErrorAndClose(ctx, retainedData)
-            return@unwrap
-          }
-
-          val tag = "UDP-RELAY-${destination.address}:${destination.port}"
-
-          // Replace the channel ID here now that we have evaluated the real upstream
-          setChannelTag(ctx, tag)
-          setChannelId(tag)
-
-          val client = resolveTetherClient(ctx, sender)
-
-          // If the client is blocked we do not process any input
-          if (blockedClients.isBlocked(client)) {
-            Timber.w { "($channelId) DROP: client was blocked: $client" }
-            sendErrorAndClose(ctx, retainedData)
-            return@unwrap
-          }
-
-          // Grab the amount BEFORE the data buffer is released
-          val amountMoved = retainedData.readableBytes()
-
-          // This is from Proxy out to Internet
-          bytesOutbound.addAndGet(amountMoved)
-
-          // Write here claims the msg
-          ctx.writeAndFlush(DatagramPacket(retainedData, destination)).addListener { future ->
-            if (!future.isSuccess) {
-              Timber.e(future.cause()) {
-                "($channelId) Failed sending UDP to internet: $destination"
-              }
-            }
-          }
+        onUnwrapped = { retainedData, hostName, port ->
+          destinationQueue.enqueue(
+              ctx = ctx,
+              channelId = channelId,
+              data = retainedData,
+              hostName = hostName,
+              port = port,
+              onFailed = { sendErrorAndClose(ctx, it) },
+              onReady = { data, destination ->
+                sendUdpToInternet(ctx, channelId, data, destination, sender)
+              },
+          )
         },
     )
+  }
+
+  private fun sendUdpToInternet(
+      ctx: ChannelHandlerContext,
+      channelId: String,
+      retainedData: ByteBuf,
+      destination: InetSocketAddress,
+      sender: InetSocketAddress,
+  ) {
+    if (isBlockedLocalAddress(destination.address)) {
+      Timber.w { "($channelId) DROP: Blocked local address: $destination" }
+      sendErrorAndClose(ctx, retainedData)
+      return
+    }
+
+    val tag = "UDP-RELAY-${destination.address}:${destination.port}"
+
+    // Replace the channel ID here now that we have evaluated the real upstream
+    setChannelTag(ctx, tag)
+    setChannelId(tag)
+
+    val client = resolveTetherClient(ctx, sender)
+
+    // If the client is blocked we do not process any input
+    if (blockedClients.isBlocked(client)) {
+      Timber.w { "($channelId) DROP: client was blocked: $client" }
+      sendErrorAndClose(ctx, retainedData)
+      return
+    }
+
+    // Grab the amount BEFORE the data buffer is released
+    val amountMoved = retainedData.readableBytes()
+
+    // This is from Proxy out to Internet
+    bytesOutbound.addAndGet(amountMoved)
+
+    // Write here claims the msg
+    ctx.writeAndFlush(DatagramPacket(retainedData, destination)).closeOnWriteFailure(ctx)
   }
 
   private fun ensureChannelTag(ctx: ChannelHandlerContext) {
@@ -263,11 +281,7 @@ private constructor(
     bytesInbound.addAndGet(amountMoved)
 
     // Write here claims the msg
-    ctx.writeAndFlush(DatagramPacket(response, backToClient)).addListener { future ->
-      if (!future.isSuccess) {
-        Timber.e(future.cause()) { "($channelId) Failed sending UDP back to client: $backToClient" }
-      }
-    }
+    ctx.writeAndFlush(DatagramPacket(response, backToClient)).closeOnWriteFailure(ctx)
   }
 
   private fun handleUdpMessage(ctx: ChannelHandlerContext, msg: DatagramPacket, channelId: String) {
@@ -311,6 +325,9 @@ private constructor(
 
     // One last report before we close
     getTetherClient(ctx)?.also { produceByteReport(it) }
+
+    // Clear the queue, we are done
+    destinationQueue.clear()
 
     ctx.channel().apply {
       attr(TAG).set(null)

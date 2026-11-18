@@ -19,10 +19,7 @@ package com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.udp
 import androidx.annotation.CheckResult
 import com.pyamsoft.pydroid.core.LintIgnoreLongMethod
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
-import com.pyamsoft.pydroid.util.AppDispatchers
 import com.pyamsoft.tetherfi.core.Timber
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.resolveDnsAddress
-import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.runInEventLoop
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.FRAGMENT_ZERO
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.FRAGMENT_ZERO_INT
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.RESERVED_BYTE
@@ -30,7 +27,6 @@ import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.RESERVED_B
 import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.socks.resolveSocks5AddressType
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
-import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.socket.DatagramPacket
 import io.netty.handler.codec.socksx.v5.Socks5AddressType
 import io.netty.util.ReferenceCountUtil
@@ -38,9 +34,6 @@ import io.netty.util.ReferenceCounted
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetSocketAddress
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 object UDP {
 
@@ -136,11 +129,8 @@ object UDP {
   @LintIgnoreLongMethod
   fun unwrap(
       channelId: String,
-      scope: CoroutineScope,
-      dispatchers: AppDispatchers,
-      ctx: ChannelHandlerContext,
       msg: DatagramPacket,
-      onUnwrapped: (ByteBuf, InetSocketAddress) -> Unit,
+      onUnwrapped: (ByteBuf, String, Int) -> Unit,
       onError: (ReferenceCounted) -> Unit,
   ) {
     val buf = msg.content()
@@ -211,48 +201,12 @@ object UDP {
     // Release the original message at this point
     ReferenceCountUtil.release(msg)
 
-    val handleUdpUnwrapped = { address: InetSocketAddress ->
-      try {
-        onUnwrapped(retainedData, address)
-      } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-        Timber.e(e) { "Failed to unwrap UDP data" }
-        onError(retainedData)
-      }
+    try {
+      onUnwrapped(retainedData, destinationAddr, destinationPort)
+    } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
+      Timber.e(e) { "(${channelId}) Failed to unwrap UDP data" }
+      onError(retainedData)
     }
-
-    // Branch off to IO
-    scope
-        .launch(context = dispatchers.io) {
-          // Resolve in the IO branch (blocking)
-          val resolved =
-              ctx.resolveDnsAddress(
-                  dispatchers = dispatchers,
-                  hostName = destinationAddr,
-                  port = destinationPort,
-              )
-
-          // Hop back onto the channel's event loop before touching the channel
-          try {
-            ctx.executor().runInEventLoop {
-              if (resolved == null) {
-                onError(retainedData)
-              } else {
-                handleUdpUnwrapped(resolved)
-              }
-            }
-          } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
-            Timber.e(e) { "(${channelId}) Unable to return to event loop" }
-            ReferenceCountUtil.release(retainedData)
-          }
-        }
-        .invokeOnCompletion { throwable ->
-          if (throwable != null) {
-            if (throwable !is CancellationException) {
-              Timber.e(throwable) { "Error during UDP unwrapping" }
-            }
-            ReferenceCountUtil.release(retainedData)
-          }
-        }
   }
 
   @CheckResult
