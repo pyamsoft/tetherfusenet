@@ -27,13 +27,16 @@
     android:theme="@style/Theme.TetherFuseNet"
   >
     <!--
-                      Compose Handles config changes
+      Compose Handles config changes
 
-                      https://www.reddit.com/r/androiddev/comments/qwu12a/activity_recreation_problem_is_solved_with/
-                    -->
+      https://www.reddit.com/r/androiddev/comments/qwu12a/activity_recreation_problem_is_solved_with/
+      https://issuetracker.google.com/issues/457269058
+      developer.android.com/reference/android/R.attr#configChanges
+    -->
     <activity
+      android:configChanges="allKnown"
+
       android:name=".MainActivity"
-      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
       android:excludeFromRecents="false"
       android:exported="true"
       android:label="@string/app_name"
