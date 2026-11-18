@@ -25,10 +25,10 @@ import com.pyamsoft.tetherfi.server.proxy.session.netty.handler.runInEventLoop
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.util.NetUtil
+import java.net.InetSocketAddress
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.net.InetSocketAddress
 
 /**
  * Ensure UDP travels in order it was received, per destination
