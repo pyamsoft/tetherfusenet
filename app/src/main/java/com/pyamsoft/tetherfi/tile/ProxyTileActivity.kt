@@ -71,7 +71,11 @@ class ProxyTileActivity : ComponentActivity() {
             appName = appName,
             tileAction = tileAction,
             onComplete = { finishAndRemoveTask() },
-            onUpdateTile = { ProxyTileService.updateTile(this) },
+            onUpdateTile = {
+              ToggleProxyTileService.updateTile(this)
+              StartProxyTileService.updateTile(this)
+              StopProxyTileService.updateTile(this)
+ },
         )
       }
     }

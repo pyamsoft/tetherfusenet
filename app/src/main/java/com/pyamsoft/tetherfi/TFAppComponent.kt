@@ -20,7 +20,6 @@ import android.app.Activity
 import android.app.Application
 import android.app.Service
 import android.content.Context
-import android.service.quicksettings.TileService
 import androidx.annotation.CheckResult
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
@@ -56,7 +55,6 @@ import com.pyamsoft.tetherfi.status.PermissionRequests
 import com.pyamsoft.tetherfi.status.PermissionResponse
 import com.pyamsoft.tetherfi.tile.ProxyTileActivity
 import com.pyamsoft.tetherfi.tile.ProxyTileComponent
-import com.pyamsoft.tetherfi.tile.ProxyTileService
 import com.pyamsoft.tetherfi.tile.ProxyTileServiceComponent
 import com.pyamsoft.tetherfi.tile.TileAppModule
 import dagger.Binds
@@ -64,11 +62,11 @@ import dagger.BindsInstance
 import dagger.Component
 import dagger.Module
 import dagger.Provides
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import java.time.Clock
 import javax.inject.Named
 import javax.inject.Singleton
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 
 private val Context.dataStore: DataStore<Preferences> by
     preferencesDataStore(
@@ -254,12 +252,6 @@ internal interface TFAppComponent {
       @JvmStatic
       internal fun provideForegroundServiceClass(): Class<out Service> {
         return ProxyForegroundService::class.java
-      }
-
-      @Provides
-      @JvmStatic
-      internal fun provideTileServiceClass(): Class<out TileService> {
-        return ProxyTileService::class.java
       }
 
       @Provides

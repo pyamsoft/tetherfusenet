@@ -18,6 +18,7 @@
 
 package com.pyamsoft.tetherfi.tile
 
+import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.os.Build
@@ -29,18 +30,17 @@ import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.util.AppDispatchers
-import com.pyamsoft.tetherfi.ObjectGraph
 import com.pyamsoft.tetherfi.R
 import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.server.status.RunningStatus
 import com.pyamsoft.tetherfi.service.tile.TileHandler
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import javax.inject.Inject
 
-internal class ProxyTileService internal constructor() : TileService() {
+internal abstract class AbstractProxyTileService internal constructor() : TileService() {
 
   @Inject @JvmField internal var dispatchers: AppDispatchers? = null
   @Inject @JvmField internal var tileHandler: TileHandler? = null
@@ -79,7 +79,7 @@ internal class ProxyTileService internal constructor() : TileService() {
       }
     } else {
       Timber.w { "Cannot update tile, no QS Tile, try requesting LS update" }
-      updateTile(application)
+      onUpdateTile(application)
     }
   }
 
@@ -97,13 +97,21 @@ internal class ProxyTileService internal constructor() : TileService() {
       is RunningStatus.NotRunning -> {
         state = Tile.STATE_INACTIVE
         title = getString(R.string.app_name)
-        description = "Click to start Hotspot"
+        description = if (proxyTileAction == ProxyTileAction.STOP) {
+          "Hotspot is stopped."
+        } else {
+          "Click to start Hotspot"
+        }
       }
 
       is RunningStatus.Running -> {
         state = Tile.STATE_ACTIVE
         title = getString(R.string.app_name)
-        description = "Hotspot Running"
+        description = if (proxyTileAction == ProxyTileAction.STOP) {
+          "Click to stop Hotspot"
+        } else {
+          "Hotspot Running"
+        }
       }
 
       is RunningStatus.Starting -> {
@@ -167,12 +175,7 @@ internal class ProxyTileService internal constructor() : TileService() {
       // This can crash if the TileService spins up BEFORE the application class is created
       // /vitals/crashes/fc7545d4e783dd108d01983e58d70f43/details?days=28&versionCode=53
       try {
-        ObjectGraph.ApplicationScope.retrieve(this)
-            .plusTileService()
-            .create(
-                service = this,
-            )
-            .inject(this)
+        ensureObjectGraphInjected()
       } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
         Timber.e(e) { "Failed to inject Tile handler, application not ready!" }
       }
@@ -186,7 +189,7 @@ internal class ProxyTileService internal constructor() : TileService() {
     tileActivityLauncher
         .requireNotNull()
         .launchTileActivity(
-            action = ProxyTileAction.TOGGLE,
+            action = proxyTileAction,
         )
   }
 
@@ -261,21 +264,22 @@ internal class ProxyTileService internal constructor() : TileService() {
     dispatchers = null
   }
 
+  protected abstract fun onUpdateTile(application: Application)
+
+  protected abstract fun ensureObjectGraphInjected()
+  protected abstract val proxyTileAction: ProxyTileAction
+
   companion object {
 
     @JvmStatic
-    fun updateTile(context: Context) {
+    protected fun updateTile(context: Context, cls: Class<out TileService>) {
       val appContext = context.applicationContext
-      val component =
-          ComponentName(
-              appContext,
-              ProxyTileService::class.java,
-          )
+      val component = ComponentName(appContext, cls)
 
       try {
         requestListeningState(
-            appContext,
-            component,
+          appContext,
+          component,
         )
       } catch (@LintIgnoreTooGenericExceptionCaught e: Throwable) {
         // https://github.com/pyamsoft/tetherfusenet/issues/229

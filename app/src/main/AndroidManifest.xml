@@ -90,28 +90,40 @@
               https://developer.android.com/develop/ui/views/quicksettings-tiles#create-declare-tileservice
             -->
     <service
-      android:name=".tile.ProxyTileService"
+        android:name=".tile.StartProxyTileService"
+        android:enabled="true"
+        android:exported="true"
+        android:icon="@drawable/ic_wifi_tethering_24"
+        android:label="@string/start_hotspot"
+        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+      <intent-filter>
+        <action android:name="android.service.quicksettings.action.QS_TILE" />
+      </intent-filter>
+    </service>
+
+    <service
+        android:name=".tile.StopProxyTileService"
+        android:enabled="true"
+        android:exported="true"
+        android:icon="@drawable/ic_wifi_tethering_off_24"
+        android:label="@string/stop_hotspot"
+        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+      <intent-filter>
+        <action android:name="android.service.quicksettings.action.QS_TILE" />
+      </intent-filter>
+    </service>
+
+    <service
+      android:name=".tile.ToggleProxyTileService"
       android:enabled="true"
       android:exported="true"
       android:icon="@drawable/ic_wifi_tethering_24"
-      android:label="@string/app_name"
+      android:label="@string/toggle_hotspot_shortcut"
       android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
     >
       <intent-filter>
         <action android:name="android.service.quicksettings.action.QS_TILE" />
       </intent-filter>
-
-      <!--
-                    Mark Tile active Tile's make an application a candidate for Foreground
-                    starting We mark this as NOT active so that the system binds to us and treats
-                    us as foreground!
-
-                    https://github.com/pyamsoft/tetherfusenet/issues/250
-
-                    <meta-data
-                    android:name="android.service.quicksettings.ACTIVE_TILE" android:value="true"
-                    />
-                    -->
 
       <!-- Tile can be toggled -->
       <meta-data

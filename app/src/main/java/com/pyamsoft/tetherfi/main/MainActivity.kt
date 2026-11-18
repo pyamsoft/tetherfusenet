@@ -47,12 +47,14 @@ import com.pyamsoft.tetherfi.core.Timber
 import com.pyamsoft.tetherfi.core.notification.NotificationErrorLauncher
 import com.pyamsoft.tetherfi.getSystemDarkMode
 import com.pyamsoft.tetherfi.service.ServiceLauncher
-import com.pyamsoft.tetherfi.tile.ProxyTileService
+import com.pyamsoft.tetherfi.tile.StartProxyTileService
+import com.pyamsoft.tetherfi.tile.StopProxyTileService
+import com.pyamsoft.tetherfi.tile.ToggleProxyTileService
 import com.pyamsoft.tetherfi.ui.InstallPYDroidExtras
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
 
@@ -186,7 +188,11 @@ class MainActivity : ComponentActivity() {
             allDestinations = allDestinations,
             pagerState = pagerState,
             onShowInAppRating = { handleShowInAppRating() },
-            onUpdateTile = { ProxyTileService.updateTile(this) },
+            onUpdateTile = {
+              ToggleProxyTileService.updateTile(this)
+              StartProxyTileService.updateTile(this)
+              StopProxyTileService.updateTile(this)
+            },
             onLaunchIntent = { safeOpenSettingsIntent(it) },
         )
       }

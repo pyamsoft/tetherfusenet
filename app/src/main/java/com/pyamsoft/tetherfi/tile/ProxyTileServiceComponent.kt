@@ -29,7 +29,11 @@ import dagger.Subcomponent
 )
 internal interface ProxyTileServiceComponent {
 
-  fun inject(service: ProxyTileService)
+  fun inject(service: ToggleProxyTileService)
+
+  fun inject(service: StartProxyTileService)
+
+  fun inject(service: StopProxyTileService)
 
   @Subcomponent.Factory
   interface Factory {
