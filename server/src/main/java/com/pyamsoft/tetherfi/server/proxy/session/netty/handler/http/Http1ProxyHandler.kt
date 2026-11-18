@@ -59,9 +59,9 @@ import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import io.netty.util.ReferenceCountUtil
 import io.netty.util.concurrent.Future
-import java.net.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.net.InetSocketAddress
 
 // Cannot be shareable because of the local state messageQueue and outboundChannel
 internal class Http1ProxyHandler
@@ -95,6 +95,8 @@ private constructor(
 
   private var outboundChannel: Channel? = null
 
+  private var needsFlush = false
+
   private fun assignOutboundChannel(channel: Channel) {
     outboundChannel?.let { old ->
       Timber.d { "Re-assigning outbound channel $old -> $channel" }
@@ -120,11 +122,14 @@ private constructor(
     if (outbound == null) {
       messageQueue.add(msg)
     } else {
-      // Use immediately and release
-      outbound.writeAndFlush(msg).closeOnWriteFailure(ctx)
+      outbound.write(msg).closeOnWriteFailure(ctx)
 
       if (msg is LastHttpContent) {
+        needsFlush = false
+        outbound.flush()
         finishForwardedRequest(ctx, outbound)
+      } else {
+        needsFlush = true
       }
     }
   }
@@ -640,6 +645,27 @@ private constructor(
     serverChannel.config().isAutoRead = true
   }
 
+  override fun channelReadComplete(ctx: ChannelHandlerContext) {
+    try {
+      if (needsFlush) {
+        needsFlush = false
+
+        val outbound = outboundChannel
+        if (outbound == null) {
+          ensureChannelTag(ctx)
+          val channelId = getChannelId()
+
+          Timber.w { "(${channelId}) Outbound flush requested but channel was NULL" }
+          return
+        }
+
+        outbound.flush()
+      }
+    } finally {
+      super.channelReadComplete(ctx)
+    }
+  }
+
   override fun channelWritabilityChanged(ctx: ChannelHandlerContext) {
     try {
       val isWritable = ctx.channel().isWritable
@@ -650,7 +676,10 @@ private constructor(
   }
 
   override fun onCloseChannels(ctx: ChannelHandlerContext) {
-    Timber.d { "Clear pending message queue" }
+    ensureChannelTag(ctx)
+    val channelId = getChannelId()
+
+    Timber.d { "(${channelId}) Clear pending message queue" }
     releaseQueuedMessages()
 
     outboundChannel?.flushAndClose()
