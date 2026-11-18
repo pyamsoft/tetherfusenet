@@ -92,7 +92,7 @@ internal constructor(
                 Timber.e(future.cause()) {
                   "(${getChannelId()}) Write failed, close"
                 }
-                ctx.channel().close()
+                ctx.flushAndClose()
               }
             }
                 .also { closeOnWriteFailureListener = it }
