@@ -15,12 +15,6 @@
   ~ limitations under the License.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-  <!-- Foreground Service -->
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-  <uses-permission
-    android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
-  />
-  <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 
   <application
     android:name=".TFApp"

@@ -17,4 +17,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <!-- Keep Device CPU alive -->
   <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+  <!-- Foreground Service -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 </manifest>
