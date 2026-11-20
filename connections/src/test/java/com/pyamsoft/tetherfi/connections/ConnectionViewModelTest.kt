@@ -63,6 +63,10 @@ private class FakeBlockedClients(
   override fun listenForBlocked(): Flow<Collection<TetherClient>> = blocked
 
   override fun isBlocked(client: TetherClient): Boolean = isBlockedResult
+
+  override fun isBlockedVisual(client: TetherClient): Boolean {
+    return isBlockedResult
+  }
 }
 
 private class FakeBlockedClientTracker : BlockedClientTracker {

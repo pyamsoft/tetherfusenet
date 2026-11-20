@@ -55,7 +55,7 @@ internal constructor(
   }
 
   fun handleToggleBlock(client: TetherClient) {
-    if (blockedClients.isBlocked(client)) {
+    if (blockedClients.isBlockedVisual(client)) {
       blockTracker.unblock(client)
     } else {
       blockTracker.block(client)

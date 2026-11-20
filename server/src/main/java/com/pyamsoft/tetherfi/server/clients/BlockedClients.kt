@@ -24,4 +24,7 @@ interface BlockedClients {
   @CheckResult fun listenForBlocked(): Flow<Collection<TetherClient>>
 
   @CheckResult fun isBlocked(client: TetherClient): Boolean
+
+  /** A UI only switch for the block/unblock interaction */
+  @CheckResult fun isBlockedVisual(client: TetherClient): Boolean
 }

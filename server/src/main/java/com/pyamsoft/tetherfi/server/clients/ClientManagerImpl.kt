@@ -284,6 +284,10 @@ internal constructor(
     return checkBlocked(client)
   }
 
+  override fun isBlockedVisual(client: TetherClient): Boolean {
+    return isBlockedClient(client)
+  }
+
   override fun seen(client: TetherClient) {
     handleClientUpdate(client) { markLastSeenNow(it) }
   }
