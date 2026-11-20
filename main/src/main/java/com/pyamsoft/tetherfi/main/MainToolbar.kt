@@ -17,7 +17,6 @@
 package com.pyamsoft.tetherfi.main
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -28,7 +27,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 internal fun MainToolbar(
     modifier: Modifier = Modifier,
     appName: String,
