@@ -29,6 +29,7 @@ android {
   namespace = "com.pyamsoft.networktest"
 
   compileSdk = libs.versions.compileSdk.get().toInt()
+  compileSdkMinor = libs.versions.compileSdkMinor.get().toInt()
 
   defaultConfig {
     applicationId = "com.pyamsoft.networktest"
