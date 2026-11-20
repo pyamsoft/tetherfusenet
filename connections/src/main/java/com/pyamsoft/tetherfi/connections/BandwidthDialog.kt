@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -107,7 +108,8 @@ private fun TransferDialog(
   // Initialize this to the current name
   // This way we can track changes quickly without needing to update the model
   val (enabled, setEnabled) = remember(limit) { mutableStateOf(limit != null) }
-  val (amount, setAmount) = remember(limit) { mutableStateOf(limit?.amount?.toString().orEmpty()) }
+  val amountState =
+      remember(limit) { TextFieldState(initialText = limit?.amount?.toString().orEmpty()) }
 
   // The default unit depends on the type of Dialog
   val defaultUnit =
@@ -121,8 +123,10 @@ private fun TransferDialog(
         mutableStateOf(limit?.unit ?: defaultUnit)
       }
 
+  val amountText = amountState.text
+  val amountValue = remember(amountText) { amountText.toString().toLongOrNull() }
+
   val hapticManager = LocalHapticManager.current
-  val amountValue = remember(amount) { amount.toLongOrNull() }
   val canSave =
       remember(amountValue, enabled) {
         if (!enabled) {
@@ -176,8 +180,7 @@ private fun TransferDialog(
       ) {
         TextField(
             modifier = Modifier.weight(1F),
-            value = amount,
-            onValueChange = { setAmount(it) },
+            state = amountState,
             enabled = enabled,
             keyboardOptions =
                 KeyboardOptions(

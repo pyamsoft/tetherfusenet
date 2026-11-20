@@ -17,23 +17,23 @@
 package com.pyamsoft.tetherfi.status.sections.network
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 internal fun StatusEditor(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     title: String,
-    value: String,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
+    state: TextFieldState,
+    textObfuscationMode: TextObfuscationMode = TextObfuscationMode.Visible,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    onChange: (String) -> Unit,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
 ) {
@@ -42,24 +42,19 @@ internal fun StatusEditor(
           fontFamily = FontFamily.Monospace,
       )
 
-  val label =
-      @Composable {
-        Text(
-            text = title,
-        )
-      }
-
-  OutlinedTextField(
+  OutlinedSecureTextField(
       modifier = modifier,
       enabled = enabled,
       keyboardOptions = keyboardOptions,
-      value = value,
+      state = state,
       textStyle = textStyle,
-      visualTransformation = visualTransformation,
-      onValueChange = onChange,
       leadingIcon = leadingIcon,
       trailingIcon = trailingIcon,
-      singleLine = true,
-      label = label,
+      textObfuscationMode = textObfuscationMode,
+      label = {
+        Text(
+            text = title,
+        )
+      },
   )
 }

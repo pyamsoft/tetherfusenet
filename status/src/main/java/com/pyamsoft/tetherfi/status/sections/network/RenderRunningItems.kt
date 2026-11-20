@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -146,8 +147,8 @@ private fun PreviewRunningItems(
         serverViewState = makeTestServerState(server, http, socks),
         state =
             MutableStatusViewState().apply {
-              this.ssid.value = TEST_SSID
-              this.password.value = TEST_PASSWORD
+              this.ssid.setTextAndPlaceCursorAtEnd(TEST_SSID)
+              this.password.setTextAndPlaceCursorAtEnd(TEST_PASSWORD)
             },
         onShowNetworkError = {},
         onShowQRCode = {},

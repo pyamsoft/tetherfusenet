@@ -16,25 +16,26 @@
 
 package com.pyamsoft.tetherfi.status.sections.network
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextObfuscationMode
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.core.text.trimmedLength
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pyamsoft.pydroid.theme.keylines
@@ -49,25 +50,36 @@ import com.pyamsoft.tetherfi.ui.icons.IconPainters
 private const val MAX_SSID_ALLOWED_LENGTH = 32
 
 @Composable
-private fun EditPort(
+internal fun EditProxyPort(
     modifier: Modifier = Modifier,
-    port: Int,
-    @StringRes portLabelRes: Int,
+    serverViewState: ServerViewState,
     onPortChanged: (Int) -> Unit,
 ) {
-  val isValid = remember(port) { port in 1025..65000 }
-  val portString = remember(port) { port.toString() }
+  val port by serverViewState.port.collectAsStateWithLifecycle()
+
+  val portState = rememberTextFieldState(port.toString())
+  val portString = portState.text
+
+  val isValid =
+      remember(portString) {
+        val portInt = portString.toString().toIntOrNull()
+        return@remember portInt != null && portInt in 1025..65000
+      }
+
+  val label = stringResource(R.string.hotspot_proxy_port)
+
+  val handlePortChanged by rememberUpdatedState(onPortChanged)
+  LaunchedEffect(portString) {
+    val portInt = portString.toString().toIntOrNull()
+    if (portInt != null) {
+      handlePortChanged(portInt)
+    }
+  }
 
   StatusEditor(
       modifier = modifier,
-      title = stringResource(portLabelRes),
-      value = portString,
-      onChange = { newValue ->
-        val portNumber = newValue.toIntOrNull()
-        if (portNumber != null) {
-          onPortChanged(portNumber)
-        }
-      },
+      title = label,
+      state = portState,
       keyboardOptions =
           KeyboardOptions(
               keyboardType = KeyboardType.Number,
@@ -78,7 +90,7 @@ private fun EditPort(
             description =
                 stringResource(
                     R.string.editmode_label_map,
-                    stringResource(portLabelRes),
+                    label,
                     stringResource(
                         if (isValid) R.string.editmode_label_valid
                         else R.string.editmode_label_invalid,
@@ -90,47 +102,28 @@ private fun EditPort(
 }
 
 @Composable
-internal fun EditHttpPort(
-    modifier: Modifier = Modifier,
-    serverViewState: ServerViewState,
-    onPortChanged: (Int) -> Unit,
-) {
-  val port by serverViewState.port.collectAsStateWithLifecycle()
-  EditPort(
-      modifier = modifier,
-      port = port,
-      portLabelRes = R.string.hotspot_proxy_port,
-      onPortChanged = onPortChanged,
-  )
-}
-
-@Composable
 internal fun EditPassword(
     modifier: Modifier = Modifier,
     state: StatusViewState,
-    onPasswordChanged: (String) -> Unit,
+    onPasswordChanged: (CharSequence) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
 ) {
+  val userDefinedPassword = state.password
   val canUseCustomConfig = remember { ServerDefaults.canUseCustomConfig() }
-  val password by state.password.collectAsStateWithLifecycle()
-  val isPasswordVisible by state.isPasswordVisible.collectAsStateWithLifecycle()
   val systemDefined = stringResource(R.string.editmode_system_defined)
-  val hotspotPassword =
-      remember(
-          canUseCustomConfig,
-          password,
-          systemDefined,
-      ) {
-        if (canUseCustomConfig) password else systemDefined
-      }
 
+  val hotspotPassword =
+      if (canUseCustomConfig) userDefinedPassword else rememberTextFieldState(systemDefined)
+  val passwordText = hotspotPassword.text
   val isValid =
       remember(
           canUseCustomConfig,
-          password,
+          passwordText,
       ) {
-        if (canUseCustomConfig) password.trimmedLength() in 8..63 else true
+        !canUseCustomConfig || passwordText.trimmedLength() in 8..63
       }
+
+  val isPasswordVisible by state.isPasswordVisible.collectAsStateWithLifecycle()
 
   val hapticManager = LocalHapticManager.current
 
@@ -199,15 +192,25 @@ internal fun EditPassword(
         null
       }
 
+  val handlePasswordChanged by rememberUpdatedState(onPasswordChanged)
+
+  LaunchedEffect(
+      passwordText,
+      canUseCustomConfig,
+  ) {
+    if (canUseCustomConfig) {
+      handlePasswordChanged(passwordText)
+    }
+  }
+
   StatusEditor(
       modifier = modifier,
       enabled = canUseCustomConfig,
       title = stringResource(R.string.editmode_hotspot_password),
-      value = hotspotPassword,
-      onChange = onPasswordChanged,
-      visualTransformation =
-          if (isPasswordCurrentlyVisible) VisualTransformation.None
-          else PasswordVisualTransformation(),
+      state = hotspotPassword,
+      textObfuscationMode =
+          if (isPasswordCurrentlyVisible) TextObfuscationMode.Visible
+          else TextObfuscationMode.System,
       keyboardOptions =
           KeyboardOptions(
               keyboardType = KeyboardType.Password,
@@ -220,34 +223,30 @@ internal fun EditPassword(
 internal fun EditSsid(
     modifier: Modifier = Modifier,
     state: StatusViewState,
-    onSsidChanged: (String) -> Unit,
+    onSsidChanged: (CharSequence) -> Unit,
 ) {
+  val userDefinedSsid = state.ssid
   val canUseCustomConfig = remember { ServerDefaults.canUseCustomConfig() }
-  val ssid by state.ssid.collectAsStateWithLifecycle()
   val systemDefined = stringResource(R.string.editmode_system_defined)
+
   val hotspotSsid =
-      remember(
-          canUseCustomConfig,
-          ssid,
-          systemDefined,
-      ) {
-        if (canUseCustomConfig) ssid else systemDefined
-      }
+      if (canUseCustomConfig) userDefinedSsid else rememberTextFieldState(systemDefined)
+  val ssidText = hotspotSsid.text
 
   val isValid =
       remember(
           canUseCustomConfig,
-          ssid,
+          ssidText,
       ) {
         if (canUseCustomConfig) {
-          if (ssid.isBlank()) {
+          if (ssidText.isBlank()) {
             return@remember false
           }
 
           // SSID must be less than 32 bytes long
           // This is enforced by some IEEE standard
           // http://standards.ieee.org/getieee802/download/802.11-2012.pdf
-          val fullSsid = ServerDefaults.asWifiSsid(ssid)
+          val fullSsid = ServerDefaults.asWifiSsid(ssidText.toString())
           val ssidBytes = fullSsid.toByteArray(charset = Charsets.UTF_8)
           return@remember (ssidBytes.size < MAX_SSID_ALLOWED_LENGTH)
         }
@@ -297,12 +296,22 @@ internal fun EditSsid(
         null
       }
 
+  val handleSsidChanged by rememberUpdatedState(onSsidChanged)
+
+  LaunchedEffect(
+      ssidText,
+      canUseCustomConfig,
+  ) {
+    if (canUseCustomConfig) {
+      handleSsidChanged(ssidText)
+    }
+  }
+
   StatusEditor(
       modifier = modifier,
       enabled = canUseCustomConfig,
       title = stringResource(R.string.editmode_hotspot_name),
-      value = hotspotSsid,
-      onChange = onSsidChanged,
+      state = hotspotSsid,
       leadingIcon = leadingIcon,
       trailingIcon = trailingIcon,
   )

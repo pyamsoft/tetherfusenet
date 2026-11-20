@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -78,8 +79,8 @@ internal fun LazyListScope.renderEditableItems(
     appName: String,
     state: StatusViewState,
     serverViewState: ServerViewState,
-    onSsidChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
+    onSsidChanged: (CharSequence) -> Unit,
+    onPasswordChanged: (CharSequence) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
     onHttpEnabledChanged: (Boolean) -> Unit,
     onSocksEnabledChanged: (Boolean) -> Unit,
@@ -157,7 +158,7 @@ internal fun LazyListScope.renderEditableItems(
                 ),
         )
 
-        EditProxyPort(
+        ExplainProxyPort(
             modifier = modifier.padding(bottom = MaterialTheme.keylines.baseline),
             portType = ServerPortTypes.HTTP,
             titleRes = R.string.editmode_hotspot_proxy_http_title,
@@ -168,7 +169,7 @@ internal fun LazyListScope.renderEditableItems(
             onEnableChangeFailed = onEnableChangeFailed,
         )
 
-        EditProxyPort(
+        ExplainProxyPort(
             modifier = modifier.padding(bottom = MaterialTheme.keylines.baseline),
             portType = ServerPortTypes.SOCKS,
             titleRes = R.string.editmode_hotspot_proxy_socks_title,
@@ -179,7 +180,7 @@ internal fun LazyListScope.renderEditableItems(
             onEnableChangeFailed = onEnableChangeFailed,
         )
 
-        EditHttpPort(
+        EditProxyPort(
             modifier =
                 Modifier.fillMaxWidth()
                     .padding(horizontal = MaterialTheme.keylines.content)
@@ -280,7 +281,7 @@ private fun NetworkSetupExplainer(
 }
 
 @Composable
-private fun EditProxyPort(
+private fun ExplainProxyPort(
     modifier: Modifier = Modifier,
     portType: ServerPortTypes,
     @StringRes titleRes: Int,
@@ -344,8 +345,8 @@ private fun PreviewEditableItems(
         appName = "TEST",
         state =
             MutableStatusViewState().apply {
-              this.ssid.value = ssid
-              this.password.value = password
+              this.ssid.setTextAndPlaceCursorAtEnd(ssid)
+              this.password.setTextAndPlaceCursorAtEnd(password)
             },
         onHttpEnabledChanged = {},
         onSocksEnabledChanged = {},

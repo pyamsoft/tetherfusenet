@@ -16,19 +16,19 @@
 
 package com.pyamsoft.tetherfi.connections
 
-import android.R
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,7 +51,7 @@ internal fun NickNameDialog(
 ) {
   // Initialize this to the current name
   // This way we can track changes quickly without needing to update the model
-  val (nickName, setNickName) = remember(client) { mutableStateOf(client.nickName) }
+  val nickNameState = remember(client) { TextFieldState(initialText = client.nickName) }
 
   CardDialog(
       modifier = modifier,
@@ -60,10 +60,10 @@ internal fun NickNameDialog(
     Column(
         modifier = Modifier.padding(MaterialTheme.keylines.content),
     ) {
-      TextField(
+      OutlinedTextField(
           modifier = Modifier.fillMaxWidth(),
-          value = nickName,
-          onValueChange = { setNickName(it) },
+          state = nickNameState,
+          lineLimits = TextFieldLineLimits.SingleLine,
       )
 
       Row(
@@ -78,18 +78,18 @@ internal fun NickNameDialog(
             onClick = onDismiss,
         ) {
           Text(
-              text = stringResource(R.string.cancel),
+              text = stringResource(android.R.string.cancel),
           )
         }
         Button(
             modifier = Modifier.padding(start = MaterialTheme.keylines.baseline),
             onClick = {
-              onUpdateNickName(nickName)
+              onUpdateNickName(nickNameState.text.toString())
               onDismiss()
             },
         ) {
           Text(
-              text = stringResource(R.string.ok),
+              text = stringResource(android.R.string.ok),
           )
         }
       }

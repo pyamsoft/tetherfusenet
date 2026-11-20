@@ -16,7 +16,6 @@
 
 package com.pyamsoft.tetherfi.ui.trouble
 
-import android.R
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -93,7 +92,7 @@ fun TroubleshootDialog(
             },
         ) {
           Text(
-              text = stringResource(R.string.cancel),
+              text = stringResource(android.R.string.cancel),
           )
         }
       }

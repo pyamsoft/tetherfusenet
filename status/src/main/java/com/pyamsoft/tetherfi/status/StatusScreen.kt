@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,8 +72,8 @@ fun StatusScreen(
     onStatusUpdated: (RunningStatus) -> Unit,
 
     // Network
-    onSsidChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
+    onSsidChanged: (CharSequence) -> Unit,
+    onPasswordChanged: (CharSequence) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
     onSelectBand: (ServerNetworkBand) -> Unit,
     onHttpEnabledChanged: (Boolean) -> Unit,
@@ -239,8 +240,8 @@ private fun PreviewStatusScreen(
             loadingState.value =
                 if (isLoading) StatusViewState.LoadingState.LOADING
                 else StatusViewState.LoadingState.DONE
-            this.ssid.value = ssid
-            this.password.value = password
+            this.ssid.setTextAndPlaceCursorAtEnd(ssid)
+            this.password.setTextAndPlaceCursorAtEnd(password)
             band.value = ServerNetworkBand.LEGACY
           },
       serverViewState = makeTestServerState(TestServerState.EMPTY, http, socks),

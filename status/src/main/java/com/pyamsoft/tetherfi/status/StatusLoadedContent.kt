@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -71,8 +72,8 @@ internal fun LazyListScope.renderLoadedContent(
     // Network
     wiDiStatus: RunningStatus,
     proxyStatus: RunningStatus,
-    onSsidChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
+    onSsidChanged: (CharSequence) -> Unit,
+    onPasswordChanged: (CharSequence) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
     onSelectBand: (ServerNetworkBand) -> Unit,
     onHttpEnabledChanged: (Boolean) -> Unit,
@@ -202,8 +203,8 @@ private fun PreviewLoadedContent(
         state =
             MutableStatusViewState().apply {
               loadingState.value = StatusViewState.LoadingState.DONE
-              this.ssid.value = TEST_SSID
-              this.password.value = TEST_PASSWORD
+              this.ssid.setTextAndPlaceCursorAtEnd(TEST_SSID)
+              this.password.setTextAndPlaceCursorAtEnd(TEST_PASSWORD)
               band.value = ServerNetworkBand.LEGACY
             },
         serverViewState = makeTestServerState(state, http, socks),

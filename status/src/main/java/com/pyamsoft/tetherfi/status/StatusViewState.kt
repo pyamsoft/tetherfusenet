@@ -16,6 +16,7 @@
 
 package com.pyamsoft.tetherfi.status
 
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import com.pyamsoft.pydroid.arch.UiViewState
@@ -30,8 +31,9 @@ interface StatusViewState : UiViewState {
   val loadingState: StateFlow<LoadingState>
 
   // For editing, at proxy runtime we pull from ServerViewState
-  val ssid: StateFlow<String>
-  val password: StateFlow<String>
+  val ssid: TextFieldState
+  val password: TextFieldState
+
   val isPasswordVisible: StateFlow<Boolean>
   val band: StateFlow<ServerNetworkBand?>
 
@@ -48,8 +50,8 @@ interface StatusViewState : UiViewState {
 class MutableStatusViewState @Inject internal constructor() : StatusViewState {
   override val loadingState = MutableStateFlow(StatusViewState.LoadingState.NONE)
 
-  override val ssid = MutableStateFlow("")
-  override val password = MutableStateFlow("")
+  override val ssid = TextFieldState("")
+  override val password = TextFieldState("")
   override val isPasswordVisible = MutableStateFlow(false)
   override val band = MutableStateFlow<ServerNetworkBand?>(null)
 }

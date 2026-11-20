@@ -106,8 +106,8 @@ fun StatusEntry(
             onToggleProxy = handleToggleProxy,
         )
       },
-      onSsidChanged = { viewModel.handleSsidChanged(it.trim()) },
-      onPasswordChanged = { viewModel.handlePasswordChanged(it) },
+      onSsidChanged = { viewModel.handleSsidChanged(it.trim().toString()) },
+      onPasswordChanged = { viewModel.handlePasswordChanged(it.toString()) },
       onViewSlowSpeedHelp = onShowSlowSpeedHelp,
       onSelectBand = { viewModel.handleChangeBand(it) },
       onStatusUpdated = onUpdateTile,

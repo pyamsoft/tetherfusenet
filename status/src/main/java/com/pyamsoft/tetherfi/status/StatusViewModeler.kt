@@ -18,6 +18,7 @@
 
 package com.pyamsoft.tetherfi.status
 
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import com.pyamsoft.pydroid.arch.AbstractViewModeler
 import com.pyamsoft.pydroid.core.LintIgnoreTooManyFunctions
 import com.pyamsoft.pydroid.util.AppDispatchers
@@ -143,8 +144,8 @@ internal constructor(
         // Only pull once since after this point, the state will be driven by the input
         val ssid = f.first()
 
-        // Write the SSID to save it to Preferences
-        handleSsidChanged(ssid)
+        // Set the SSID. After this it is driven by input
+        state.ssid.setTextAndPlaceCursorAtEnd(ssid)
 
         config.ssid = true
         markPreferencesLoaded(config)
@@ -157,8 +158,8 @@ internal constructor(
         // Only pull once since after this point, the state will be driven by the input
         val password = f.first()
 
-        // Write the password to save it to Preferences
-        handlePasswordChanged(password)
+        // Set the Password. After this it is driven by input
+        state.password.setTextAndPlaceCursorAtEnd(password)
 
         config.password = true
         markPreferencesLoaded(config)
@@ -191,8 +192,8 @@ internal constructor(
       scope.bindWifiPreferences(config)
     } else {
       // No custom WiFi Direct config is allowed, fallback
-      s.ssid.value = ""
-      s.password.value = ""
+      s.ssid.setTextAndPlaceCursorAtEnd("")
+      s.password.setTextAndPlaceCursorAtEnd("")
       s.band.value = null
 
       // Mark loaded and attempt flag setting
@@ -210,12 +211,10 @@ internal constructor(
   }
 
   fun handleSsidChanged(ssid: String) {
-    state.ssid.value = ssid
     wifiPreferences.setSsid(ssid)
   }
 
   fun handlePasswordChanged(password: String) {
-    state.password.value = password
     wifiPreferences.setPassword(password)
   }
 

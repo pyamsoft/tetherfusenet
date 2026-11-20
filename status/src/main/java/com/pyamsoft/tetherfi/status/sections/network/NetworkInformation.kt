@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,8 +70,8 @@ internal fun LazyListScope.renderNetworkInformation(
     proxyStatus: RunningStatus,
 
     // Network config
-    onSsidChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
+    onSsidChanged: (CharSequence) -> Unit,
+    onPasswordChanged: (CharSequence) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
     onHttpEnabledChanged: (Boolean) -> Unit,
     onSocksEnabledChanged: (Boolean) -> Unit,
@@ -195,8 +196,8 @@ private fun PreviewNetworkInformation(
         serverViewState = makeTestServerState(server, http, socks),
         state =
             MutableStatusViewState().apply {
-              this.ssid.value = ssid
-              this.password.value = password
+              this.ssid.setTextAndPlaceCursorAtEnd(ssid)
+              this.password.setTextAndPlaceCursorAtEnd(password)
             },
         onShowNetworkError = {},
         onShowQRCode = {},
