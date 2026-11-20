@@ -49,7 +49,6 @@ import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 
 @Singleton
 @LintIgnoreTooManyFunctions
@@ -284,10 +283,10 @@ internal constructor(
 
   override fun listenShowInAppRating(): Flow<Boolean> =
       combineTransform(
-              preferences.data.map { it[PreferenceKeys.IN_APP_HOTSPOT_USED] ?: 0 },
-              preferences.data.map { it[PreferenceKeys.IN_APP_DEVICES_CONNECTED] ?: 0 },
-              preferences.data.map { it[PreferenceKeys.IN_APP_APP_OPENED] ?: 0 },
-              preferences.data.map { it[PreferenceKeys.IN_APP_RATING_SHOWN_VERSION] ?: 0 },
+              getPreference(PreferenceKeys.IN_APP_HOTSPOT_USED, 0),
+              getPreference(PreferenceKeys.IN_APP_DEVICES_CONNECTED, 0),
+              getPreference(PreferenceKeys.IN_APP_APP_OPENED, 0),
+              getPreference(PreferenceKeys.IN_APP_RATING_SHOWN_VERSION, 0),
           ) { hotspotUsed, devicesConnected, appOpened, lastVersionShown ->
             enforcer.assertOffMainThread()
 
