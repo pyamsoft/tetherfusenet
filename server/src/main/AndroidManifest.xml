@@ -19,15 +19,19 @@
   xmlns:tools="http://schemas.android.com/tools"
 >
   <!-- Required for WifiManager service -->
-  <uses-feature android:name="android.hardware.wifi" android:required="true"/>
+  <uses-feature android:name="android.hardware.wifi" android:required="true" />
 
   <!-- Required for WifiP2PManager service -->
-  <uses-feature android:name="android.hardware.wifi.direct" android:required="true" />
+  <uses-feature
+    android:name="android.hardware.wifi.direct"
+    android:required="true"
+  />
 
   <!-- Required for LocationManager service -->
   <uses-feature
-      android:name="android.hardware.location"
-      android:required="true" />
+    android:name="android.hardware.location"
+    android:required="true"
+  />
 
   <!-- For Proxy -->
   <uses-permission android:name="android.permission.INTERNET" />
