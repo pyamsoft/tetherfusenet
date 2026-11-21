@@ -52,9 +52,9 @@ import com.pyamsoft.tetherfi.tile.StopProxyTileService
 import com.pyamsoft.tetherfi.tile.ToggleProxyTileService
 import com.pyamsoft.tetherfi.ui.InstallPYDroidExtras
 import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
 
@@ -83,11 +83,11 @@ class MainActivity : ComponentActivity() {
                   override val applicationIcon = R.mipmap.ic_launcher
 
                   override val changelog = buildChangeLog {
-                    bugfix("Fix UDP_ASSOC delivering the wrong address to clients")
-                    bugfix("Fix various memory leaks in the networking code")
-                    bugfix(
-                        "Fix a potential 'stuck Wi-Fi Direct' state when the app did not clean up correctly.",
-                    )
+                    bugfix("Fix socket performance over consuming memory in some cases")
+                    bugfix("Fix UDP packets sometimes getting lost when large amounts of data are sent")
+                    bugfix("Fix blocked connections being unable to be toggled in some cases")
+                    change("Visual update to the in-app navigation experience.")
+                    feature("Separate Intent actions for toggling, forcing on, and forcing off the hotspot (for Automations)")
                   }
                 },
         )
