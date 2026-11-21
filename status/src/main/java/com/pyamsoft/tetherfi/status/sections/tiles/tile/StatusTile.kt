@@ -16,7 +16,7 @@
 
 package com.pyamsoft.tetherfi.status.sections.tiles.tile
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +33,7 @@ internal fun StatusTile(
     enabled: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-  AnimatedVisibility(
+  CapturedAnimatedVisibility(
       modifier = modifier,
       visible = show,
   ) {

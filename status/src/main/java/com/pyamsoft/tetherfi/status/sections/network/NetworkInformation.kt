@@ -18,7 +18,7 @@
 
 package com.pyamsoft.tetherfi.status.sections.network
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -118,7 +118,7 @@ internal fun LazyListScope.renderNetworkInformation(
           isBroadcastError || isProxyError
         }
 
-    AnimatedVisibility(
+    CapturedAnimatedVisibility(
         visible = showErrorHintMessage,
     ) {
       Box(

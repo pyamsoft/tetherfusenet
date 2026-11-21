@@ -16,7 +16,7 @@
 
 package com.pyamsoft.tetherfi.behavior
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -36,7 +36,7 @@ internal fun BehaviorDialogs(
 
   val isShowingSocketTimeout by state.isShowingSocketTimeout.collectAsStateWithLifecycle()
 
-  AnimatedVisibility(
+  CapturedAnimatedVisibility(
       visible = isShowingSocketTimeout,
   ) {
     SocketTimeoutDialog(

@@ -17,7 +17,7 @@
 package com.pyamsoft.tetherfi.main
 
 import androidx.annotation.CheckResult
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -106,7 +106,7 @@ private fun MainDestination(
         painter = painterResource(destination.icon),
         tint = tint,
     )
-    AnimatedVisibility(
+    CapturedAnimatedVisibility(
         modifier = Modifier.padding(start = MaterialTheme.keylines.typography),
         visible = isSelected,
     ) {

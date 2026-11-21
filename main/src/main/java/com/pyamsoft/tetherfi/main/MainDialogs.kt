@@ -18,7 +18,7 @@
 
 package com.pyamsoft.tetherfi.main
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -103,7 +103,7 @@ fun MainDialogs(
       onOpenWifiSettings = onOpenWifiSettings,
   )
 
-  AnimatedVisibility(visible = isShowingSetupError) {
+  CapturedAnimatedVisibility(visible = isShowingSetupError) {
     val broadcastType by state.broadcastType.collectAsStateWithLifecycle()
     val isBroadcastError = remember(wiDiStatus) { wiDiStatus is RunningStatus.Error }
     val isProxyError = remember(proxyStatus) { proxyStatus is RunningStatus.Error }
@@ -158,7 +158,7 @@ fun MainDialogs(
   )
 
   wiDiStatus.cast<RunningStatus.Error>()?.also { err ->
-    AnimatedVisibility(visible = isShowingBroadcastError) {
+    CapturedAnimatedVisibility(visible = isShowingBroadcastError) {
       ServerErrorDialog(
           modifier = dialogModifier,
           title = "Broadcast Initialization Error",
@@ -169,7 +169,7 @@ fun MainDialogs(
   }
 
   proxyStatus.cast<RunningStatus.Error>()?.also { err ->
-    AnimatedVisibility(visible = isShowingProxyError) {
+    CapturedAnimatedVisibility(visible = isShowingProxyError) {
       ServerErrorDialog(
           modifier = dialogModifier,
           title = "Proxy Initialization Error",
@@ -277,7 +277,7 @@ private fun GroupErrorDialog(
   }
 
   if (groupError != null) {
-    AnimatedVisibility(visible = show) {
+    CapturedAnimatedVisibility(visible = show) {
       ServerErrorDialog(
           modifier = modifier,
           title = stringResource(R.string.hotspot_group_removed_title),
@@ -315,7 +315,7 @@ private fun ConnectionErrorDialog(
   }
 
   if (connectionError != null) {
-    AnimatedVisibility(visible = show) {
+    CapturedAnimatedVisibility(visible = show) {
       ServerErrorDialog(
           modifier = modifier,
           title = "Network Initialization Error",

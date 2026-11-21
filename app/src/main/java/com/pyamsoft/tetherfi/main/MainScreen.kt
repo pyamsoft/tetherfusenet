@@ -19,7 +19,7 @@
 package com.pyamsoft.tetherfi.main
 
 import androidx.annotation.CheckResult
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
@@ -172,7 +172,7 @@ fun MainScreen(
           onEnableChangeFailed = { setSnackbarError(it) },
       )
 
-      AnimatedVisibility(
+      CapturedAnimatedVisibility(
           modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
           visible = isBottomBarVisible,
           enter = slideInVertically { it },

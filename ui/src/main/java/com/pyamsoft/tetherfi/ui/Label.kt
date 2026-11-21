@@ -16,7 +16,7 @@
 
 package com.pyamsoft.tetherfi.ui
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -58,7 +58,7 @@ fun Label(
     )
 
     onAction.also { click ->
-      AnimatedVisibility(
+      CapturedAnimatedVisibility(
           visible = click != null,
       ) {
         Icon(

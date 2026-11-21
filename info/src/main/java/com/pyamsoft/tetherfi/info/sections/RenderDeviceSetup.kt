@@ -16,7 +16,7 @@
 
 package com.pyamsoft.tetherfi.info.sections
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -266,7 +266,7 @@ internal fun LazyListScope.renderDeviceSetup(
             }
           }
 
-          AnimatedVisibility(
+          CapturedAnimatedVisibility(
               visible = showHttpOptions,
           ) {
             Column(
@@ -364,7 +364,7 @@ internal fun LazyListScope.renderDeviceSetup(
               )
             }
 
-            AnimatedVisibility(
+            CapturedAnimatedVisibility(
                 visible = showSocksOptions,
             ) {
               Column(
