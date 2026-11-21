@@ -210,12 +210,12 @@ internal constructor(
     loadPreferences(scope)
   }
 
-  fun handleSsidChanged(ssid: String) {
-    wifiPreferences.setSsid(ssid)
+  fun handleSsidChanged(ssid: CharSequence) {
+    wifiPreferences.setSsid(ssid.toString())
   }
 
-  fun handlePasswordChanged(password: String) {
-    wifiPreferences.setPassword(password)
+  fun handlePasswordChanged(password: CharSequence) {
+    wifiPreferences.setPassword(password.toString())
   }
 
   fun handleChangeBand(band: ServerNetworkBand) {
