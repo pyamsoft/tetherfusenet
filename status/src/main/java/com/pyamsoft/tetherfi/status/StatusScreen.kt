@@ -18,6 +18,7 @@
 
 package com.pyamsoft.tetherfi.status
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -237,11 +238,15 @@ private fun PreviewStatusScreen(
   StatusScreen(
       state =
           MutableStatusViewState().apply {
+            @SuppressLint("StateFlowValueCalledInComposition")
             loadingState.value =
                 if (isLoading) StatusViewState.LoadingState.LOADING
                 else StatusViewState.LoadingState.DONE
+
             this.ssid.setTextAndPlaceCursorAtEnd(ssid)
             this.password.setTextAndPlaceCursorAtEnd(password)
+
+            @SuppressLint("StateFlowValueCalledInComposition")
             band.value = ServerNetworkBand.LEGACY
           },
       serverViewState = makeTestServerState(TestServerState.EMPTY, http, socks),

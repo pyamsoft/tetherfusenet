@@ -16,6 +16,7 @@
 
 package com.pyamsoft.tetherfi.info.sections
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -484,7 +485,11 @@ private fun PreviewDeviceSetupActiveHttp() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupActivePassword() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+      state =
+          MutableInfoViewState().apply {
+            @SuppressLint("StateFlowValueCalledInComposition")
+            isPasswordVisible.value = true
+          },
       server = TestServerState.CONNECTED,
       http = true,
       socks = false,
@@ -517,7 +522,11 @@ private fun PreviewDeviceSetupActiveSocks() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupActivePasswordSocks() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+      state =
+          MutableInfoViewState().apply {
+            @SuppressLint("StateFlowValueCalledInComposition")
+            isPasswordVisible.value = true
+          },
       server = TestServerState.CONNECTED,
       http = false,
       socks = true,
@@ -550,7 +559,11 @@ private fun PreviewDeviceSetupActiveBoth() {
 @Preview(showBackground = true)
 private fun PreviewDeviceSetupActivePasswordBoth() {
   PreviewDeviceSetup(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+      state =
+          MutableInfoViewState().apply {
+            @SuppressLint("StateFlowValueCalledInComposition")
+            isPasswordVisible.value = true
+          },
       server = TestServerState.CONNECTED,
       http = true,
       socks = true,

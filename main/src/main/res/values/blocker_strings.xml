@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <string name="block_privacy_policy">Privacy Policy</string>
   <string name="block_view_privacy_policy">View the %1$s %2$s</string>
   <string name="block_vpn_title">Conflicting VPN</string>
@@ -34,14 +34,22 @@
   >Please enable Location on your device, and then attempt to launch the Hotspot again. Alternatively, you can enable the \"%1$s\" tweak to test if %2$s works on your device without requiring Location to be on.</string>
   <string name="block_location_open_settings">Enable Location Services</string>
 
-  <string name="block_wifi_title">Wi-Fi is Off</string>
+  <string
+    name="block_wifi_title"
+    tools:ignore="MissingTranslation"
+  >Wi-Fi is Off</string>
   <string
     name="block_wifi_description"
+    tools:ignore="MissingTranslation"
   >%1$s cannot start the hotspot while Wi-Fi is turned off. Wi-Fi Direct is only available when Wi-Fi is on.</string>
   <string
     name="block_wifi_instruction"
+    tools:ignore="MissingTranslation"
   >Please turn on Wi-Fi, and then attempt to launch the Hotspot again. You do not need to connect to a Wi-Fi network.</string>
-  <string name="block_wifi_open_settings">Turn on Wi-Fi</string>
+  <string
+    name="block_wifi_open_settings"
+    tools:ignore="MissingTranslation"
+  >Turn on Wi-Fi</string>
 
   <string name="block_permission_title">Permission Request</string>
   <string
@@ -60,8 +68,12 @@
   <string name="block_background_data_open_settings">Open Settings</string>
 
   <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="block_background_data_title">Background Data Required</string>
+  <string
+    name="block_background_data_title"
+    tools:ignore="MissingTranslation"
+  >Background Data Required</string>
   <string
     name="block_background_data_description"
+    tools:ignore="MissingTranslation"
   >%1$s has trouble starting the hotspot Background Data usage permission is restricted. Please allow Background Data, or alternatively you can enable the \"%2$s\" tweak to test if this requirement is not needed for your device.</string>
 </resources>

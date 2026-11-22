@@ -14,47 +14,82 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <string name="expert_title">Expert Settings</string>
   <string
     name="expert_description"
   >This is for Advanced Users.\n\nAdjusting these options may completely change how %1$s performs, proceed at your own risk.\n\nMany users will NOT need to change these settings.</string>
 
   <!-- TODO Need translations -->
-  <string name="expert_socket_timeout_title">Socket Timeout</string>
+  <string
+    name="expert_socket_timeout_title"
+    tools:ignore="MissingTranslation"
+  >Socket Timeout</string>
   <string
     name="expert_socket_timeout_description"
+    tools:ignore="MissingTranslation"
   >You can adjust the timeout, which controls how long %1$s will wait for a connection before closing a socket. If you notice connections are reporting frequent timeouts, you should try increasing this value. If you notice high latency, you could try lowering the value.\n\nFor usage with SSH or other remote sessions, you should use `No Timeout`</string>
-  <string name="expert_socket_timeout_button">Adjust Socket Timeout</string>
+  <string
+    name="expert_socket_timeout_button"
+    tools:ignore="MissingTranslation"
+  >Adjust Socket Timeout</string>
 
-  <string name="expert_timeout_yolo_title">No Timeout</string>
+  <string
+    name="expert_timeout_yolo_title"
+    tools:ignore="MissingTranslation"
+  >No Timeout</string>
   <string
     name="expert_timeout_yolo_description"
+    tools:ignore="MissingTranslation"
   >Will never close connections until the website closes them. Throws memory usage and latency concerns out the window in an attempt to get websites to work. If there are many connections, could massively increase latency and memory usage.</string>
-  <string name="expert_timeout_toofast_title">3 seconds</string>
+  <string
+    name="expert_timeout_toofast_title"
+    tools:ignore="MissingTranslation"
+  >3 seconds</string>
   <string
     name="expert_timeout_toofast_description"
+    tools:ignore="MissingTranslation"
   >Barely waits at all. If you are on a fast connection, most well-behaved websites should still work. Cleans up aggressively, lowering memory usage and latency at the risk of breaking connections</string>
-  <string name="expert_timeout_fast_title">10 seconds</string>
+  <string
+    name="expert_timeout_fast_title"
+    tools:ignore="MissingTranslation"
+  >10 seconds</string>
   <string
     name="expert_timeout_fast_description"
+    tools:ignore="MissingTranslation"
   >Slightly faster timeout that should work with most well-behaved websites. Slightly lower memory usage, and only some latency if there are many connections.</string>
-  <string name="expert_timeout_balance_title">30 seconds</string>
+  <string
+    name="expert_timeout_balance_title"
+    tools:ignore="MissingTranslation"
+  >30 seconds</string>
   <string
     name="expert_timeout_balance_description"
+    tools:ignore="MissingTranslation"
   >The most balanced setting that should work with most well-behaved websites. Normal memory usage, and only some latency if there are many connections.</string>
-  <string name="expert_timeout_conservative_title">1 minute</string>
+  <string
+    name="expert_timeout_conservative_title"
+    tools:ignore="MissingTranslation"
+  >1 minute</string>
   <string
     name="expert_timeout_conservative_description"
+    tools:ignore="MissingTranslation"
   >Waits extra long which should allow slower or bad behaving websites to still work. Slightly higher memory usage and latency if there are many connections.</string>
-  <string name="expert_timeout_longwait_title">5 minutes</string>
+  <string
+    name="expert_timeout_longwait_title"
+    tools:ignore="MissingTranslation"
+  >5 minutes</string>
   <string
     name="expert_timeout_longwait_description"
+    tools:ignore="MissingTranslation"
   >Almost every website should work. If there are many connections, could massively increase latency and memory usage.</string>
 
   <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="hold_wakelock_title">Use Wakelock</string>
+  <string
+    name="hold_wakelock_title"
+    tools:ignore="MissingTranslation"
+  >Use Wakelock</string>
   <string
     name="hold_wakelock_description"
+    tools:ignore="MissingTranslation"
   >Using a wakelock will keep your CPU on and will keep processing fast. However, it will consume more battery.\n\nOn devices that use restrictive power-saving measures, this may not work, and you should try the Keep Screen On tweak, or enable Always Alive instead.</string>
 </resources>

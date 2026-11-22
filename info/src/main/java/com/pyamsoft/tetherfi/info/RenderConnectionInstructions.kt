@@ -16,6 +16,7 @@
 
 package com.pyamsoft.tetherfi.info
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
@@ -162,7 +163,11 @@ private fun PreviewConnectionInstructionsActiveHttp() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsActivePasswordHttp() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+      state =
+          MutableInfoViewState().apply {
+            @SuppressLint("StateFlowValueCalledInComposition")
+            isPasswordVisible.value = true
+          },
       server = TestServerState.CONNECTED,
       http = true,
       socks = false,
@@ -195,7 +200,11 @@ private fun PreviewConnectionInstructionsActiveSocks() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsActivePasswordSocks() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+      state =
+          MutableInfoViewState().apply {
+            @SuppressLint("StateFlowValueCalledInComposition")
+            isPasswordVisible.value = true
+          },
       server = TestServerState.CONNECTED,
       http = false,
       socks = true,
@@ -228,7 +237,11 @@ private fun PreviewConnectionInstructionsActiveBoth() {
 @Preview(showBackground = true)
 private fun PreviewConnectionInstructionsActivePasswordBoth() {
   PreviewConnectionInstructions(
-      state = MutableInfoViewState().apply { isPasswordVisible.value = true },
+      state =
+          MutableInfoViewState().apply {
+            @SuppressLint("StateFlowValueCalledInComposition")
+            isPasswordVisible.value = true
+          },
       server = TestServerState.CONNECTED,
       http = true,
       socks = true,

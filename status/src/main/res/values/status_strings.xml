@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <string name="status_error">An unexpected error occurred.</string>
   <string name="status_not_running">Not Running</string>
   <string name="status_running">Running</string>
@@ -31,7 +31,16 @@
   <string name="title_hotspot_status">Hotspot Status</string>
 
   <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="hotspot_proxy_port">HOTSPOT PROXY PORT</string>
-  <string name="hotspot_proxy_http_port">HTTP PROXY PORT</string>
-  <string name="hotspot_proxy_socks_port">SOCKS PROXY PORT</string>
+  <string
+    name="hotspot_proxy_port"
+    tools:ignore="MissingTranslation"
+  >HOTSPOT PROXY PORT</string>
+  <string
+    name="hotspot_proxy_http_port"
+    tools:ignore="MissingTranslation"
+  >HTTP PROXY PORT</string>
+  <string
+    name="hotspot_proxy_socks_port"
+    tools:ignore="MissingTranslation"
+  >SOCKS PROXY PORT</string>
 </resources>

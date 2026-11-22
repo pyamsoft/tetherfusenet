@@ -34,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,60 +57,57 @@ private data class SocketDisplayTimeout(
 @Composable
 @CheckResult
 private fun rememberDisplayTimeouts(): List<SocketDisplayTimeout> {
-  val context = LocalContext.current
-  return remember(context) {
-    ServerSocketTimeout.Defaults.entries
-        .map { t ->
-          val title: String
-          val description: String
-          when (t) {
-            ServerSocketTimeout.Defaults.INFINITE -> {
-              title = context.getString(R.string.expert_timeout_yolo_title)
-              description = context.getString(R.string.expert_timeout_yolo_description)
-            }
-            ServerSocketTimeout.Defaults.SUPERFAST -> {
-              title = context.getString(R.string.expert_timeout_toofast_title)
-              description = context.getString(R.string.expert_timeout_toofast_description)
-            }
-            ServerSocketTimeout.Defaults.FAST -> {
-              title = context.getString(R.string.expert_timeout_fast_title)
-              description = context.getString(R.string.expert_timeout_fast_description)
-            }
-            ServerSocketTimeout.Defaults.BALANCED -> {
-              title = context.getString(R.string.expert_timeout_balance_title)
-              description = context.getString(R.string.expert_timeout_balance_description)
-            }
-            ServerSocketTimeout.Defaults.COMPAT -> {
-              title = context.getString(R.string.expert_timeout_conservative_title)
-              description = context.getString(R.string.expert_timeout_conservative_description)
-            }
-            ServerSocketTimeout.Defaults.NICE -> {
-              title = context.getString(R.string.expert_timeout_longwait_title)
-              description = context.getString(R.string.expert_timeout_longwait_description)
-            }
+  return ServerSocketTimeout.Defaults.entries
+      .map { t ->
+        val title: String
+        val description: String
+        when (t) {
+          ServerSocketTimeout.Defaults.INFINITE -> {
+            title = stringResource(R.string.expert_timeout_yolo_title)
+            description = stringResource(R.string.expert_timeout_yolo_description)
           }
-
-          return@map SocketDisplayTimeout(
-              key = t.name,
-              timeout = t,
-              title = title,
-              description = description,
-          )
+          ServerSocketTimeout.Defaults.SUPERFAST -> {
+            title = stringResource(R.string.expert_timeout_toofast_title)
+            description = stringResource(R.string.expert_timeout_toofast_description)
+          }
+          ServerSocketTimeout.Defaults.FAST -> {
+            title = stringResource(R.string.expert_timeout_fast_title)
+            description = stringResource(R.string.expert_timeout_fast_description)
+          }
+          ServerSocketTimeout.Defaults.BALANCED -> {
+            title = stringResource(R.string.expert_timeout_balance_title)
+            description = stringResource(R.string.expert_timeout_balance_description)
+          }
+          ServerSocketTimeout.Defaults.COMPAT -> {
+            title = stringResource(R.string.expert_timeout_conservative_title)
+            description = stringResource(R.string.expert_timeout_conservative_description)
+          }
+          ServerSocketTimeout.Defaults.NICE -> {
+            title = stringResource(R.string.expert_timeout_longwait_title)
+            description = stringResource(R.string.expert_timeout_longwait_description)
+          }
         }
-        .sortedWith { o1, o2 ->
-          // Infinite on bottom
-          if (o1.timeout.timeoutDuration.isInfinite()) {
-            return@sortedWith 1
-          }
 
-          // Infinite on bottom
-          if (o2.timeout.timeoutDuration.isInfinite()) {
-            return@sortedWith -1
-          }
-
-          return@sortedWith o1.timeout.timeoutDuration.compareTo(o2.timeout.timeoutDuration)
+        return@map SocketDisplayTimeout(
+            key = t.name,
+            timeout = t,
+            title = title,
+            description = description,
+        )
+      }
+      .sortedWith { o1, o2 ->
+        // Infinite on bottom
+        if (o1.timeout.timeoutDuration.isInfinite()) {
+          return@sortedWith 1
         }
-  }
+
+        // Infinite on bottom
+        if (o2.timeout.timeoutDuration.isInfinite()) {
+          return@sortedWith -1
+        }
+
+        return@sortedWith o1.timeout.timeoutDuration.compareTo(o2.timeout.timeoutDuration)
+      }
 }
 
 @Composable

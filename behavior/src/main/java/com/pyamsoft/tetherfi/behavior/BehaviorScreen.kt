@@ -16,6 +16,7 @@
 
 package com.pyamsoft.tetherfi.behavior
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -192,6 +193,7 @@ private fun PreviewBehaviorScreen(
   BehaviorScreen(
       state =
           MutableBehaviorViewState().apply {
+            @SuppressLint("StateFlowValueCalledInComposition")
             loadingState.value =
                 if (isLoading) BehaviorViewState.LoadingState.LOADING
                 else BehaviorViewState.LoadingState.DONE

@@ -14,11 +14,26 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="main_tab_name_status">Hotspot</string>
-  <string name="main_tab_name_behavior">Behavior</string>
-  <string name="main_tab_name_info">Info</string>
-  <string name="main_tab_name_connections">Connections</string>
-  <string name="main_tab_name_settings">Settings</string>
+  <string
+    name="main_tab_name_status"
+    tools:ignore="MissingTranslation"
+  >Hotspot</string>
+  <string
+    name="main_tab_name_behavior"
+    tools:ignore="MissingTranslation"
+  >Behavior</string>
+  <string
+    name="main_tab_name_info"
+    tools:ignore="MissingTranslation"
+  >Info</string>
+  <string
+    name="main_tab_name_connections"
+    tools:ignore="MissingTranslation"
+  >Connections</string>
+  <string
+    name="main_tab_name_settings"
+    tools:ignore="MissingTranslation"
+  >Settings</string>
 </resources>

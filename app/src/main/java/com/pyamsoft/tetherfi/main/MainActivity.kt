@@ -92,8 +92,8 @@ class MainActivity : ComponentActivity() {
                     change("Visual update to the in-app navigation experience.")
 
                     feature(
-                      @LintIgnoreMaxLineLength
-                      "Separate Intent actions for toggling, forcing on, and forcing off the hotspot (for Automations)",
+                        @LintIgnoreMaxLineLength
+                        "Separate Intent actions for toggling, forcing on, and forcing off the hotspot (for Automations)",
                     )
                   }
                 },

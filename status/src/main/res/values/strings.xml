@@ -14,22 +14,30 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <!-- TODO Need translations -->
-  <string name="hotspot_configuration_title">Hotspot Configuration</string>
+  <string
+    name="hotspot_configuration_title"
+    tools:ignore="MissingTranslation"
+  >Hotspot Configuration</string>
   <string
     name="hotspot_configuration_google_please"
+    tools:ignore="MissingTranslation"
   >This is not an account or a login.</string>
   <string
     name="hotspot_config_defaults"
+    tools:ignore="MissingTranslation"
   >You can edit the name and password for the %1$s Hotspot. By default a valid configuration is created for you.</string>
   <string
     name="hotspot_config_no_account"
+    tools:ignore="MissingTranslation"
   >%1$s will never require you to use an account or remember a login. This is only to setup the broadcasted Wi-Fi Network.</string>
   <string
     name="hotspot_config_name_requirement"
+    tools:ignore="MissingTranslation"
   >• The name MUST be prefixed with %1$s. This is a system requirement.</string>
   <string
     name="hotspot_config_password_requirement"
+    tools:ignore="MissingTranslation"
   >• The password must be at least 8 characters long. This is a system requirement.</string>
 </resources>

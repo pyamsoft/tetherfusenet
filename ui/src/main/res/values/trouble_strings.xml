@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <string name="trouble_title">%1$s Hotspot failed to start.</string>
   <string
     name="trouble_description"
@@ -57,5 +57,8 @@
   >• USB Tethering must be turned ON</string>
 
   <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="trouble_click_expand">Click to expand Error trace</string>
+  <string
+    name="trouble_click_expand"
+    tools:ignore="MissingTranslation"
+  >Click to expand Error trace</string>
 </resources>

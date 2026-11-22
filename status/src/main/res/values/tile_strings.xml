@@ -14,11 +14,17 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <string name="tile_qr_code">View QR Code</string>
   <string name="tile_refresh_hotspot">Refresh Hotspot</string>
 
   <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="tile_broadcast_error">Broadcast Error</string>
-  <string name="tile_proxy_error">Proxy Error</string>
+  <string
+    name="tile_broadcast_error"
+    tools:ignore="MissingTranslation"
+  >Broadcast Error</string>
+  <string
+    name="tile_proxy_error"
+    tools:ignore="MissingTranslation"
+  >Proxy Error</string>
 </resources>

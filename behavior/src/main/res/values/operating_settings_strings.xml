@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <string name="operating_settings">Operating Settings</string>
 
   <string name="operating_always_alive_title">Always Alive</string>
@@ -29,8 +29,14 @@
     name="permission_notification_description"
   >Keep the Hotspot alive on newer Android versions.\n\nWithout a notification, the Hotspot may be stopped randomly.</string>
 
-  <string name="operating_new_engine_title">Use New Engine</string>
-  <string name="operating_new_engine_description">
+  <string
+    name="operating_new_engine_title"
+    tools:ignore="MissingTranslation"
+  >Use New Engine</string>
+  <string
+    name="operating_new_engine_description"
+    tools:ignore="MissingTranslation"
+  >
     This will make %1$s use a new Netty based proxy engine for handling connections. This new engine is the current default and will become the only supported engine in the next version.
   </string>
 </resources>

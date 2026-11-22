@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <string
     name="configure_the_proxy_settings"
   >Configure the proxy settings</string>
@@ -28,12 +28,24 @@
   >Open the Connection/Internet settings page</string>
 
   <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="view_http_options">Configure HTTP proxy settings</string>
-  <string name="view_socks_options">Configure SOCKS settings</string>
+  <string
+    name="view_http_options"
+    tools:ignore="MissingTranslation"
+  >Configure HTTP proxy settings</string>
+  <string
+    name="view_socks_options"
+    tools:ignore="MissingTranslation"
+  >Configure SOCKS settings</string>
 
   <!-- TODO(Peter): Need zh-rTW translation -->
-  <string name="label_hotspot_http_port">HTTP Port</string>
-  <string name="label_hotspot_socks_port">SOCKS Port</string>
+  <string
+    name="label_hotspot_http_port"
+    tools:ignore="MissingTranslation"
+  >HTTP Port</string>
+  <string
+    name="label_hotspot_socks_port"
+    tools:ignore="MissingTranslation"
+  >SOCKS Port</string>
 
   <string
     name="http_manual_proxy"
@@ -42,5 +54,6 @@
   <!-- TODO(Peter): Need zh-rTW translation -->
   <string
     name="socks_manual_proxy"
+    tools:ignore="MissingTranslation"
   >Use MANUAL mode and configure SOCKS proxy options. SOCKS proxy will resolve DNS.</string>
 </resources>
