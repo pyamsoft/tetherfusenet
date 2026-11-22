@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.pyamsoft.pydroid.arch.SaveStateDisposableEffect
 import com.pyamsoft.pydroid.bus.EventBus
+import com.pyamsoft.pydroid.core.LintIgnoreMaxLineLength
 import com.pyamsoft.pydroid.core.LintIgnoreTooGenericExceptionCaught
 import com.pyamsoft.pydroid.core.requireNotNull
 import com.pyamsoft.pydroid.ui.app.PYDroidActivityDelegate
@@ -89,8 +90,10 @@ class MainActivity : ComponentActivity() {
                     )
                     bugfix("Fix blocked connections being unable to be toggled in some cases")
                     change("Visual update to the in-app navigation experience.")
+
                     feature(
-                        "Separate Intent actions for toggling, forcing on, and forcing off the hotspot (for Automations)",
+                      @LintIgnoreMaxLineLength
+                      "Separate Intent actions for toggling, forcing on, and forcing off the hotspot (for Automations)",
                     )
                   }
                 },
