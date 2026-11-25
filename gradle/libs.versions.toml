@@ -14,7 +14,7 @@ kotlin = "2.4.21"
 coroutines = "1.11.0"
 
 # Us
-pydroid = "30.0.5"
+pydroid = "30.0.6"
 
 # Square
 leakCanary = "2.14"
@@ -46,7 +46,7 @@ coil = "3.6.3"
 
 # Developer Tools
 ktfmt = "0.65"
-spotless = "8.11.0"
+spotless = "8.12.0"
 jdkDesugar = "2.1.5"
 caupain = "1.10.1"
 detekt = "2.0.0-alpha.6"

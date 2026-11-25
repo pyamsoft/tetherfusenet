@@ -16,14 +16,9 @@
 
 package com.pyamsoft.tetherfi.settings
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.pydroid.ui.inject.rememberComposableInjector
 import com.pyamsoft.pydroid.ui.util.rememberNotNull
 
@@ -35,13 +30,8 @@ fun SettingsEntry(
   val component = rememberComposableInjector { SettingsInjector() }
   val appEnvironment = rememberNotNull(component.appEnvironment)
 
-  val baselinePadding = MaterialTheme.keylines.baseline
-  val itemModifier =
-      remember(baselinePadding) { Modifier.fillMaxWidth().padding(bottom = baselinePadding) }
-
   SettingsScreen(
       modifier = modifier,
-      itemModifier = itemModifier,
       appEnvironment = appEnvironment,
       listState = lazyListState,
   )

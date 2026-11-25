@@ -16,14 +16,20 @@
 
 package com.pyamsoft.tetherfi.settings
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.pyamsoft.pydroid.theme.keylines
 import com.pyamsoft.pydroid.ui.settings.SettingsPage
 import com.pyamsoft.pydroid.util.isDebugMode
 import com.pyamsoft.tetherfi.core.AppDevEnvironment
 import com.pyamsoft.tetherfi.ui.BottomPadding
+import com.pyamsoft.tetherfi.ui.LANDSCAPE_MAX_WIDTH
 
 private enum class SettingsItems {
   EXTRA_BOTTOM_PADDING,
@@ -32,23 +38,27 @@ private enum class SettingsItems {
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    itemModifier: Modifier = Modifier,
     listState: LazyListState,
     appEnvironment: AppDevEnvironment,
 ) {
   val context = LocalContext.current
 
+  val baselinePadding = MaterialTheme.keylines.baseline
+  val extraDebugModifier =
+      remember(baselinePadding) { Modifier.fillMaxWidth().padding(bottom = baselinePadding) }
+
   SettingsPage(
       modifier = modifier,
+      contentMaxWidth = LANDSCAPE_MAX_WIDTH,
       listState = listState,
       extraDebugContent = {
         renderExperiments(
-            itemModifier = itemModifier,
+            itemModifier = extraDebugModifier,
         )
 
         if (context.isDebugMode()) {
           renderExtraDebugContent(
-              itemModifier = itemModifier,
+              itemModifier = extraDebugModifier,
               appEnvironment = appEnvironment,
           )
         }
