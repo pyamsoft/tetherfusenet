@@ -6,7 +6,7 @@ compileSdk = "37"
 compileSdkMinor = "2"
 
 # Android Gradle
-agp = "9.5.2"
+agp = "9.5.3"
 cacheFix = "3.0.3"
 
 # Kotlin
