@@ -25,6 +25,8 @@ plugins {
   alias(libs.plugins.ksp)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.android.cacheFix)
+
+  alias(libs.plugins.hotswan.compiler)
 }
 
 android {

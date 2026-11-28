@@ -50,6 +50,7 @@ spotless = "8.12.0"
 jdkDesugar = "2.1.5"
 caupain = "1.10.1"
 detekt = "2.0.0-alpha.6"
+hotswan = "2.3.0"
 
 # Testing
 junit = "4.13.2"
@@ -68,6 +69,8 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 caupain = { id = "com.deezer.caupain", version.ref = "caupain" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
+
+hotswan-compiler = { id = "com.github.skydoves.compose.hotswan.compiler", version.ref = "hotswan" }
 
 [libraries]
 android-desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "jdkDesugar" }

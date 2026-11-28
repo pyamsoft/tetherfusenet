@@ -46,6 +46,10 @@ plugins {
   // Detekt
   // https://detekt.dev/docs/gettingstarted/gradle
   alias(libs.plugins.detekt) apply true
+
+  // Compose Hotswan
+  // https://hotswan.dev/blog/compose-hotswan-is-free
+  alias(libs.plugins.hotswan.compiler) apply false
 }
 
 detekt {
